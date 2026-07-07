@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blockfall</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <main class="shell">
+    <section class="play-area" aria-label="ゲーム画面">
+      <canvas id="board" width="300" height="600" aria-label="テトリス風ゲーム盤"></canvas>
+      <div id="bombingReveal" class="bombing-reveal hidden" aria-hidden="true">
+        <img id="bombingRevealImage" src="Bombing.png" alt="" />
+      </div>
+      <div class="field-hud" aria-label="ホールドと次ミノ">
+        <div class="field-box hold-box">
+          <span>Hold</span>
+          <canvas id="hold" width="72" height="72"></canvas>
+        </div>
+        <div class="field-box next-box">
+          <span>Next</span>
+          <canvas class="next-preview" width="72" height="72"></canvas>
+          <canvas class="next-preview" width="72" height="72"></canvas>
+          <canvas class="next-preview" width="72" height="72"></canvas>
+          <canvas class="next-preview" width="72" height="72"></canvas>
+          <canvas class="next-preview" width="72" height="72"></canvas>
+        </div>
+      </div>
+      <div id="overlay" class="overlay">
+        <p id="overlayTitle">Blockfall</p>
+        <p id="playerIndicator" class="player-indicator">Player: Guest</p>
+        <div id="loginMenu" class="option-menu hidden">
+          <div class="option-row">
+            <span>Player Select</span>
+            <strong id="selectedPlayerName">Guest</strong>
+          </div>
+          <label class="option-row">
+            <span>名前</span>
+            <input id="playerNameInput" type="text" maxlength="16" placeholder="Player" />
+          </label>
+          <button id="createProfileButton" type="button">この名前で始める</button>
+          <button id="guestPlayButton" type="button">ゲストで遊ぶ</button>
+          <div id="profileList" class="profile-list"></div>
+        </div>
+        <div id="modeMenu" class="mode-menu">
+          <button id="onePlayerButton" type="button">一人でテトリス</button>
+          <button id="easyTetrisButton" type="button">いろんなテトリス</button>
+          <button type="button" disabled>VS</button>
+          <button type="button" disabled>練習</button>
+        </div>
+        <button id="globalOptionsButton" class="gear-button" type="button" aria-label="総合オプション">⚙</button>
+        <button id="myPageButton" class="corner-button corner-button-left" type="button" aria-label="マイページ">◎</button>
+        <button id="playerSwitchButton" class="corner-button corner-button-left secondary" type="button" aria-label="プレイヤー切り替え">⇄</button>
+        <div id="onePlayerMenu" class="mode-menu hidden">
+          <button id="marathonButton" type="button">マラソン</button>
+          <button id="sprintButton" type="button">スプリント</button>
+          <button id="ultraButton" type="button">ウルトラ</button>
+          <button id="allClearSprintButton" type="button">オールクリアスプリント</button>
+          <button id="easyMarathonButton" type="button">やさしいマラソン</button>
+          <button id="hotlineButton" type="button">ホットライン</button>
+          <button id="cheeseRaceButton" type="button">Cheese Race</button>
+          <button id="zoneButton" type="button">ゾーン</button>
+          <button id="onePlayerBackButton" type="button">戻る</button>
+        </div>
+        <div id="easyModeMenu" class="mode-menu hidden">
+          <button id="shadowButton" type="button">えあわせブロック</button>
+          <button id="catchButton" type="button">Catch</button>
+          <button id="bomblissButton" type="button">ボンブリス</button>
+          <button id="cascadeButton" type="button">カスケード</button>
+          <button id="zeroGravityButton" type="button">無重力</button>
+          <button id="squareButton" type="button">スクエア</button>
+          <button id="easyModeBackButton" type="button">戻る</button>
+        </div>
+        <div id="optionMenu" class="option-menu hidden">
+          <div class="option-row">
+            <span>Mode</span>
+            <strong id="selectedMode">マラソン</strong>
+          </div>
+          <label id="shadowStageRow" class="option-row hidden">
+            <span>Stage</span>
+            <select id="shadowStageSelect"></select>
+          </label>
+          <label id="fixedLevelToggleRow" class="option-row">
+            <span>レベル固定</span>
+            <input id="fixedLevelToggle" type="checkbox" />
+          </label>
+          <label id="fixedLevelRow" class="option-row hidden">
+            <span>固定レベル</span>
+            <select id="fixedLevelSelect">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+              <option value="13">13</option>
+              <option value="14">14</option>
+              <option value="15">15</option>
+              <option value="master">Master</option>
+            </select>
+          </label>
+          <button id="ghostToggleButton" type="button">ゴースト: ON</button>
+          <button id="difficultyToggleButton" class="hidden" type="button">難易度: easy</button>
+          <button id="endlessToggleButton" class="marathon-only" type="button">エンドレス: OFF</button>
+          <label id="sprintGoalRow" class="option-row hidden">
+            <span>ゴールライン</span>
+            <strong id="sprintGoalValue">40</strong>
+            <input id="sprintGoalRange" type="range" min="40" max="200" step="10" value="40" />
+          </label>
+          <label id="cheeseGoalRow" class="option-row hidden">
+            <span>Cheese Goal</span>
+            <select id="cheeseGoalSelect">
+              <option value="10">10</option>
+              <option value="18" selected>18</option>
+              <option value="40">40</option>
+              <option value="100">100</option>
+            </select>
+          </label>
+          <button id="cheesePurifyToggleButton" type="button">浄化: OFF</button>
+          <button type="button" disabled>BGM選択</button>
+          <label class="option-row disabled-control">
+            <span>BGM音量</span>
+            <input type="range" min="0" max="100" value="52" disabled />
+          </label>
+          <label class="option-row disabled-control">
+            <span>SE音量</span>
+            <input type="range" min="0" max="100" value="70" disabled />
+          </label>
+          <p id="modeRules" class="mode-description mode-description-panel"></p>
+          <button id="optionStartButton" type="button">Start</button>
+          <button id="optionBackButton" type="button">戻る</button>
+        </div>
+        <div id="globalOptionsMenu" class="option-menu hidden">
+          <button id="myPageFromOptionsButton" type="button">マイページ</button>
+          <button id="playerSwitchFromOptionsButton" type="button">プレイヤー切り替え</button>
+          <button id="exportSaveButton" type="button">セーブデータを書き出す</button>
+          <button id="importSaveButton" type="button">セーブデータを読み込む</button>
+          <button id="tsdAssistToggleButton" type="button">TSD Assist: OFF</button>
+          <button id="keybindMenuButton" type="button">キーコン設定</button>
+          <button id="globalOptionsBackButton" type="button">戻る</button>
+        </div>
+        <div id="keybindMenu" class="option-menu hidden">
+          <div class="option-row">
+            <span>キーコン</span>
+            <strong>設定</strong>
+          </div>
+          <div class="keybind-list">
+            <button class="keybind-button" data-action="moveLeft" type="button">Move Left: A / ←</button>
+            <button class="keybind-button" data-action="moveRight" type="button">Move Right: D / →</button>
+            <button class="keybind-button" data-action="softDrop" type="button">Soft Drop: S</button>
+            <button class="keybind-button" data-action="hardDrop" type="button">Hard Drop: W</button>
+            <button class="keybind-button" data-action="rotateRight" type="button">Rotate Right: J</button>
+            <button class="keybind-button" data-action="rotateLeft" type="button">Rotate Left: K</button>
+            <button class="keybind-button" data-action="hold" type="button">Hold: F</button>
+            <button class="keybind-button" data-action="zone" type="button">Zone: Space</button>
+            <button class="keybind-button" data-action="pause" type="button">Pause: P</button>
+          </div>
+          <button id="keybindMenuBackButton" type="button">戻る</button>
+        </div>
+        <div id="myPageMenu" class="option-menu hidden">
+          <div class="option-row">
+            <span>Player</span>
+            <strong id="myPagePlayerName">Guest</strong>
+          </div>
+          <div class="option-row">
+            <span>ID</span>
+            <strong id="myPagePlayerId">guest</strong>
+          </div>
+          <div class="option-row">
+            <span>Type</span>
+            <strong id="myPagePlayerType">Guest</strong>
+          </div>
+          <div class="mypage-section">
+            <span class="label">Best Records</span>
+            <div id="myPageBestRecords" class="mypage-list"></div>
+          </div>
+          <div class="mypage-section">
+            <span class="label">Stats</span>
+            <div id="myPageStats" class="mypage-list"></div>
+          </div>
+          <button id="myPageBackButton" type="button">戻る</button>
+        </div>
+        <div id="actionMenu" class="mode-menu hidden">
+          <p id="resultSummary" class="result-summary hidden"></p>
+          <button id="startButton" type="button">Continue</button>
+          <button id="restartButton" type="button">Restart</button>
+          <button id="titleButton" type="button">タイトルへもどる</button>
+        </div>
+        <input id="saveImportInput" type="file" accept="application/json,.json" hidden />
+      </div>
+    </section>
+
+    <aside class="sidebar" aria-label="ゲーム情報">
+      <div class="panel">
+        <span class="label">Score</span>
+        <strong id="score">0</strong>
+      </div>
+      <div class="stats">
+        <div class="panel">
+          <span class="label">Lines</span>
+          <strong id="lines">0</strong>
+        </div>
+        <div class="panel">
+          <span class="label">Level</span>
+          <strong id="level">1</strong>
+        </div>
+      </div>
+      <div class="panel event-panel">
+        <span class="label">Last</span>
+        <strong id="lastEvent">-</strong>
+      </div>
+      <div class="panel event-panel">
+        <span class="label">Time</span>
+        <strong id="timeDisplay">00:00.000</strong>
+      </div>
+      <div class="panel event-panel">
+        <span class="label">Current Lines</span>
+        <strong id="currentLines">0 / 150</strong>
+      </div>
+      <div class="controls panel">
+        <span class="label">Controls</span>
+        <dl>
+          <div>
+            <dt id="moveKeys">A D</dt>
+            <dd>Move</dd>
+          </div>
+          <div>
+            <dt id="softDropKey">S</dt>
+            <dd>Soft drop</dd>
+          </div>
+          <div>
+            <dt id="rotateRightKey">J</dt>
+            <dd>Rotate right</dd>
+          </div>
+          <div>
+            <dt id="rotateLeftKey">K</dt>
+            <dd>Rotate left</dd>
+          </div>
+          <div>
+            <dt id="hardDropKey">W</dt>
+            <dd>Hard drop</dd>
+          </div>
+          <div>
+            <dt id="holdKey">F</dt>
+            <dd>Hold</dd>
+          </div>
+          <div>
+            <dt id="pauseKey">P</dt>
+            <dd>Pause</dd>
+          </div>
+        </dl>
+      </div>
+    </aside>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+
+</html>
