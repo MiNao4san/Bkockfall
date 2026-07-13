@@ -90,10 +90,17 @@ const ROTATION_INSERT_TARGETS = ["I", "J", "L", "S", "Z"];
 const ROTATION_INSERT_TYPES = ["I", "J", "L", "S", "Z"];
 const ROTATION_INSERT_EXPECTED_PLACEMENTS = {
   I: { x: 3, y: 17, rotationState: "2", clearedLines: 1 },
-  J: { x: 3, y: 17, rotationState: "2", clearedLines: 1 },
-  L: { x: 4, y: 17, rotationState: "2", clearedLines: 1 },
+  J: { x: 3, y: 16, rotationState: "R", clearedLines: 1 },
+  L: { x: 4, y: 16, rotationState: "L", clearedLines: 1 },
   S: { x: 4, y: 17, rotationState: "R", clearedLines: 1 },
   Z: { x: 3, y: 17, rotationState: "R", clearedLines: 1 },
+};
+const ROTATION_INSERT_VERIFIED_SOLUTIONS = {
+  I: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop"],
+  J: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop", "Rotate Left", "Soft Drop", "Rotate Right"],
+  L: ["Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Left", "Soft Drop", "Rotate Right", "Soft Drop", "Rotate Left"],
+  S: ["Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop"],
+  Z: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right"],
 };
 const TUTORIAL_CHAPTER_SECTIONS = {
   1: TUTORIAL_CHAPTER_1_SECTIONS,
@@ -4109,13 +4116,13 @@ function getRotationInsertBoard(type) {
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", ".....X....", "XXX...XXXX", "XXXX..XXXX",
+      "....XX....", "..........", "..........", "XXXX.XXXXX", "XXXXXXXXXX",
     ],
     L: [
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "....X.....", "XXXX...XXX", "XXXX..XXXX",
+      "....XX....", "..........", "..........", "XXXXX.XXXX", "XXXXXXXXXX",
     ],
     S: [
       "..........", "..........", "..........", "..........", "..........",
@@ -4134,26 +4141,16 @@ function getRotationInsertBoard(type) {
 }
 
 function validateTutorialBoardPattern(name, pattern) {
-  console.assert(
-    pattern.length === rows,
-    `${name}: invalid row count`,
-    {
-      expected: rows,
-      actual: pattern.length,
-      pattern,
-    },
-  );
+  if (pattern.length !== rows) {
+    throw new Error(`${name}: expected ${rows} rows, got ${pattern.length}`);
+  }
   pattern.forEach((row, y) => {
-    console.assert(
-      row.length === cols,
-      `${name}: invalid column count`,
-      {
-        y,
-        expected: cols,
-        actual: row.length,
-        row,
-      },
-    );
+    if (row.length !== cols) {
+      throw new Error(`${name}: row ${y} expected ${cols} columns, got ${row.length}: ${row}`);
+    }
+    if (!/^[.X]+$/.test(row)) {
+      throw new Error(`${name}: row ${y} contains unsupported characters: ${row}`);
+    }
   });
 }
 
@@ -4242,6 +4239,7 @@ function setupTutorialSectionBoard(sectionId) {
     validateRotationInsertBoards();
     const type = tutorialState.rotationInsertTypes[tutorialState.subStep];
     pattern = getRotationInsertBoard(type);
+    console.debug(`${type} tutorial solution:`, ROTATION_INSERT_VERIFIED_SOLUTIONS[type] ?? []);
   }
   if (pattern) {
     board = createTutorialBoard(pattern, {
