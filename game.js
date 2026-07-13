@@ -2272,6 +2272,14 @@ function startCascadeResolution() {
   recordLineClearStats(fullLines.length);
   recordCustomLineEvents(fullLines.length, false);
   updateStats();
+  console.debug("Cascade started", {
+    enabled: isCascadeEnabledForCurrentGame(),
+    isCascadeMode: isCascadeMode(),
+    tutorialSection: getCurrentTutorialSection?.(),
+    cascadeResolutionActive,
+    phase: cascadeResolutionPhase,
+    active,
+  });
   return true;
 }
 
@@ -2318,6 +2326,15 @@ function finalizeCascadeResolution() {
   cascadeGravityTimer = 0;
   cascadeResolutionClears = [];
   cascadeResolutionUsedZone = false;
+  dropCounter = 0;
+  lockCounter = 0;
+  lockResetCount = 0;
+  softDropDistance = 0;
+  softDropHeld = false;
+  softDropSuppressedUntilKeyup = false;
+  activeDirection = null;
+  clearInputBuffer();
+  resetAllInputState();
   if (evaluateTutorialLockResult({
     mode: "cascade",
     cascadeChain: result.chainCount,
@@ -2327,9 +2344,11 @@ function finalizeCascadeResolution() {
   })) {
     return;
   }
-  spawnPiece();
-  drawNextPreviews();
-  drawPreview(holdCtx, holdType);
+  if (!gameOver) {
+    spawnPiece();
+    drawNextPreviews();
+    drawPreview(holdCtx, holdType);
+  }
 }
 
 function processCascadeResolutionFrame(delta) {
@@ -3500,8 +3519,12 @@ function isTutorialMode() {
   return selectedGameMode === "チュートリアル";
 }
 
+function isTutorialCascadeSection() {
+  return isTutorialMode() && getCurrentTutorialSection() === "cascade";
+}
+
 function isCascadeEnabledForCurrentGame() {
-  return isCascadeMode() || (isCustomMode() && customSettings.cascadeEnabled);
+  return isCascadeMode() || isTutorialCascadeSection() || (isCustomMode() && customSettings.cascadeEnabled);
 }
 
 function isZoneEnabledForCurrentGame() {
@@ -3533,6 +3556,10 @@ function hasNaturalGravity() {
 function shouldUseInstantGravity() {
   if (!hasNaturalGravity()) return false;
   return isMasterMode() || isTenGMode();
+}
+
+function canControlActivePiece() {
+  return running && !paused && !gameOver && active !== null && !cascadeResolutionActive;
 }
 
 function getEffectiveModeName() {
@@ -5219,7 +5246,7 @@ function finishZone() {
 }
 
 function movePiece(deltaX) {
-  if (!running || paused) return;
+  if (!canControlActivePiece()) return;
   if (!collides(active, active.x + deltaX, active.y, active.matrix)) {
     const wasGrounded = isActiveGrounded();
     active.x += deltaX;
@@ -5756,6 +5783,7 @@ function hideBombingReveal() {
 }
 
 function movePieceDown(isSoftDrop = false) {
+  if (!canControlActivePiece()) return false;
   if (!collides(active, active.x, active.y + 1, active.matrix)) {
     active.y += 1;
     active.lastAction = "drop";
@@ -5770,6 +5798,7 @@ function movePieceDown(isSoftDrop = false) {
 }
 
 function movePieceToGround(isSoftDrop = false) {
+  if (!canControlActivePiece()) return false;
   let moved = false;
   while (!collides(active, active.x, active.y + 1, active.matrix)) {
     active.y += 1;
@@ -5807,7 +5836,7 @@ function updateLockDelay(delta) {
 }
 
 function hardDrop() {
-  if (!running || paused) return;
+  if (!canControlActivePiece()) return;
   const dropPiece = active
     ? { piece: active.type, x: active.x, y: active.y, rotationState: active.rotationState }
     : {};
@@ -5833,7 +5862,7 @@ function hardDrop() {
 }
 
 function rotatePiece(direction) {
-  if (!running || paused) return;
+  if (!canControlActivePiece()) return;
   if (active?.type === "DOT" || active?.type === "O") {
     return;
   }
@@ -6050,8 +6079,14 @@ function lockCascadePiece() {
     score += softDropDistance;
   }
   mergePiece();
+  active = null;
   recordCustomAction("lock", lockedPiece);
-  if (!startCascadeResolution()) {
+  const cascadeStarted = startCascadeResolution();
+  if (cascadeStarted) {
+    resetAllInputState();
+    return;
+  }
+  if (!cascadeStarted) {
     if (evaluateTutorialLockResult({
       mode: "cascade",
       piece: lockedPiece.piece,
@@ -6459,7 +6494,7 @@ function holdPiece() {
     skipShadowPiece();
     return;
   }
-  if (!running || paused || !canHold) return;
+  if (!canControlActivePiece() || !canHold) return;
   const currentType = active.type;
   if (holdType) {
     active = createPiece(holdType);
@@ -6709,6 +6744,14 @@ function update(time = 0) {
         finishZone();
       }
     }
+  }
+  if (cascadeResolutionActive) {
+    console.debug("Cascade frame", {
+      enabled: isCascadeEnabledForCurrentGame(),
+      mode: selectedGameMode,
+      section: getCurrentTutorialSection?.(),
+      phase: cascadeResolutionPhase,
+    });
   }
   if (isCascadeEnabledForCurrentGame() && cascadeResolutionActive) {
     processCascadeResolutionFrame(delta);
