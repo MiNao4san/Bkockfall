@@ -2211,9 +2211,7 @@ function getRequiredCascadeCore() {
   const required = [
     "findFullCascadeLines",
     "clearCascadeLines",
-    "getCascadeConnectedGroups",
     "countOccupiedBoardCells",
-    "canMoveCascadeGroupDown",
     "applyCascadeGravityStep",
   ];
   const missing = required.filter((name) => typeof core?.[name] !== "function");
@@ -2231,19 +2229,8 @@ function clearCascadeLines(fullLines) {
   getRequiredCascadeCore().clearCascadeLines(board, cols, fullLines);
 }
 
-function getCascadeConnectedGroups() {
-  return getRequiredCascadeCore().getCascadeConnectedGroups(board, rows, cols);
-}
-
 function countOccupiedBoardCells() {
   return getRequiredCascadeCore().countOccupiedBoardCells(board);
-}
-
-function canMoveCascadeGroupDown(cells, occupiedSet = null) {
-  const set = occupiedSet ?? new Set(
-    board.flatMap((row, y) => row.map((cell, x) => (cell ? `${x},${y}` : null)).filter(Boolean)),
-  );
-  return getRequiredCascadeCore().canMoveCascadeGroupDown(cells, rows, set);
 }
 
 function applyCascadeGravityStep() {
