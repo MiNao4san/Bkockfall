@@ -183,7 +183,7 @@ const TUTORIAL_BOARD_PATTERNS = {
     "..........", "..........", "..........", "..........", "..........",
     "..........", "..........", "..........", "..........", "..........",
     "..........", "..........", "..........", "..........", "..........",
-    "..........", "..........", "....XX....", "XXXX..XXXX", "XXX....XXX",
+    "..........", "..........", ".........X", "XXX....XXX", "XXXXXXXXX.",
   ],
   tSpin: [
     "..........", "..........", "..........", "..........", "..........",
@@ -2192,80 +2192,45 @@ function getDominantSquareType(clearedCells) {
 }
 
 function findFullCascadeLines() {
-  const fullLines = [];
-  for (let y = 0; y < rows; y += 1) {
-    if (board[y].every(isOccupiedCell)) {
-      fullLines.push(y);
-    }
+  if (globalThis.CascadeCore?.findFullCascadeLines) {
+    return CascadeCore.findFullCascadeLines(board, rows);
   }
-  return fullLines;
+  return [];
 }
 
 function clearCascadeLines(fullLines) {
-  fullLines.forEach((y) => {
-    board[y] = Array(cols).fill(null);
-  });
+  if (globalThis.CascadeCore?.clearCascadeLines) {
+    CascadeCore.clearCascadeLines(board, cols, fullLines);
+  }
 }
 
-function getCascadeGroups() {
-  const groups = new Map();
-  let fallbackId = -1;
-  for (let y = rows - 1; y >= 0; y -= 1) {
-    for (let x = 0; x < cols; x += 1) {
-      const cell = board[y][x];
-      if (!cell) continue;
-      const pieceId = typeof cell === "object" && Number.isFinite(cell.pieceId) ? cell.pieceId : fallbackId--;
-      if (!groups.has(pieceId)) groups.set(pieceId, []);
-      groups.get(pieceId).push({ x, y, cell });
-    }
+function getCascadeConnectedGroups() {
+  if (globalThis.CascadeCore?.getCascadeConnectedGroups) {
+    return CascadeCore.getCascadeConnectedGroups(board, rows, cols);
   }
-  return groups;
+  return [];
+}
+
+function countOccupiedBoardCells() {
+  if (globalThis.CascadeCore?.countOccupiedBoardCells) {
+    return CascadeCore.countOccupiedBoardCells(board);
+  }
+  return board.reduce((sum, row) => sum + row.filter(Boolean).length, 0);
 }
 
 function canMoveCascadeGroupDown(cells, occupiedSet = null) {
-  const ownCells = new Set(cells.map(({ x, y }) => `${x},${y}`));
-  return cells.every(({ x, y }) => {
-    const nextY = y + 1;
-    if (nextY >= rows) return false;
-    if (occupiedSet) {
-      return !occupiedSet.has(`${x},${nextY}`) || ownCells.has(`${x},${nextY}`);
-    }
-    return !board[nextY][x] || ownCells.has(`${x},${nextY}`);
-  });
-}
-
-function moveCascadeGroupDown(cells) {
-  cells.forEach(({ x, y }) => {
-    board[y][x] = null;
-  });
-  cells.forEach(({ x, y, cell }) => {
-    board[y + 1][x] = cell;
-  });
+  const set = occupiedSet ?? new Set(
+    board.flatMap((row, y) => row.map((cell, x) => (cell ? `${x},${y}` : null)).filter(Boolean)),
+  );
+  if (globalThis.CascadeCore?.canMoveCascadeGroupDown) {
+    return CascadeCore.canMoveCascadeGroupDown(cells, rows, set);
+  }
+  return false;
 }
 
 function applyCascadeGravityStep() {
-  const groups = Array.from(getCascadeGroups().values()).sort(
-    (a, b) => Math.max(...b.map((cell) => cell.y)) - Math.max(...a.map((cell) => cell.y)),
-  );
-  const occupiedSet = new Set();
-  groups.forEach((cells) => {
-    cells.forEach(({ x, y }) => occupiedSet.add(`${x},${y}`));
-  });
-
-  const movableGroups = groups.filter((cells) => canMoveCascadeGroupDown(cells, occupiedSet));
-  if (movableGroups.length === 0) return false;
-
-  movableGroups.forEach((cells) => {
-    cells.forEach(({ x, y }) => {
-      board[y][x] = null;
-    });
-  });
-  movableGroups.forEach((cells) => {
-    cells.forEach(({ x, y, cell }) => {
-      board[y + 1][x] = cell;
-    });
-  });
-  return true;
+  if (!globalThis.CascadeCore?.applyCascadeGravityStep) return false;
+  return CascadeCore.applyCascadeGravityStep(board, rows, cols);
 }
 
 function resolveCascadeClears() {
