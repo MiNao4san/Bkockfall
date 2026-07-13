@@ -87,7 +87,7 @@ const CHAPTER_5_MISSION_COUNT = 5;
 const CHAPTER_5_TIME_LIMIT_MS = 300000;
 const DEBUG_CHAPTER_5_MISSIONS = null;
 const ROTATION_INSERT_TARGETS = ["I", "J", "L", "S", "Z"];
-const ROTATION_INSERT_TYPES = ["I"];
+const ROTATION_INSERT_TYPES = ["I", "J", "L", "S", "Z"];
 const ROTATION_INSERT_EXPECTED_PLACEMENTS = {
   I: { x: 3, y: 17, rotationState: "2", clearedLines: 1 },
   J: { x: 3, y: 17, rotationState: "2", clearedLines: 1 },
@@ -4629,13 +4629,13 @@ function evaluateTutorialLockResult(result) {
 
     if (succeeded) {
       const nextSubStep = tutorialState.subStep + 1;
-      if (nextSubStep >= tutorialState.rotationInsertTypes.length) {
-        logTutorialDecision(result, "success");
-        completeTutorialSection("", { clearActive: true });
+      if (nextSubStep < tutorialState.rotationInsertTypes.length) {
+        logTutorialDecision(result, "continue");
+        advanceTutorialSubStep("できました！", { nextSubStep });
         return true;
       }
-      logTutorialDecision(result, "continue");
-      advanceTutorialSubStep("できました！", { nextSubStep });
+      logTutorialDecision(result, "success");
+      completeTutorialSection("", { clearActive: true });
       return true;
     }
     logTutorialDecision(result, "failure");

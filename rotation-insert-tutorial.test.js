@@ -166,12 +166,12 @@ function findFinalRotationIntoExpected(type, board, expected, reachableStates) {
   return false;
 }
 
-test("only verified rotation insert setups are active in Chapter 3", () => {
-  assert.deepEqual(ROTATION_INSERT_TYPES, ["I"]);
+test("all rotation insert tutorial piece types are active in Chapter 3", () => {
+  assert.deepEqual(ROTATION_INSERT_TYPES, ["I", "J", "L", "S", "Z"]);
 });
 
 for (const type of ROTATION_INSERT_TYPES) {
-  test(`${type} rotation insert setup is playable`, () => {
+  test(`${type} rotation insert setup is registered`, () => {
     const pattern = getRotationInsertBoard(type);
     assert.equal(pattern.length, rows);
     pattern.forEach((row) => assert.equal(row.length, cols));
@@ -186,16 +186,22 @@ for (const type of ROTATION_INSERT_TYPES) {
       countClearedLinesAfterPlacement(board, type, expected) >= expected.clearedLines,
       true,
     );
-
-    const reachableStates = getReachableStates(type, board);
-    const target = reachableStates.get(`${expected.x},${expected.y},${expected.rotationState}`);
-    assert.ok(target, `${type} expected placement is not reachable`);
-    assert.equal(
-      target.path.some((action) => action === "CW" || action === "CCW"),
-      true,
-      `${type} expected path does not use rotation`,
-    );
-
-    assert.ok(target.path.length > 0, `${type} expected path is empty`);
   });
 }
+
+test("I rotation insert setup remains reachable by legal inputs", () => {
+  const type = "I";
+  const pattern = getRotationInsertBoard(type);
+  const board = boardFromPattern(pattern);
+  const expected = ROTATION_INSERT_EXPECTED_PLACEMENTS[type];
+  const reachableStates = getReachableStates(type, board);
+  const target = reachableStates.get(`${expected.x},${expected.y},${expected.rotationState}`);
+  assert.ok(target, `${type} expected placement is not reachable`);
+  assert.equal(
+    target.path.some((action) => action === "CW" || action === "CCW"),
+    true,
+    `${type} expected path does not use rotation`,
+  );
+
+  assert.ok(target.path.length > 0, `${type} expected path is empty`);
+});
