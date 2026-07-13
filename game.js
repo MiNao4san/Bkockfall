@@ -88,6 +88,13 @@ const CHAPTER_5_TIME_LIMIT_MS = 300000;
 const DEBUG_CHAPTER_5_MISSIONS = null;
 const ROTATION_INSERT_TARGETS = ["I", "J", "L", "S", "Z"];
 const ROTATION_INSERT_TYPES = ["I", "J", "L", "S", "Z"];
+const ROTATION_INSERT_EXPECTED_PLACEMENTS = {
+  I: { x: 3, y: 17, rotationState: "2", clearedLines: 1 },
+  J: { x: 3, y: 17, rotationState: "2", clearedLines: 1 },
+  L: { x: 4, y: 17, rotationState: "2", clearedLines: 1 },
+  S: { x: 4, y: 17, rotationState: "R", clearedLines: 1 },
+  Z: { x: 3, y: 17, rotationState: "R", clearedLines: 1 },
+};
 const TUTORIAL_CHAPTER_SECTIONS = {
   1: TUTORIAL_CHAPTER_1_SECTIONS,
   2: TUTORIAL_CHAPTER_2_SECTIONS,
@@ -4114,16 +4121,20 @@ function getRotationInsertBoard(type) {
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "....XX....", "XXX...XXXX", "XXXX..XXXX",
+      "..........", "..........", "..........", "XXXXX..XXX", "XXXXXX.XXX",
     ],
     Z: [
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "....XX....", "XXXX...XXX", "XXXX..XXXX",
+      "..........", "..........", "..........", "XXXX..XXXX", "XXXX.XXXXX",
     ],
   };
   return setups[type] ?? setups.I;
+}
+
+function getRotationInsertExpectedPlacement(type) {
+  return ROTATION_INSERT_EXPECTED_PLACEMENTS[type] ?? ROTATION_INSERT_EXPECTED_PLACEMENTS.I;
 }
 
 function resetTutorialRuntimeState(options = {}) {
@@ -4249,6 +4260,7 @@ function startTutorialSection(sectionId) {
     usedHoldDuringBackToBack: false,
     rotatedSinceSpawn: false,
     lastSuccessfulAction: null,
+    lastRotationContext: null,
     rotationInsertTypes: [...ROTATION_INSERT_TYPES],
     completed: false,
     showSuccess: false,
@@ -4408,6 +4420,7 @@ function resetTutorialSectionForSubStep(options = {}) {
     pendingAdvanceCallback: null,
     rotatedSinceSpawn: false,
     lastSuccessfulAction: null,
+    lastRotationContext: null,
   };
   setupTutorialSectionBoard(sectionId);
   setupTutorialActivePiece(sectionId);
@@ -4534,14 +4547,33 @@ function evaluateTutorialLockResult(result) {
 
   if (sectionId === "rotationInsert") {
     const type = tutorialState.rotationInsertTypes[tutorialState.subStep];
-    const context = tutorialState.lastRotationContext;
-    if (
+    const expected = getRotationInsertExpectedPlacement(type);
+    const placedCorrectly =
       result.piece === type &&
-      result.lastAction === "rotate" &&
+      result.x === expected.x &&
+      result.y === expected.y &&
+      result.rotationState === expected.rotationState;
+    const succeeded =
+      placedCorrectly &&
       tutorialState.rotatedSinceSpawn &&
-      (context?.usedKick || context?.fromPlacementBlockedAtFinal) &&
-      result.clearedLines > 0
-    ) {
+      result.clearedLines >= expected.clearedLines;
+
+    console.debug("Rotation insert check", {
+      expectedType: type,
+      expected,
+      resultPiece: result.piece,
+      resultX: result.x,
+      resultY: result.y,
+      resultRotationState: result.rotationState,
+      resultLastAction: result.lastAction,
+      rotatedSinceSpawn: tutorialState.rotatedSinceSpawn,
+      lastRotationContext: tutorialState.lastRotationContext,
+      clearedLines: result.clearedLines,
+      placedCorrectly,
+      succeeded,
+    });
+
+    if (succeeded) {
       const nextSubStep = tutorialState.subStep + 1;
       if (nextSubStep >= tutorialState.rotationInsertTypes.length) {
         logTutorialDecision(result, "success");
@@ -4553,7 +4585,7 @@ function evaluateTutorialLockResult(result) {
       return true;
     }
     logTutorialDecision(result, "failure");
-    failTutorialSection("回転入れ条件を満たしていません", result);
+    failTutorialSection("指定された場所へ回転入れしてください", result);
     return true;
   }
 
