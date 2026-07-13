@@ -39,7 +39,7 @@ const LAST_PLAYER_STORAGE_KEY = "blockfall.lastPlayer.v1";
 const LAST_PLAYER_STORAGE_KEY_LEGACY = "blockfall.lastPlayer";
 const SETTINGS_STORAGE_KEY = "blockfall.settings.v1";
 const CUSTOM_ACTION_LOG_LIMIT = 1000;
-const TUTORIAL_SUCCESS_DELAY_MS = 900;
+const TUTORIAL_SUCCESS_DELAY_MS = 1200;
 const TUTORIAL_CHAPTER_1_SECTIONS = [
   "screenExplanation",
   "moveHorizontal",
@@ -3733,11 +3733,12 @@ function getTutorialSectionContent(sectionId) {
 
 function isTutorialActionAllowed(action) {
   if (!isTutorialMode()) return true;
+  if (action === "pause") return true;
   if (tutorialChapter === 5) {
-    if (tutorialState?.completed || tutorialState?.waitingForNext) return false;
+    if (tutorialState?.completed || tutorialState?.waitingForNext || tutorialState?.waitingForAdvance) return false;
     return ["moveLeft", "moveRight", "rotateLeft", "rotateRight", "softDrop", "hardDrop", "hold", "pause"].includes(action);
   }
-  if (tutorialState?.completed || tutorialState?.waitingForNext) return false;
+  if (tutorialState?.completed || tutorialState?.waitingForNext || tutorialState?.waitingForAdvance) return false;
   const section = getCurrentTutorialSection();
   const config = TUTORIAL_SECTIONS[section];
   if (config?.allowedActions) return config.allowedActions.includes(action);
@@ -3776,6 +3777,48 @@ function hideTutorialPanel() {
   tutorialAdvanceTimer = null;
   tutorialPanel?.classList.add("hidden");
   tutorialMissionPanel?.classList.add("hidden");
+}
+
+function scheduleTutorialAdvance(callback, delay = TUTORIAL_SUCCESS_DELAY_MS) {
+  window.clearTimeout(tutorialAdvanceTimer);
+  tutorialAdvanceTimer = window.setTimeout(() => {
+    tutorialAdvanceTimer = null;
+    if (paused) {
+      if (tutorialState) {
+        tutorialState.pendingAdvanceCallback = callback;
+      }
+      return;
+    }
+    callback();
+  }, delay);
+}
+
+function resumePendingTutorialAdvance() {
+  const callback = tutorialState?.pendingAdvanceCallback;
+  if (!callback) return;
+  tutorialState.pendingAdvanceCallback = null;
+  scheduleTutorialAdvance(callback, 120);
+}
+
+function logTutorialSectionStart(sectionId) {
+  if (!isTutorialMode()) return;
+  console.debug("Tutorial section start", {
+    chapter: tutorialChapter,
+    section: sectionId,
+    board,
+    active,
+    tutorialState,
+  });
+}
+
+function logTutorialDecision(result, decision) {
+  console.debug("Tutorial result", {
+    chapter: tutorialChapter,
+    section: getCurrentTutorialSection(),
+    subStep: tutorialState?.subStep,
+    result,
+    decision,
+  });
 }
 
 function getChapter5MissionTitle(mission) {
@@ -3981,6 +4024,16 @@ function failTutorialChapter5() {
   showActionOverlay("Challenge Failed", "もう一度", true, "もう一度挑戦しよう");
 }
 
+function getMatrixCells(matrix) {
+  const cells = [];
+  matrix.forEach((row, y) => {
+    row.forEach((value, x) => {
+      if (value) cells.push([x, y]);
+    });
+  });
+  return cells;
+}
+
 function spawnTutorialPiece(type, options = {}) {
   active = createPiece(type);
   if (!active) return;
@@ -3994,7 +4047,8 @@ function spawnTutorialPiece(type, options = {}) {
     }
   }
   if (options.bombCells) {
-    active.bombCells = new Set(options.bombCells);
+    const occupied = new Set(getMatrixCells(active.matrix).map(([x, y]) => `${x},${y}`));
+    active.bombCells = new Set(options.bombCells.filter((cell) => occupied.has(cell)));
   }
   if (isCascadeEnabledForCurrentGame() || isSquareMode()) {
     active.pieceId = nextPieceId;
@@ -4003,8 +4057,12 @@ function spawnTutorialPiece(type, options = {}) {
   active.lastAction = null;
   canHold = true;
   if (collides(active, active.x, active.y, active.matrix)) {
-    failTutorialSection();
+    failTutorialSection("チュートリアルミノの初期位置が衝突しています");
   }
+}
+
+function spawnTutorialBomblissPiece(type, bombCells) {
+  spawnTutorialPiece(type, { x: type === "O" ? 4 : undefined, y: 1, bombCells });
 }
 
 function createTutorialBoard(pattern, options = {}) {
@@ -4037,24 +4095,47 @@ function createTutorialCellForSection(sectionId) {
 }
 
 function getRotationInsertBoard(type) {
-  const pattern = [
-    "..........", "..........", "..........", "..........", "..........",
-    "..........", "..........", "..........", "..........", "..........",
-    "..........", "..........", "..........", "..........", "..........",
-    "..........", "..........", "..........", "XXXX..XXXX", "XXXX..XXXX",
-  ];
-  if (type === "I") {
-    pattern[16] = "XXXX.XXXXX";
-    pattern[17] = "XXXX.XXXXX";
-    pattern[18] = "XXXX.XXXXX";
-    pattern[19] = "XXXX.XXXXX";
-  }
-  return pattern;
+  const setups = {
+    I: [
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "...X..X...", "...X..X...", "XXX....XXX", "XXX....XXX",
+    ],
+    J: [
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", ".....X....", "XXX...XXXX", "XXXX..XXXX",
+    ],
+    L: [
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "....X.....", "XXXX...XXX", "XXXX..XXXX",
+    ],
+    S: [
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "....XX....", "XXX...XXXX", "XXXX..XXXX",
+    ],
+    Z: [
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "....XX....", "XXXX...XXX", "XXXX..XXXX",
+    ],
+  };
+  return setups[type] ?? setups.I;
 }
 
 function resetTutorialRuntimeState(options = {}) {
   const preservedBackToBack = options.preserveBackToBack ? backToBackStreak : 0;
   const preservedRen = options.preserveRen ? renStreak : 0;
+  if (zoneActive) {
+    finishZone();
+  }
   board = createBoard();
   active = null;
   holdType = null;
@@ -4148,6 +4229,10 @@ function setupTutorialActivePiece(sectionId) {
   if (pieceType === "I") options.x = 3;
   if (pieceType === "O") options.x = 4;
   if (config.bombCells) options.bombCells = config.bombCells;
+  if (config.specialMode === "bombliss") {
+    spawnTutorialBomblissPiece(pieceType, config.bombCells ?? []);
+    return;
+  }
   spawnTutorialPiece(pieceType, options);
 }
 
@@ -4172,6 +4257,9 @@ function startTutorialSection(sectionId) {
     completed: false,
     showSuccess: false,
     message: "",
+    waitingForAdvance: false,
+    waitingForNext: false,
+    pendingAdvanceCallback: null,
   };
 
   if (config) {
@@ -4201,20 +4289,26 @@ function startTutorialSection(sectionId) {
   drawPreview(holdCtx, holdType);
   updateTutorialPanel();
   draw();
+  logTutorialSectionStart(sectionId);
 }
 
-function completeTutorialSection(message = "") {
+function completeTutorialSection(message = "", options = {}) {
   if (!isTutorialMode() || tutorialState?.completed) return;
   tutorialState.completed = true;
-  tutorialState.showSuccess = true;
+  tutorialState.waitingForAdvance = true;
   tutorialState.message = message || getTutorialSectionContent(getCurrentTutorialSection()).success || "できました！";
-  active = null;
+  if (options.clearActive) {
+    active = null;
+  }
   resetAllInputState();
-  updateTutorialPanel();
-  window.clearTimeout(tutorialAdvanceTimer);
-  tutorialAdvanceTimer = window.setTimeout(() => {
-    advanceTutorialSection();
-  }, TUTORIAL_SUCCESS_DELAY_MS);
+  requestAnimationFrame(() => {
+    if (!isTutorialMode() || !tutorialState?.completed) return;
+    tutorialState.showSuccess = true;
+    updateTutorialPanel();
+    scheduleTutorialAdvance(() => {
+      advanceTutorialSection();
+    });
+  });
 }
 
 function advanceTutorialSection() {
@@ -4229,21 +4323,26 @@ function advanceTutorialSection() {
   startTutorialSection(getCurrentTutorialSection());
 }
 
-function failTutorialSection() {
+function failTutorialSection(reason = "条件を満たしていません", result = null) {
   if (!isTutorialMode()) return;
+  console.warn("Tutorial failed", {
+    section: getCurrentTutorialSection(),
+    reason,
+    result,
+  });
   tutorialState = {
     ...(tutorialState ?? {}),
     waitingForNext: true,
+    waitingForAdvance: true,
   };
   resetAllInputState();
   if (tutorialSuccessMessageEl) {
     tutorialSuccessMessageEl.textContent = "もう一度やってみよう";
     tutorialSuccessMessageEl.classList.remove("hidden");
   }
-  window.clearTimeout(tutorialAdvanceTimer);
-  tutorialAdvanceTimer = window.setTimeout(() => {
+  scheduleTutorialAdvance(() => {
     startTutorialSection(getCurrentTutorialSection());
-  }, TUTORIAL_SUCCESS_DELAY_MS);
+  });
 }
 
 function handleTutorialMove(deltaX) {
@@ -4273,12 +4372,12 @@ function handleTutorialSoftDrop() {
 
 function lockTutorialPiece() {
   if (getCurrentTutorialSection() !== "hardDrop" || !tutorialState || tutorialState.completed) {
-    failTutorialSection();
+    failTutorialSection("hardDrop以外で固定されました");
     return;
   }
   mergePiece();
   active = null;
-  completeTutorialSection();
+  completeTutorialSection("", { clearActive: true });
   updateStats();
   draw();
 }
@@ -4309,6 +4408,8 @@ function resetTutorialSectionForSubStep(options = {}) {
     showSuccess: false,
     message: "",
     waitingForNext: false,
+    waitingForAdvance: false,
+    pendingAdvanceCallback: null,
     rotatedSinceSpawn: false,
     lastSuccessfulAction: null,
   };
@@ -4319,31 +4420,36 @@ function resetTutorialSectionForSubStep(options = {}) {
   drawPreview(holdCtx, holdType);
   updateTutorialPanel();
   draw();
+  logTutorialSectionStart(sectionId);
 }
 
 function advanceTutorialSubStep(message = "できました！", options = {}) {
   if (!tutorialState) return;
-  tutorialState.showSuccess = true;
+  tutorialState.waitingForAdvance = true;
   tutorialState.message = message;
   active = null;
   resetAllInputState();
-  updateTutorialPanel();
-  window.clearTimeout(tutorialAdvanceTimer);
-  tutorialAdvanceTimer = window.setTimeout(() => {
-    if (!isTutorialMode() || tutorialState?.completed) return;
-    tutorialState.showSuccess = false;
-    tutorialState.message = "";
-    if (options.nextSubStep !== undefined) {
-      tutorialState.subStep = options.nextSubStep;
-    }
-    if (options.completedLocks !== undefined) {
-      tutorialState.completedLocks = options.completedLocks;
-    }
-    resetTutorialSectionForSubStep({
-      preserveBackToBack: options.preserveBackToBack,
-      preserveRen: options.preserveRen,
+  requestAnimationFrame(() => {
+    if (!isTutorialMode() || !tutorialState) return;
+    tutorialState.showSuccess = true;
+    updateTutorialPanel();
+    scheduleTutorialAdvance(() => {
+      if (!isTutorialMode() || tutorialState?.completed) return;
+      tutorialState.showSuccess = false;
+      tutorialState.message = "";
+      tutorialState.waitingForAdvance = false;
+      if (options.nextSubStep !== undefined) {
+        tutorialState.subStep = options.nextSubStep;
+      }
+      if (options.completedLocks !== undefined) {
+        tutorialState.completedLocks = options.completedLocks;
+      }
+      resetTutorialSectionForSubStep({
+        preserveBackToBack: options.preserveBackToBack,
+        preserveRen: options.preserveRen,
+      });
     });
-  }, TUTORIAL_SUCCESS_DELAY_MS);
+  });
 }
 
 function isTutorialLockSuccess(sectionId, result) {
@@ -4369,7 +4475,7 @@ function isTutorialLockSuccess(sectionId, result) {
     case "square":
       return result.mode === "square" && result.madeSquareCount >= 1;
     case "bombliss":
-      return result.mode === "bombliss" && result.chainCount > 0 && (result.usedSmall || result.usedLarge);
+      return result.mode === "bombliss" && result.explodedBombCount > 0 && (result.usedSmall || result.usedLarge);
     case "zone":
       return tutorialState.subStep === 1 && result.mode === "zone" && result.zoneActive && result.zoneLines > 0;
     case "garbage":
@@ -4387,21 +4493,26 @@ function evaluateTutorialLockResult(result) {
   const sectionId = getCurrentTutorialSection();
 
   if (sectionId === "backToBack") {
-    if (result.clearedLines === 4 && result.eventType === "tetris") {
-      if (tutorialState.subStep === 0) {
-        tutorialState.subStep = 1;
-        advanceTutorialSubStep("できました！", {
-          nextSubStep: 1,
-          preserveBackToBack: true,
-        });
-        return true;
-      }
-      if (tutorialState.subStep === 1 && result.isBackToBack && tutorialState.usedHoldDuringBackToBack) {
-        completeTutorialSection();
-        return true;
-      }
+    const isEligibleClear = Boolean(result.isB2BEligibleClear || result.clearedLines === 4 || result.isTSpin);
+    if (tutorialState.subStep === 0 && isEligibleClear) {
+      logTutorialDecision(result, "continue");
+      tutorialState.subStep = 1;
+      advanceTutorialSubStep("できました！", {
+        nextSubStep: 1,
+        preserveBackToBack: true,
+      });
+      return true;
     }
-    failTutorialSection();
+    if (tutorialState.subStep === 1 && isEligibleClear && result.isBackToBackClear) {
+      logTutorialDecision(result, "success");
+      completeTutorialSection("", { clearActive: true });
+      return true;
+    }
+    const decision = result.pieceLocked === false ? "continue" : "failure";
+    logTutorialDecision(result, decision);
+    if (decision === "failure") {
+      failTutorialSection("Back-to-Back対象技を連続で達成できませんでした", result);
+    }
     return true;
   }
 
@@ -4409,40 +4520,55 @@ function evaluateTutorialLockResult(result) {
     if (result.clearedLines > 0) {
       const completedLocks = (tutorialState.completedLocks ?? 0) + 1;
       if (completedLocks >= 2 && result.comboCount >= 2) {
-        completeTutorialSection();
+        logTutorialDecision(result, "success");
+        completeTutorialSection("", { clearActive: true });
         return true;
       }
+      logTutorialDecision(result, "continue");
       advanceTutorialSubStep("できました！", {
         completedLocks,
         preserveRen: true,
       });
       return true;
     }
-    failTutorialSection();
+    logTutorialDecision(result, "failure");
+    failTutorialSection("Combo中にライン消去が途切れました", result);
     return true;
   }
 
   if (sectionId === "rotationInsert") {
     const type = tutorialState.rotationInsertTypes[tutorialState.subStep];
-    if (result.piece === type && result.lastAction === "rotate" && tutorialState.rotatedSinceSpawn) {
+    const context = tutorialState.lastRotationContext;
+    if (
+      result.piece === type &&
+      result.lastAction === "rotate" &&
+      tutorialState.rotatedSinceSpawn &&
+      (context?.usedKick || context?.fromPlacementBlockedAtFinal) &&
+      result.clearedLines > 0
+    ) {
       const nextSubStep = tutorialState.subStep + 1;
       if (nextSubStep >= tutorialState.rotationInsertTypes.length) {
-        completeTutorialSection();
+        logTutorialDecision(result, "success");
+        completeTutorialSection("", { clearActive: true });
         return true;
       }
+      logTutorialDecision(result, "continue");
       advanceTutorialSubStep("できました！", { nextSubStep });
       return true;
     }
-    failTutorialSection();
+    logTutorialDecision(result, "failure");
+    failTutorialSection("回転入れ条件を満たしていません", result);
     return true;
   }
 
   if (isTutorialLockSuccess(sectionId, result)) {
-    completeTutorialSection(sectionId === "square" ? "Square完成！\n\n4個とも同じ種類なら\nGold Squareになります。" : "できました！");
+    logTutorialDecision(result, "success");
+    completeTutorialSection(sectionId === "square" ? "Square完成！\n\n4個とも同じ種類なら\nGold Squareになります。" : "できました！", { clearActive: true });
     return true;
   }
 
-  failTutorialSection();
+  logTutorialDecision(result, "failure");
+  failTutorialSection("成功条件を満たしていません", result);
   return true;
 }
 
@@ -5073,7 +5199,7 @@ function activateZone() {
     tutorialState.showSuccess = true;
     tutorialState.message = "できました！";
     updateTutorialPanel();
-    window.setTimeout(() => {
+    scheduleTutorialAdvance(() => {
       if (isTutorialMode() && getCurrentTutorialSection() === "zone" && tutorialState && !tutorialState.completed) {
         tutorialState.showSuccess = false;
         tutorialState.message = "";
@@ -5571,12 +5697,17 @@ function showActionOverlay(title, buttonText, showRestart = false, resultText = 
   startButton.textContent = buttonText;
   restartButton.textContent = isTutorialMode() && gameOver ? "Chapter選択へ" : "Restart";
   const customPause = paused && isCustomMode() && !gameOver;
+  const tutorialPause = paused && isTutorialMode() && !gameOver;
+  if (tutorialPause) {
+    restartButton.textContent = "現在のセクションを最初から";
+  }
+  if (customRestartButton) customRestartButton.textContent = tutorialPause ? "Chapter選択へ" : "リスタート";
   customSettingsButton?.classList.toggle("hidden", !customPause);
-  customRestartButton?.classList.toggle("hidden", !customPause);
+  customRestartButton?.classList.toggle("hidden", !customPause && !tutorialPause);
   customTimeResetButton?.classList.toggle("hidden", !customPause);
   customScoreResetButton?.classList.toggle("hidden", !customPause);
   customActionLogButton?.classList.toggle("hidden", !customPause);
-  restartButton.classList.toggle("hidden", customPause || !showRestart);
+  restartButton.classList.toggle("hidden", customPause || (!showRestart && !tutorialPause));
 }
 
 function showCountdownOverlay(text) {
@@ -5688,6 +5819,26 @@ function movePieceToGround(isSoftDrop = false) {
   return moved;
 }
 
+function updateLockDelay(delta) {
+  if (!active || gameOver || paused || tutorialState?.waitingForAdvance || tutorialState?.waitingForNext) return;
+  if (collides(active, active.x, active.y + 1, active.matrix)) {
+    lockCounter += delta;
+    if (lockCounter >= LOCK_DELAY || lockResetCount >= MAX_LOCK_RESETS) {
+      console.log("force lock from update", {
+        lockCounter,
+        lockResetCount,
+        max: MAX_LOCK_RESETS,
+        x: active?.x,
+        y: active?.y,
+        grounded: isActiveGrounded(),
+      });
+      lockPiece();
+    }
+  } else {
+    lockCounter = 0;
+  }
+}
+
 function hardDrop() {
   if (!running || paused) return;
   const dropPiece = active
@@ -5764,6 +5915,7 @@ function rotatePiece(direction) {
         toX: active.x,
         toY: active.y,
         usedKick: kickX !== 0 || kickY !== 0,
+        fromPlacementBlockedAtFinal: collides(active, active.x, active.y, fromMatrix),
       };
     }
     tsdAssistDirty = true;
@@ -5858,13 +6010,16 @@ function lockPiece() {
   recordCustomAction("lock", lockedPiece);
   const { cleared, clearedRowCells } = clearLinesWithRowsAndCells();
   const perfectClear = cleared > 0 && isPerfectClear();
-  const backToBackActive = isBackToBackEligible(cleared, tSpin) && backToBackStreak > 0;
+  const backToBackBefore = backToBackStreak;
+  const isB2BEligibleClear = isBackToBackEligible(cleared, tSpin);
+  const backToBackActive = isB2BEligibleClear && backToBackBefore > 0;
   applyLockScore(cleared, tSpin, backToBackActive, perfectClear);
   if (perfectClear) {
     perfectClearCount += 1;
     updateStats();
   }
   updateLastEvent(cleared, tSpin, backToBackActive, perfectClear);
+  const backToBackAfter = backToBackStreak;
   recordLineClearStats(cleared, { tSpin, backToBackActive, perfectClear });
   recordCustomLineEvents(cleared, tSpin);
   const lockResult = {
@@ -5878,13 +6033,19 @@ function lockPiece() {
     rotationState: lockedPiece.rotationState,
     lastAction: active?.lastAction ?? null,
     lastSuccessfulAction: active?.lastAction ?? null,
+    pieceLocked: true,
     clearedLines: cleared,
     eventType: getTutorialLineEventType(cleared, tSpin, perfectClear),
     isTSpin: tSpin,
     tSpinType: tSpin ? getTSpinEventName(cleared) : null,
+    isTetris: cleared === 4,
     isPerfectClear: perfectClear,
     isBackToBack: backToBackActive,
+    isBackToBackClear: backToBackActive,
+    isB2BEligibleClear,
     comboCount: renStreak,
+    backToBackBefore,
+    backToBackAfter,
     backToBackStreak,
     usedHold: Boolean(tutorialState?.usedHoldForCurrentMission),
     lockedAfterHold: Boolean(tutorialState?.usedHoldForCurrentMission),
@@ -6288,6 +6449,7 @@ function lockBomblissPiece() {
     x: lockedPiece.x,
     y: lockedPiece.y,
     rotationState: lockedPiece.rotationState,
+    pieceLocked: true,
     chainCount: result.chainCount,
     usedSmall: Boolean(result.usedSmall),
     usedLarge: Boolean(result.usedLarge),
@@ -6431,14 +6593,37 @@ function togglePause() {
   paused = !paused;
   if (!paused) {
     customActionLogVisible = false;
-    hideOverlay();
+    hideBombingReveal();
+    hideCustomOverlayPanels();
+    overlay.classList.add("hidden");
+    actionMenu.classList.add("hidden");
+    resultSummaryEl.classList.add("hidden");
+    if (isTutorialMode()) {
+      if (tutorialChapter === 5) {
+        showChapter5Mission();
+      } else {
+        updateTutorialPanel();
+      }
+    }
     resumeBgm();
     lastTime = performance.now();
+    resumePendingTutorialAdvance();
     requestAnimationFrame(update);
   } else {
-    showActionOverlay("Paused", isCustomMode() ? "再開" : "Resume", true);
+    showActionOverlay("Paused", isCustomMode() || isTutorialMode() ? "再開" : "Resume", true);
     pauseBgm();
   }
+}
+
+function restartCurrentTutorialSection() {
+  if (!isTutorialMode() || tutorialChapter === 5) return;
+  paused = false;
+  gameOver = false;
+  hideOverlay();
+  startTutorialSection(getCurrentTutorialSection());
+  running = true;
+  lastTime = performance.now();
+  requestAnimationFrame(update);
 }
 
 function returnToTitle() {
@@ -6592,6 +6777,7 @@ function update(time = 0) {
     } else {
       dropCounter = 0;
     }
+    updateLockDelay(delta);
     draw();
     updateTimeDisplay();
     requestAnimationFrame(update);
@@ -6620,22 +6806,7 @@ function update(time = 0) {
   } else {
     dropCounter = 0;
   }
-  if (collides(active, active.x, active.y + 1, active.matrix)) {
-    lockCounter += delta;
-    if (lockCounter >= LOCK_DELAY || lockResetCount >= MAX_LOCK_RESETS) {
-      console.log("force lock from update", {
-        lockCounter,
-        lockResetCount,
-        max: MAX_LOCK_RESETS,
-        x: active?.x,
-        y: active?.y,
-        grounded: isActiveGrounded(),
-      });
-      lockPiece();
-    }
-  } else {
-    lockCounter = 0;
-  }
+  updateLockDelay(delta);
   draw();
   updateTimeDisplay();
   updateZoneStatus();
@@ -7595,6 +7766,10 @@ restartButton.addEventListener("click", () => {
     showTutorialChapterMenu();
     return;
   }
+  if (paused && isTutorialMode() && !gameOver) {
+    restartCurrentTutorialSection();
+    return;
+  }
   startGame();
 });
 
@@ -7603,6 +7778,15 @@ customSettingsButton?.addEventListener("click", () => {
 });
 
 customRestartButton?.addEventListener("click", () => {
+  if (paused && isTutorialMode() && !gameOver) {
+    running = false;
+    paused = false;
+    gameOver = false;
+    tutorialState = null;
+    hideTutorialPanel();
+    showTutorialChapterMenu();
+    return;
+  }
   restartCustomGame();
 });
 
