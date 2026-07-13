@@ -16,17 +16,16 @@ function extractConst(name) {
 const SHAPES = extractConst("SHAPES");
 const JLSTZ_KICKS = extractConst("JLSTZ_KICKS");
 const I_KICKS = extractConst("I_KICKS");
-const ROTATION_INSERT_EXPECTED_PLACEMENTS = extractConst("ROTATION_INSERT_EXPECTED_PLACEMENTS");
-const ROTATION_INSERT_VERIFIED_SOLUTIONS = extractConst("ROTATION_INSERT_VERIFIED_SOLUTIONS");
+const rotationInsertSetupsSource = source.slice(
+  source.indexOf("const ROTATION_INSERT_EMPTY_BOARD"),
+  source.indexOf("const TUTORIAL_CHAPTER_SECTIONS"),
+);
+const ROTATION_INSERT_SETUPS = Function(
+  `${rotationInsertSetupsSource}; return ROTATION_INSERT_SETUPS;`,
+)();
 const rotationInsertTypesMatch = source.match(/const ROTATION_INSERT_TYPES = (\[[^\]]+\]);/);
 assert.ok(rotationInsertTypesMatch, "ROTATION_INSERT_TYPES was not found");
 const ROTATION_INSERT_TYPES = Function(`return ${rotationInsertTypesMatch[1]};`)();
-const getRotationInsertBoard = Function(
-  `${source.slice(
-    source.indexOf("function getRotationInsertBoard"),
-    source.indexOf("function validateTutorialBoardPattern"),
-  )}; return getRotationInsertBoard;`,
-)();
 
 function cloneMatrix(matrix) {
   return matrix.map((row) => [...row]);
@@ -203,13 +202,23 @@ test("all rotation insert tutorial piece types are active in Chapter 3", () => {
 });
 
 for (const type of ROTATION_INSERT_TYPES) {
-  test(`${type} rotation insert setup is playable with its verified solution`, () => {
-    const pattern = getRotationInsertBoard(type);
+  test(`${type} rotation insert setup has a valid board shape`, () => {
+    const pattern = ROTATION_INSERT_SETUPS[type].board;
     assert.equal(pattern.length, rows);
-    pattern.forEach((row) => assert.equal(row.length, cols));
+    pattern.forEach((row) => {
+      assert.equal(row.length, cols);
+      assert.match(row, /^[.X]+$/);
+    });
+  });
+}
+
+for (const type of ROTATION_INSERT_TYPES.filter((pieceType) => ROTATION_INSERT_SETUPS[pieceType].verified)) {
+  test(`${type} rotation insert setup is playable with its verified solution`, () => {
+    const setup = ROTATION_INSERT_SETUPS[type];
+    const pattern = setup.board;
 
     const board = boardFromPattern(pattern);
-    const expected = ROTATION_INSERT_EXPECTED_PLACEMENTS[type];
+    const expected = setup.expected;
     const expectedMatrix = matrixFor(type, expected.rotationState);
 
     assert.equal(collides(board, expected.x, expected.y, expectedMatrix), false);
@@ -219,7 +228,7 @@ for (const type of ROTATION_INSERT_TYPES) {
       true,
     );
 
-    const solution = ROTATION_INSERT_VERIFIED_SOLUTIONS[type];
+    const solution = setup.verifiedSolution;
     assert.ok(solution?.length > 0, `${type} solution is missing`);
     const finalState = replaySolution(type, board, solution);
     assert.deepEqual(finalState, {
@@ -237,6 +246,16 @@ for (const type of ROTATION_INSERT_TYPES) {
     assert.ok(
       reachableStates.has(`${expected.x},${expected.y},${expected.rotationState}`),
       `${type} expected placement is not reachable by BFS`,
+    );
+  });
+}
+
+for (const type of ROTATION_INSERT_TYPES.filter((pieceType) => !ROTATION_INSERT_SETUPS[pieceType].verified)) {
+  test(`${type} rotation insert setup is intentionally blocked until verified`, () => {
+    assert.equal(ROTATION_INSERT_SETUPS[type].verified, false);
+    assert.equal(
+      ROTATION_INSERT_SETUPS[type].errorMessage,
+      `${type} rotation insert tutorial setup is not verified`,
     );
   });
 }

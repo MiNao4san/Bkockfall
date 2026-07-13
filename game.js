@@ -88,19 +88,52 @@ const CHAPTER_5_TIME_LIMIT_MS = 300000;
 const DEBUG_CHAPTER_5_MISSIONS = null;
 const ROTATION_INSERT_TARGETS = ["I", "J", "L", "S", "Z"];
 const ROTATION_INSERT_TYPES = ["I", "J", "L", "S", "Z"];
-const ROTATION_INSERT_EXPECTED_PLACEMENTS = {
-  I: { x: 3, y: 17, rotationState: "2", clearedLines: 1 },
-  J: { x: 3, y: 16, rotationState: "R", clearedLines: 1 },
-  L: { x: 4, y: 16, rotationState: "L", clearedLines: 1 },
-  S: { x: 4, y: 17, rotationState: "R", clearedLines: 1 },
-  Z: { x: 3, y: 17, rotationState: "R", clearedLines: 1 },
-};
-const ROTATION_INSERT_VERIFIED_SOLUTIONS = {
-  I: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop"],
-  J: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop", "Rotate Left", "Soft Drop", "Rotate Right"],
-  L: ["Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Left", "Soft Drop", "Rotate Right", "Soft Drop", "Rotate Left"],
-  S: ["Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop"],
-  Z: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right"],
+const ROTATION_INSERT_EMPTY_BOARD = [
+  "..........", "..........", "..........", "..........", "..........",
+  "..........", "..........", "..........", "..........", "..........",
+  "..........", "..........", "..........", "..........", "..........",
+  "..........", "..........", "..........", "..........", "..........",
+];
+const ROTATION_INSERT_SETUPS = {
+  I: {
+    board: [
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "...X..X...", "...X..X...", "XXX....XXX", "XXX....XXX",
+    ],
+    expected: { x: 3, y: 17, rotationState: "2", clearedLines: 1 },
+    verifiedSolution: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop"],
+    verified: true,
+  },
+  J: {
+    board: ROTATION_INSERT_EMPTY_BOARD,
+    expected: null,
+    verifiedSolution: [],
+    verified: false,
+    errorMessage: "J rotation insert tutorial setup is not verified",
+  },
+  L: {
+    board: ROTATION_INSERT_EMPTY_BOARD,
+    expected: null,
+    verifiedSolution: [],
+    verified: false,
+    errorMessage: "L rotation insert tutorial setup is not verified",
+  },
+  S: {
+    board: ROTATION_INSERT_EMPTY_BOARD,
+    expected: null,
+    verifiedSolution: [],
+    verified: false,
+    errorMessage: "S rotation insert tutorial setup is not verified",
+  },
+  Z: {
+    board: ROTATION_INSERT_EMPTY_BOARD,
+    expected: null,
+    verifiedSolution: [],
+    verified: false,
+    errorMessage: "Z rotation insert tutorial setup is not verified",
+  },
 };
 const TUTORIAL_CHAPTER_SECTIONS = {
   1: TUTORIAL_CHAPTER_1_SECTIONS,
@@ -4105,39 +4138,11 @@ function createTutorialCellForSection(sectionId) {
 }
 
 function getRotationInsertBoard(type) {
-  const setups = {
-    I: [
-      "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "..........", "..........", "..........",
-      "..........", "...X..X...", "...X..X...", "XXX....XXX", "XXX....XXX",
-    ],
-    J: [
-      "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "..........", "..........", "..........",
-      "....XX....", "..........", "..........", "XXXX.XXXXX", "XXXXXXXXXX",
-    ],
-    L: [
-      "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "..........", "..........", "..........",
-      "....XX....", "..........", "..........", "XXXXX.XXXX", "XXXXXXXXXX",
-    ],
-    S: [
-      "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "..........", "XXXXX..XXX", "XXXXXX.XXX",
-    ],
-    Z: [
-      "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "..........", "XXXX..XXXX", "XXXX.XXXXX",
-    ],
-  };
-  return setups[type] ?? setups.I;
+  return getRotationInsertSetup(type).board;
+}
+
+function getRotationInsertSetup(type) {
+  return ROTATION_INSERT_SETUPS[type] ?? ROTATION_INSERT_SETUPS.I;
 }
 
 function validateTutorialBoardPattern(name, pattern) {
@@ -4164,7 +4169,11 @@ function validateRotationInsertBoards() {
 }
 
 function getRotationInsertExpectedPlacement(type) {
-  return ROTATION_INSERT_EXPECTED_PLACEMENTS[type] ?? ROTATION_INSERT_EXPECTED_PLACEMENTS.I;
+  const setup = getRotationInsertSetup(type);
+  if (!setup.expected) {
+    throw new Error(setup.errorMessage ?? `${type} rotation insert tutorial setup is not verified`);
+  }
+  return setup.expected;
 }
 
 function resetTutorialRuntimeState(options = {}) {
@@ -4238,8 +4247,18 @@ function setupTutorialSectionBoard(sectionId) {
   if (sectionId === "rotationInsert") {
     validateRotationInsertBoards();
     const type = tutorialState.rotationInsertTypes[tutorialState.subStep];
-    pattern = getRotationInsertBoard(type);
-    console.debug(`${type} tutorial solution:`, ROTATION_INSERT_VERIFIED_SOLUTIONS[type] ?? []);
+    const setup = getRotationInsertSetup(type);
+    pattern = setup.board;
+    console.log("Rotation insert setup", {
+      type,
+      pattern,
+      rowCount: pattern.length,
+      rowLengths: pattern.map((row) => row.length),
+    });
+    if (!setup.verified) {
+      throw new Error(setup.errorMessage ?? `${type} rotation insert tutorial setup is not verified`);
+    }
+    console.debug(`${type} tutorial solution:`, setup.verifiedSolution ?? []);
   }
   if (pattern) {
     board = createTutorialBoard(pattern, {
