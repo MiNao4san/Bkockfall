@@ -65,18 +65,36 @@ function applyCascadeGravityStepInternal(board, rows, cols) {
   const groups = getCascadeConnectedGroups(board, rows, cols).sort(
     (a, b) => Math.max(...b.map(({ y }) => y)) - Math.max(...a.map(({ y }) => y)),
   );
-  const occupiedSet = new Set();
-  groups.forEach((cells) => {
-    cells.forEach(({ x, y }) => occupiedSet.add(`${x},${y}`));
+  const initialOwner = new Map();
+  groups.forEach((cells, index) => {
+    cells.forEach(({ x, y }) => initialOwner.set(`${x},${y}`, index));
   });
 
-  const movableGroups = new Set();
+  const decidedGroups = new Set();
+  const finalOccupied = new Set();
+  const placements = [];
+
+  // Decide from lower groups upward. A group can move into a cell vacated by a
+  // lower group in the same gravity step, but cannot move into the final
+  // position of a stopped or moved lower group.
   groups.forEach((cells, index) => {
-    if (canMoveCascadeGroupDown(cells, rows, occupiedSet)) {
-      movableGroups.add(index);
-    }
+    const ownCells = new Set(cells.map(({ x, y }) => `${x},${y}`));
+    const canMove = cells.every(({ x, y }) => {
+      const nextY = y + 1;
+      const targetKey = `${x},${nextY}`;
+      if (nextY >= rows) return false;
+      if (ownCells.has(targetKey)) return true;
+      if (finalOccupied.has(targetKey)) return false;
+      const owner = initialOwner.get(targetKey);
+      return owner === undefined || decidedGroups.has(owner);
+    });
+    const dy = canMove ? 1 : 0;
+    placements.push({ cells, dy });
+    cells.forEach(({ x, y }) => finalOccupied.add(`${x},${y + dy}`));
+    decidedGroups.add(index);
   });
-  if (movableGroups.size === 0) return false;
+
+  if (!placements.some(({ dy }) => dy > 0)) return false;
 
   const nextBoard = Array.from({ length: rows }, () => Array(cols).fill(null));
   const writeCell = (x, y, cell) => {
@@ -86,8 +104,7 @@ function applyCascadeGravityStepInternal(board, rows, cols) {
     nextBoard[y][x] = cell;
   };
 
-  groups.forEach((cells, index) => {
-    const dy = movableGroups.has(index) ? 1 : 0;
+  placements.forEach(({ cells, dy }) => {
     cells.forEach(({ x, y, cell }) => {
       writeCell(x, y + dy, cell);
     });

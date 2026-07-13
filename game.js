@@ -2191,46 +2191,48 @@ function getDominantSquareType(clearedCells) {
   return null;
 }
 
-function findFullCascadeLines() {
-  if (globalThis.CascadeCore?.findFullCascadeLines) {
-    return CascadeCore.findFullCascadeLines(board, rows);
+function getRequiredCascadeCore() {
+  const core = globalThis.CascadeCore;
+  const required = [
+    "findFullCascadeLines",
+    "clearCascadeLines",
+    "getCascadeConnectedGroups",
+    "countOccupiedBoardCells",
+    "canMoveCascadeGroupDown",
+    "applyCascadeGravityStep",
+  ];
+  const missing = required.filter((name) => typeof core?.[name] !== "function");
+  if (missing.length > 0) {
+    throw new Error(`CascadeCore is not loaded or incomplete: ${missing.join(", ")}`);
   }
-  return [];
+  return core;
+}
+
+function findFullCascadeLines() {
+  return getRequiredCascadeCore().findFullCascadeLines(board, rows);
 }
 
 function clearCascadeLines(fullLines) {
-  if (globalThis.CascadeCore?.clearCascadeLines) {
-    CascadeCore.clearCascadeLines(board, cols, fullLines);
-  }
+  getRequiredCascadeCore().clearCascadeLines(board, cols, fullLines);
 }
 
 function getCascadeConnectedGroups() {
-  if (globalThis.CascadeCore?.getCascadeConnectedGroups) {
-    return CascadeCore.getCascadeConnectedGroups(board, rows, cols);
-  }
-  return [];
+  return getRequiredCascadeCore().getCascadeConnectedGroups(board, rows, cols);
 }
 
 function countOccupiedBoardCells() {
-  if (globalThis.CascadeCore?.countOccupiedBoardCells) {
-    return CascadeCore.countOccupiedBoardCells(board);
-  }
-  return board.reduce((sum, row) => sum + row.filter(Boolean).length, 0);
+  return getRequiredCascadeCore().countOccupiedBoardCells(board);
 }
 
 function canMoveCascadeGroupDown(cells, occupiedSet = null) {
   const set = occupiedSet ?? new Set(
     board.flatMap((row, y) => row.map((cell, x) => (cell ? `${x},${y}` : null)).filter(Boolean)),
   );
-  if (globalThis.CascadeCore?.canMoveCascadeGroupDown) {
-    return CascadeCore.canMoveCascadeGroupDown(cells, rows, set);
-  }
-  return false;
+  return getRequiredCascadeCore().canMoveCascadeGroupDown(cells, rows, set);
 }
 
 function applyCascadeGravityStep() {
-  if (!globalThis.CascadeCore?.applyCascadeGravityStep) return false;
-  return CascadeCore.applyCascadeGravityStep(board, rows, cols);
+  return getRequiredCascadeCore().applyCascadeGravityStep(board, rows, cols);
 }
 
 function resolveCascadeClears() {

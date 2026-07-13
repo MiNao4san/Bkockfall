@@ -98,7 +98,7 @@ test("floating fragment falls even when another same-piece fragment is supported
   ]);
 });
 
-test("upper group falls on a later step after lower group moves away", () => {
+test("upper group can use space vacated by a lower group in the same step", () => {
   const board = boardFrom([
     "...",
     ".X.",
@@ -113,15 +113,6 @@ test("upper group falls on a later step after lower group moves away", () => {
     "...",
     ".X.",
     "...",
-    ".X.",
-  ]);
-
-  CascadeCore.applyCascadeGravityStep(board, 5, 3);
-  assert.deepEqual(boardText(board), [
-    "...",
-    "...",
-    "...",
-    ".X.",
     ".X.",
   ]);
 });
