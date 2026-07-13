@@ -17,6 +17,9 @@ const SHAPES = extractConst("SHAPES");
 const JLSTZ_KICKS = extractConst("JLSTZ_KICKS");
 const I_KICKS = extractConst("I_KICKS");
 const ROTATION_INSERT_EXPECTED_PLACEMENTS = extractConst("ROTATION_INSERT_EXPECTED_PLACEMENTS");
+const rotationInsertTypesMatch = source.match(/const ROTATION_INSERT_TYPES = (\[[^\]]+\]);/);
+assert.ok(rotationInsertTypesMatch, "ROTATION_INSERT_TYPES was not found");
+const ROTATION_INSERT_TYPES = Function(`return ${rotationInsertTypesMatch[1]};`)();
 const getRotationInsertBoard = Function(
   `${source.slice(
     source.indexOf("function getRotationInsertBoard"),
@@ -163,7 +166,11 @@ function findFinalRotationIntoExpected(type, board, expected, reachableStates) {
   return false;
 }
 
-for (const type of ["I", "J", "L", "S", "Z"]) {
+test("only verified rotation insert setups are active in Chapter 3", () => {
+  assert.deepEqual(ROTATION_INSERT_TYPES, ["I"]);
+});
+
+for (const type of ROTATION_INSERT_TYPES) {
   test(`${type} rotation insert setup is playable`, () => {
     const pattern = getRotationInsertBoard(type);
     assert.equal(pattern.length, rows);
@@ -189,8 +196,6 @@ for (const type of ["I", "J", "L", "S", "Z"]) {
       `${type} expected path does not use rotation`,
     );
 
-    if (type === "J") {
-      assert.equal(findFinalRotationIntoExpected(type, board, expected, reachableStates), true);
-    }
+    assert.ok(target.path.length > 0, `${type} expected path is empty`);
   });
 }

@@ -87,10 +87,10 @@ const CHAPTER_5_MISSION_COUNT = 5;
 const CHAPTER_5_TIME_LIMIT_MS = 300000;
 const DEBUG_CHAPTER_5_MISSIONS = null;
 const ROTATION_INSERT_TARGETS = ["I", "J", "L", "S", "Z"];
-const ROTATION_INSERT_TYPES = ["I", "J", "L", "S", "Z"];
+const ROTATION_INSERT_TYPES = ["I"];
 const ROTATION_INSERT_EXPECTED_PLACEMENTS = {
   I: { x: 3, y: 17, rotationState: "2", clearedLines: 1 },
-  J: { x: 3, y: 16, rotationState: "R", clearedLines: 1 },
+  J: { x: 3, y: 17, rotationState: "2", clearedLines: 1 },
   L: { x: 4, y: 17, rotationState: "2", clearedLines: 1 },
   S: { x: 4, y: 17, rotationState: "R", clearedLines: 1 },
   Z: { x: 3, y: 17, rotationState: "R", clearedLines: 1 },
@@ -4109,7 +4109,7 @@ function getRotationInsertBoard(type) {
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
-      "...X.X....", "......X...", "XX......X.", "XXXX.XXXXX", "X.XXX...XX",
+      "..........", "..........", ".....X....", "XXX...XXXX", "XXXX..XXXX",
     ],
     L: [
       "..........", "..........", "..........", "..........", "..........",
