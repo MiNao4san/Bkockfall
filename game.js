@@ -1549,7 +1549,22 @@ function createLockedCell(type, pieceId, bomb) {
   return type;
 }
 
+function ensureActiveCascadePieceId() {
+  if (!isCascadeEnabledForCurrentGame() || !active || Number.isFinite(active.pieceId)) return;
+  if (globalThis.PieceIdCore?.allocatePieceIdForSpecialModes) {
+    nextPieceId = globalThis.PieceIdCore.allocatePieceIdForSpecialModes(active, nextPieceId, true);
+  } else {
+    active.pieceId = nextPieceId;
+    nextPieceId += 1;
+  }
+  console.warn("Assigned missing cascade pieceId before merge", {
+    piece: active.type,
+    pieceId: active.pieceId,
+  });
+}
+
 function mergePiece() {
+  ensureActiveCascadePieceId();
   active.matrix.forEach((row, y) => {
     row.forEach((value, x) => {
       const boardY = active.y + y;

@@ -111,6 +111,29 @@ test("floating fragment falls even when another same-piece fragment is supported
   ]);
 });
 
+test("locked piece remnants split by a cleared line fall independently", () => {
+  const board = boardFrom([
+    "....",
+    ".X..",
+    "....",
+    ".X..",
+    ".X..",
+  ], () => cell("T", 42));
+
+  const groups = CascadeCore.getCascadeConnectedGroups(board, 5, 4);
+  assert.equal(groups.length, 2);
+
+  CascadeCore.applyCascadeGravityStep(board, 5, 4);
+
+  assert.deepEqual(boardText(board), [
+    "....",
+    "....",
+    ".X..",
+    ".X..",
+    ".X..",
+  ]);
+});
+
 test("upper group can use space vacated by a lower group in the same step", () => {
   const board = boardFrom([
     "...",
