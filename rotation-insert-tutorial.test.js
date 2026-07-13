@@ -201,6 +201,14 @@ test("all rotation insert tutorial piece types are active in Chapter 3", () => {
   assert.deepEqual(ROTATION_INSERT_TYPES, ["I", "J", "L", "S", "Z"]);
 });
 
+test("only verified rotation insert setups are available for progression", () => {
+  const availableTypes = ROTATION_INSERT_TYPES.filter((type) => {
+    const setup = ROTATION_INSERT_SETUPS[type];
+    return Boolean(setup && setup.verified === true && setup.expected && Array.isArray(setup.board));
+  });
+  assert.deepEqual(availableTypes, ["I"]);
+});
+
 for (const type of ROTATION_INSERT_TYPES) {
   test(`${type} rotation insert setup has a valid board shape`, () => {
     const pattern = ROTATION_INSERT_SETUPS[type].board;

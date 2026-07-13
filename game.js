@@ -4145,6 +4145,33 @@ function getRotationInsertSetup(type) {
   return ROTATION_INSERT_SETUPS[type] ?? ROTATION_INSERT_SETUPS.I;
 }
 
+function isRotationInsertSetupAvailable(type) {
+  const setup = ROTATION_INSERT_SETUPS[type];
+  return Boolean(
+    setup &&
+    setup.verified === true &&
+    setup.expected &&
+    Array.isArray(setup.board),
+  );
+}
+
+function getAvailableRotationInsertTypes() {
+  return ROTATION_INSERT_TYPES.filter((type) => isRotationInsertSetupAvailable(type));
+}
+
+function handleUnavailableRotationInsertSubStep(subStep, context = "start") {
+  const type = tutorialState?.rotationInsertTypes?.[subStep];
+  const setup = type ? ROTATION_INSERT_SETUPS[type] : null;
+  console.error("Rotation insert setup unavailable", {
+    context,
+    subStep,
+    type,
+    setup,
+  });
+  completeTutorialSection("", { clearActive: true });
+  return false;
+}
+
 function validateTutorialBoardPattern(name, pattern) {
   if (pattern.length !== rows) {
     throw new Error(`${name}: expected ${rows} rows, got ${pattern.length}`);
@@ -4170,10 +4197,7 @@ function validateRotationInsertBoards() {
 
 function getRotationInsertExpectedPlacement(type) {
   const setup = getRotationInsertSetup(type);
-  if (!setup.expected) {
-    throw new Error(setup.errorMessage ?? `${type} rotation insert tutorial setup is not verified`);
-  }
-  return setup.expected;
+  return setup.expected ?? null;
 }
 
 function resetTutorialRuntimeState(options = {}) {
@@ -4248,6 +4272,10 @@ function setupTutorialSectionBoard(sectionId) {
     validateRotationInsertBoards();
     const type = tutorialState.rotationInsertTypes[tutorialState.subStep];
     const setup = getRotationInsertSetup(type);
+    if (!type || !isRotationInsertSetupAvailable(type)) {
+      handleUnavailableRotationInsertSubStep(tutorialState.subStep, "setup");
+      return;
+    }
     pattern = setup.board;
     console.log("Rotation insert setup", {
       type,
@@ -4255,9 +4283,6 @@ function setupTutorialSectionBoard(sectionId) {
       rowCount: pattern.length,
       rowLengths: pattern.map((row) => row.length),
     });
-    if (!setup.verified) {
-      throw new Error(setup.errorMessage ?? `${type} rotation insert tutorial setup is not verified`);
-    }
     console.debug(`${type} tutorial solution:`, setup.verifiedSolution ?? []);
   }
   if (pattern) {
@@ -4300,6 +4325,10 @@ function startTutorialSection(sectionId, options = {}) {
   resetTutorialRuntimeState();
   const config = TUTORIAL_SECTIONS[sectionId];
   const initialSubStep = options.initialSubStep ?? 0;
+  const rotationInsertTypes =
+    sectionId === "rotationInsert"
+      ? getAvailableRotationInsertTypes()
+      : [...ROTATION_INSERT_TYPES];
   tutorialState = {
     sectionId,
     startX: null,
@@ -4313,7 +4342,7 @@ function startTutorialSection(sectionId, options = {}) {
     rotatedSinceSpawn: false,
     lastSuccessfulAction: null,
     lastRotationContext: null,
-    rotationInsertTypes: [...ROTATION_INSERT_TYPES],
+    rotationInsertTypes,
     completed: false,
     showSuccess: false,
     message: "",
@@ -4324,6 +4353,7 @@ function startTutorialSection(sectionId, options = {}) {
 
   if (config) {
     setupTutorialSectionBoard(sectionId);
+    if (tutorialState?.completed) return;
     setupTutorialActivePiece(sectionId);
   } else if (sectionId === "screenExplanation") {
     spawnTutorialPiece("T", { y: 2 });
@@ -4494,6 +4524,7 @@ function resetTutorialSectionForSubStep(options = {}) {
     lastRotationContext: null,
   };
   setupTutorialSectionBoard(sectionId);
+  if (tutorialState?.completed) return;
   setupTutorialActivePiece(sectionId);
   updateStats();
   drawNextPreviews();
@@ -4619,6 +4650,11 @@ function evaluateTutorialLockResult(result) {
   if (sectionId === "rotationInsert") {
     const type = tutorialState.rotationInsertTypes[tutorialState.subStep];
     const expected = getRotationInsertExpectedPlacement(type);
+    if (!expected) {
+      console.error("Missing rotation insert expected placement", { type });
+      completeTutorialSection("", { clearActive: true });
+      return true;
+    }
     const placedCorrectly =
       result.piece === type &&
       result.x === expected.x &&
@@ -4647,6 +4683,16 @@ function evaluateTutorialLockResult(result) {
     if (succeeded) {
       const nextSubStep = tutorialState.subStep + 1;
       if (nextSubStep < tutorialState.rotationInsertTypes.length) {
+        const nextType = tutorialState.rotationInsertTypes[nextSubStep];
+        const nextSetup = ROTATION_INSERT_SETUPS[nextType];
+        if (!nextSetup || !nextSetup.verified || !nextSetup.expected) {
+          console.error("Rotation insert setup unavailable", {
+            nextType,
+            nextSetup,
+          });
+          completeTutorialSection("", { clearActive: true });
+          return true;
+        }
         logTutorialDecision(result, "continue");
         advanceTutorialSubStep("できました！", { nextSubStep });
         return true;
