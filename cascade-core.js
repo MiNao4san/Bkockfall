@@ -1,7 +1,8 @@
 // Cascade gravity spec:
-// After a line clear, blocks that are currently connected orthogonally
-// (up/down/left/right) form one falling group. If a line clear splits a group,
-// the split parts fall independently. Color and pieceId are not used.
+// After a line clear, blocks fall by original pieceId, but only while they are
+// still connected orthogonally (up/down/left/right). Contact between different
+// pieceIds does not merge groups. If a line clear splits one pieceId, the split
+// parts fall independently.
 
 function countOccupiedBoardCells(board) {
   return board.reduce((sum, row) => sum + row.filter(Boolean).length, 0);
@@ -36,7 +37,9 @@ function getCascadeConnectedGroups(board, rows, cols) {
           const nextX = current.x + dx;
           const nextY = current.y + dy;
           if (nextX < 0 || nextX >= cols || nextY < 0 || nextY >= rows) return;
-          if (!board[nextY][nextX]) return;
+          const nextCell = board[nextY][nextX];
+          if (!nextCell) return;
+          if (getCascadeGroupKey(nextCell) !== getCascadeGroupKey(cell)) return;
           const key = `${nextX},${nextY}`;
           if (visited.has(key)) return;
           visited.add(key);
@@ -49,6 +52,13 @@ function getCascadeConnectedGroups(board, rows, cols) {
   }
 
   return groups;
+}
+
+function getCascadeGroupKey(cell) {
+  if (cell && typeof cell === "object" && Number.isFinite(cell.pieceId)) {
+    return `piece:${cell.pieceId}`;
+  }
+  return "initial";
 }
 
 function canMoveCascadeGroupDown(cells, rows, occupiedSet) {

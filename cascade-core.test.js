@@ -52,7 +52,7 @@ test("orthogonally connected group keeps its shape while falling", () => {
     "X..",
     "...",
     "...",
-  ]);
+  ], () => cell("L", 1));
 
   settle(board);
 
@@ -62,6 +62,19 @@ test("orthogonally connected group keeps its shape while falling", () => {
     "XX.",
     "X..",
   ]);
+});
+
+test("touching different pieceIds stay separate groups", () => {
+  const board = boardFrom([
+    "XX.",
+    "...",
+    "...",
+  ], (value, x) => cell("X", x));
+
+  const groups = CascadeCore.getCascadeConnectedGroups(board, 3, 3);
+
+  assert.equal(groups.length, 2);
+  assert.ok(groups.every((group) => group.length === 1));
 });
 
 test("same pieceId split by a line clear becomes independent groups", () => {
