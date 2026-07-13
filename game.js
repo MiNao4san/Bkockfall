@@ -4133,6 +4133,39 @@ function getRotationInsertBoard(type) {
   return setups[type] ?? setups.I;
 }
 
+function validateTutorialBoardPattern(name, pattern) {
+  console.assert(
+    pattern.length === rows,
+    `${name}: invalid row count`,
+    {
+      expected: rows,
+      actual: pattern.length,
+      pattern,
+    },
+  );
+  pattern.forEach((row, y) => {
+    console.assert(
+      row.length === cols,
+      `${name}: invalid column count`,
+      {
+        y,
+        expected: cols,
+        actual: row.length,
+        row,
+      },
+    );
+  });
+}
+
+function validateRotationInsertBoards() {
+  ROTATION_INSERT_TYPES.forEach((type) => {
+    validateTutorialBoardPattern(
+      `rotationInsert-${type}`,
+      getRotationInsertBoard(type),
+    );
+  });
+}
+
 function getRotationInsertExpectedPlacement(type) {
   return ROTATION_INSERT_EXPECTED_PLACEMENTS[type] ?? ROTATION_INSERT_EXPECTED_PLACEMENTS.I;
 }
@@ -4206,6 +4239,7 @@ function setupTutorialSectionBoard(sectionId) {
   }
   let pattern = config.boardPattern;
   if (sectionId === "rotationInsert") {
+    validateRotationInsertBoards();
     const type = tutorialState.rotationInsertTypes[tutorialState.subStep];
     pattern = getRotationInsertBoard(type);
   }
@@ -4243,18 +4277,19 @@ function setupTutorialActivePiece(sectionId) {
   spawnTutorialPiece(pieceType, options);
 }
 
-function startTutorialSection(sectionId) {
+function startTutorialSection(sectionId, options = {}) {
   window.clearTimeout(tutorialAdvanceTimer);
   tutorialAdvanceTimer = null;
   resetTutorialRuntimeState();
   const config = TUTORIAL_SECTIONS[sectionId];
+  const initialSubStep = options.initialSubStep ?? 0;
   tutorialState = {
     sectionId,
     startX: null,
     startY: null,
     startRotationState: "0",
     specialMode: config?.specialMode ?? null,
-    subStep: 0,
+    subStep: initialSubStep,
     completedLocks: 0,
     usedHold: false,
     usedHoldDuringBackToBack: false,
@@ -4300,6 +4335,12 @@ function startTutorialSection(sectionId) {
   logTutorialSectionStart(sectionId);
 }
 
+function restartTutorialSectionAtSubStep(sectionId, subStep) {
+  startTutorialSection(sectionId, {
+    initialSubStep: subStep,
+  });
+}
+
 function completeTutorialSection(message = "", options = {}) {
   if (!isTutorialMode() || tutorialState?.completed) return;
   tutorialState.completed = true;
@@ -4331,10 +4372,17 @@ function advanceTutorialSection() {
   startTutorialSection(getCurrentTutorialSection());
 }
 
-function failTutorialSection(reason = "条件を満たしていません", result = null) {
+function failTutorialSection(reason = "条件を満たしていません", result = null, options = {}) {
   if (!isTutorialMode()) return;
+  const failedChapter = tutorialChapter;
+  const failedSectionIndex = tutorialSectionIndex;
+  const failedSectionId = tutorialState?.sectionId ?? getCurrentTutorialSection();
+  const failedSubStep = options.restartSubStep ?? tutorialState?.subStep ?? 0;
   console.warn("Tutorial failed", {
-    section: getCurrentTutorialSection(),
+    chapter: failedChapter,
+    sectionIndex: failedSectionIndex,
+    sectionId: failedSectionId,
+    subStep: failedSubStep,
     reason,
     result,
   });
@@ -4349,7 +4397,13 @@ function failTutorialSection(reason = "条件を満たしていません", resul
     tutorialSuccessMessageEl.classList.remove("hidden");
   }
   scheduleTutorialAdvance(() => {
-    startTutorialSection(getCurrentTutorialSection());
+    if (
+      tutorialChapter !== failedChapter ||
+      tutorialSectionIndex !== failedSectionIndex
+    ) {
+      return;
+    }
+    restartTutorialSectionAtSubStep(failedSectionId, failedSubStep);
   });
 }
 
