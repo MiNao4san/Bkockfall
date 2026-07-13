@@ -6,6 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Blockfall</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="piece-id-core.js"></script>
+  <script src="square-core.js"></script>
+  <script src="rotation-special-core.js"></script>
+  <script src="purify-core.js"></script>
+  <script src="zone-core.js"></script>
 </head>
 
 <body>
@@ -49,7 +54,7 @@
           <button id="onePlayerButton" type="button">一人でテトリス</button>
           <button id="easyTetrisButton" type="button">いろんなテトリス</button>
           <button type="button" disabled>VS</button>
-          <button type="button" disabled>練習</button>
+          <button id="practiceButton" type="button">練習</button>
         </div>
         <button id="globalOptionsButton" class="gear-button" type="button" aria-label="総合オプション">⚙</button>
         <button id="myPageButton" class="corner-button corner-button-left" type="button" aria-label="マイページ">◎</button>
@@ -70,9 +75,22 @@
           <button id="catchButton" type="button">Catch</button>
           <button id="bomblissButton" type="button">ボンブリス</button>
           <button id="cascadeButton" type="button">カスケード</button>
-          <button id="zeroGravityButton" type="button">無重力</button>
           <button id="squareButton" type="button">スクエア</button>
           <button id="easyModeBackButton" type="button">戻る</button>
+        </div>
+        <div id="practiceMenu" class="mode-menu hidden">
+          <button id="tutorialButton" type="button">チュートリアル</button>
+          <button id="customButton" type="button">カスタム</button>
+          <button id="zeroGravityButton" type="button">無重力</button>
+          <button id="practiceBackButton" type="button">戻る</button>
+        </div>
+        <div id="tutorialChapterMenu" class="mode-menu hidden">
+          <button id="tutorialChapter1Button" type="button">Chapter 1　基本操作</button>
+          <button id="tutorialChapter2Button" type="button">Chapter 2　ライン消去</button>
+          <button id="tutorialChapter3Button" type="button">Chapter 3　上級テクニック</button>
+          <button id="tutorialChapter4Button" type="button">Chapter 4　特殊ルール</button>
+          <button id="tutorialChapter5Button" type="button">Chapter 5　実践</button>
+          <button id="tutorialChapterBackButton" type="button">戻る</button>
         </div>
         <div id="optionMenu" class="option-menu hidden">
           <div class="option-row">
@@ -108,6 +126,37 @@
               <option value="master">Master</option>
             </select>
           </label>
+          <label id="customLevelModeRow" class="option-row hidden">
+            <span>レベル方式</span>
+            <select id="customLevelModeSelect">
+              <option value="marathon">マラソン</option>
+              <option value="fixed">固定</option>
+            </select>
+          </label>
+          <label id="customFixedLevelRow" class="option-row hidden">
+            <span>固定レベル</span>
+            <select id="customFixedLevelSelect">
+              <option value="zeroGravity">無重力</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+              <option value="13">13</option>
+              <option value="14">14</option>
+              <option value="15">15</option>
+              <option value="master">Master</option>
+            </select>
+          </label>
+          <button id="customCascadeToggleButton" class="hidden" type="button">カスケード: OFF</button>
+          <button id="customZoneToggleButton" class="hidden" type="button">ZONE: OFF</button>
           <button id="ghostToggleButton" type="button">ゴースト: ON</button>
           <button id="difficultyToggleButton" class="hidden" type="button">難易度: easy</button>
           <button id="endlessToggleButton" class="marathon-only" type="button">エンドレス: OFF</button>
@@ -192,10 +241,73 @@
         <div id="actionMenu" class="mode-menu hidden">
           <p id="resultSummary" class="result-summary hidden"></p>
           <button id="startButton" type="button">Continue</button>
+          <button id="customSettingsButton" class="hidden" type="button">カスタム設定</button>
+          <button id="customRestartButton" class="hidden" type="button">リスタート</button>
+          <button id="customTimeResetButton" class="hidden" type="button">タイムリセット</button>
+          <button id="customScoreResetButton" class="hidden" type="button">スコアリセット</button>
+          <button id="customActionLogButton" class="hidden" type="button">操作ログ</button>
           <button id="restartButton" type="button">Restart</button>
-          <button id="titleButton" type="button">タイトルへもどる</button>
+          <button id="titleButton" type="button">タイトルへ戻る</button>
+        </div>
+        <div id="customPauseSettingsPanel" class="option-menu hidden">
+          <div class="option-row">
+            <span>Mode</span>
+            <strong>カスタム</strong>
+          </div>
+          <label class="option-row">
+            <span>レベル方式</span>
+            <select id="pauseCustomLevelModeSelect">
+              <option value="marathon">マラソン</option>
+              <option value="fixed">固定</option>
+            </select>
+          </label>
+          <label id="pauseCustomFixedLevelRow" class="option-row hidden">
+            <span>固定レベル</span>
+            <select id="pauseCustomFixedLevelSelect">
+              <option value="zeroGravity">無重力</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+              <option value="13">13</option>
+              <option value="14">14</option>
+              <option value="15">15</option>
+              <option value="master">Master</option>
+            </select>
+          </label>
+          <button id="pauseCustomCascadeToggleButton" type="button">カスケード: OFF</button>
+          <button id="pauseCustomZoneToggleButton" type="button">ZONE: OFF</button>
+          <button id="customSettingsBackButton" type="button">戻る</button>
+        </div>
+        <div id="customActionLogPanel" class="option-menu custom-log-panel hidden">
+          <div class="option-row">
+            <span>操作ログ</span>
+            <strong id="customActionLogCount">0</strong>
+          </div>
+          <div id="customActionLogList" class="custom-log-list"></div>
+          <button id="customActionLogCloseButton" type="button">閉じる</button>
         </div>
         <input id="saveImportInput" type="file" accept="application/json,.json" hidden />
+      </div>
+      <div id="tutorialPanel" class="tutorial-panel hidden">
+        <p id="tutorialStepLabel"></p>
+        <h2 id="tutorialTitle"></h2>
+        <p id="tutorialInstruction"></p>
+        <p id="tutorialSuccessMessage" class="hidden">できました！</p>
+        <button id="tutorialNextButton" type="button">次へ</button>
+      </div>
+      <div id="tutorialMissionPanel" class="tutorial-panel tutorial-mission-panel hidden">
+        <p id="tutorialMissionProgress"></p>
+        <h2 id="tutorialMissionTitle"></h2>
+        <p id="tutorialMissionDescription"></p>
       </div>
     </section>
 
@@ -262,6 +374,7 @@
     </aside>
   </main>
 
+  <script src="bombliss-core.js"></script>
   <script src="game.js"></script>
 </body>
 

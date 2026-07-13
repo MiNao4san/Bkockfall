@@ -27,6 +27,10 @@ const BGM_INTRO_SRC = "korobeiniki.m4a";
 const BGM_LOOP_FALLBACK_SRC = "korobeiniki-roop.m4a";
 const BGM_LOOP_CANDIDATES = ["korobeiniki2.m4a", BGM_LOOP_FALLBACK_SRC];
 const ROTATION_STATES = ["0", "R", "2", "L"];
+const GOLD_SQUARE_CREATE_SCORE = 2000;
+const SILVER_SQUARE_CREATE_SCORE = 1000;
+const GOLD_SQUARE_LINE_SCORE = 400;
+const SILVER_SQUARE_LINE_SCORE = 200;
 const BEST_RECORDS_STORAGE_KEY = "blockfall.bestRecords.v1";
 const PLAYER_STATS_STORAGE_KEY = "blockfall.playerStats.v1";
 const PLAYER_PROFILES_STORAGE_KEY = "blockfall.playerProfiles.v1";
@@ -34,6 +38,327 @@ const PLAYER_PROFILES_STORAGE_KEY_LEGACY = "blockfall.playerProfiles";
 const LAST_PLAYER_STORAGE_KEY = "blockfall.lastPlayer.v1";
 const LAST_PLAYER_STORAGE_KEY_LEGACY = "blockfall.lastPlayer";
 const SETTINGS_STORAGE_KEY = "blockfall.settings.v1";
+const CUSTOM_ACTION_LOG_LIMIT = 1000;
+const TUTORIAL_SUCCESS_DELAY_MS = 900;
+const TUTORIAL_CHAPTER_1_SECTIONS = [
+  "screenExplanation",
+  "moveHorizontal",
+  "rotateRight",
+  "rotateLeft",
+  "softDrop",
+  "hardDrop",
+];
+const TUTORIAL_CHAPTER_2_SECTIONS = [
+  "single",
+  "double",
+  "triple",
+  "tetris",
+  "hold",
+  "backToBack",
+  "combo",
+];
+const TUTORIAL_CHAPTER_3_SECTIONS = [
+  "rotationInsert",
+  "tSpin",
+  "tSpinDouble",
+  "perfectClear",
+];
+const TUTORIAL_CHAPTER_4_SECTIONS = [
+  "cascade",
+  "square",
+  "bombliss",
+  "zone",
+  "garbage",
+];
+const CHAPTER_5_MISSION_POOL = [
+  "single",
+  "double",
+  "triple",
+  "tetris",
+  "hold",
+  "backToBack",
+  "combo",
+  "tSpin",
+  "tSpinDouble",
+  "rotationInsert",
+  "perfectClear",
+];
+const CHAPTER_5_MISSION_COUNT = 5;
+const CHAPTER_5_TIME_LIMIT_MS = 300000;
+const DEBUG_CHAPTER_5_MISSIONS = null;
+const ROTATION_INSERT_TARGETS = ["I", "J", "L", "S", "Z"];
+const ROTATION_INSERT_TYPES = ["I", "J", "L", "S", "Z"];
+const TUTORIAL_CHAPTER_SECTIONS = {
+  1: TUTORIAL_CHAPTER_1_SECTIONS,
+  2: TUTORIAL_CHAPTER_2_SECTIONS,
+  3: TUTORIAL_CHAPTER_3_SECTIONS,
+  4: TUTORIAL_CHAPTER_4_SECTIONS,
+  5: [],
+};
+const TUTORIAL_CHAPTER_COMPLETE = {
+  1: {
+    title: "Chapter 1 Complete",
+    body: "基本操作を覚えました。\n\n・左右移動\n・右回転\n・左回転\n・ソフトドロップ\n・ハードドロップ",
+  },
+  2: {
+    title: "Chapter 2 Complete",
+    body: "ライン消去と基本テクニックを覚えました。\n\n・Single\n・Double\n・Triple\n・Tetris\n・Hold\n・Back-to-Back\n・Combo",
+  },
+  3: {
+    title: "Chapter 3 Complete",
+    body: "回転入れと上級テクニックを覚えました。\n\n・回転入れ\n・T-Spin\n・T-Spin Double\n・Perfect Clear",
+  },
+  4: {
+    title: "Chapter 4 Complete",
+    body: "特殊ルールの基本を体験しました。\n\n・Cascade\n・Square\n・Bombliss\n・ZONE\n・おじゃまブロック",
+  },
+  5: {
+    title: "Chapter 5 Complete",
+    body: "実戦ミッションをすべて達成しました。",
+  },
+};
+const TUTORIAL_PROGRESS_DEFAULT = {
+  chapter1Completed: false,
+  chapter2Completed: false,
+  chapter3Completed: false,
+  chapter4Completed: false,
+  chapter5Completed: false,
+};
+const TUTORIAL_BOARD_PATTERNS = {
+  single: [
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "XXXX..XXXX",
+  ],
+  double: [
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "XXXX..XXXX", "XXXX..XXXX",
+  ],
+  triple: [
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "XXXX.XXXXX", "XXXX.XXXXX", "XXXX.XXXXX",
+  ],
+  tetris: [
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "XXXX.XXXXX", "XXXX.XXXXX", "XXXX.XXXXX", "XXXX.XXXXX",
+  ],
+  combo: [
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "XXXX..XXXX", "XXXX..XXXX",
+  ],
+  perfectClear: [
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "XXXX..XXXX", "XXXX..XXXX",
+  ],
+  garbage: [
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "XXXX.XXXXX", "XXXXX.XXXX", "XXX.XXXXXX", "XXXX..XXXX",
+  ],
+  square: [
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "XX........", "XX........", "XXXX......", "XXXX......",
+  ],
+  bombliss: [
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "XXXX..XXXX",
+  ],
+  cascade: [
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "....XX....", "XXXX..XXXX", "XXX....XXX",
+  ],
+  tSpin: [
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "....X.....", "...X.X....", "XXXX.XXXXX", "XXXXX.XXXX",
+  ],
+  tSpinDouble: [
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "...X.X....", "....X.....", "XXXX.XXXXX", "XXXX.XXXXX",
+  ],
+};
+const TUTORIAL_SECTIONS = {
+  single: {
+    chapter: 2,
+    title: "Single",
+    pieceType: "O",
+    boardPattern: TUTORIAL_BOARD_PATTERNS.single,
+    allowedActions: ["moveLeft", "moveRight", "softDrop", "hardDrop"],
+    instruction: "横一列をすべて埋めると、\nそのラインが消えます。\n\nOミノを穴へ置いて、\n1ライン消してみよう。",
+    successType: "single",
+  },
+  double: {
+    chapter: 2,
+    title: "Double",
+    pieceType: "O",
+    boardPattern: TUTORIAL_BOARD_PATTERNS.double,
+    allowedActions: ["moveLeft", "moveRight", "softDrop", "hardDrop"],
+    instruction: "2ラインを同時にそろえると\nDoubleになります。\n\nOミノを穴へ置いてみよう。",
+    successType: "double",
+  },
+  triple: {
+    chapter: 2,
+    title: "Triple",
+    pieceType: "I",
+    boardPattern: TUTORIAL_BOARD_PATTERNS.triple,
+    allowedActions: ["moveLeft", "moveRight", "rotateLeft", "rotateRight", "softDrop", "hardDrop"],
+    instruction: "3ラインを同時にそろえると\nTripleになります。\n\nIミノを縦にして\n穴へ入れてみよう。",
+    successType: "triple",
+  },
+  tetris: {
+    chapter: 2,
+    title: "Tetris",
+    pieceType: "I",
+    boardPattern: TUTORIAL_BOARD_PATTERNS.tetris,
+    allowedActions: ["moveLeft", "moveRight", "rotateLeft", "rotateRight", "softDrop", "hardDrop"],
+    instruction: "4ラインを同時に消すことを\nTetrisと呼びます。\n\nIミノを縦に入れてみよう。",
+    successType: "tetris",
+  },
+  hold: {
+    chapter: 2,
+    title: "Hold",
+    pieceType: "O",
+    nextQueue: ["I"],
+    holdEnabled: true,
+    boardPattern: TUTORIAL_BOARD_PATTERNS.tetris,
+    allowedActions: ["moveLeft", "moveRight", "rotateLeft", "rotateRight", "softDrop", "hardDrop", "hold"],
+    instruction: "今のOミノでは、\nこの穴をきれいに消せません。\n\nHOLDを使ってIミノへ入れ替え、\nTetrisを決めてみよう。",
+    successType: "holdTetris",
+  },
+  backToBack: {
+    chapter: 2,
+    title: "Back-to-Back",
+    pieceType: "I",
+    nextQueue: ["O", "I"],
+    holdEnabled: true,
+    boardPattern: TUTORIAL_BOARD_PATTERNS.tetris,
+    allowedActions: ["moveLeft", "moveRight", "rotateLeft", "rotateRight", "softDrop", "hardDrop", "hold"],
+    instruction: "TetrisやT-Spinを続けて決めると、\nBack-to-Backになります。\n\nまず1回目のTetrisを決めよう。",
+    successType: "backToBack",
+  },
+  combo: {
+    chapter: 2,
+    title: "Combo",
+    pieceType: "O",
+    nextQueue: ["O"],
+    boardPattern: TUTORIAL_BOARD_PATTERNS.combo,
+    allowedActions: ["moveLeft", "moveRight", "softDrop", "hardDrop"],
+    instruction: "ライン消去を続けて行うと、\nComboになります。\n\n2回続けてラインを消してみよう。",
+    successType: "combo",
+  },
+  rotationInsert: {
+    chapter: 3,
+    title: "回転入れ",
+    pieceType: "I",
+    allowedActions: ["moveLeft", "moveRight", "rotateLeft", "rotateRight", "softDrop", "hardDrop"],
+    instruction: "回転を使うと、\nそのままでは入らない隙間へ\nミノを入れられます。",
+    successType: "rotationInsert",
+  },
+  tSpin: {
+    chapter: 3,
+    title: "T-Spin",
+    pieceType: "T",
+    boardPattern: TUTORIAL_BOARD_PATTERNS.tSpin,
+    allowedActions: ["moveLeft", "moveRight", "rotateLeft", "rotateRight", "softDrop", "hardDrop"],
+    instruction: "Tミノを回転させて\n隙間へ入れてみよう。\n\n最後の操作が回転になるようにしてください。",
+    successType: "tSpin",
+  },
+  tSpinDouble: {
+    chapter: 3,
+    title: "T-Spin Double",
+    pieceType: "T",
+    boardPattern: TUTORIAL_BOARD_PATTERNS.tSpinDouble,
+    allowedActions: ["moveLeft", "moveRight", "rotateLeft", "rotateRight", "softDrop", "hardDrop"],
+    instruction: "Tミノを回転させて入れ、\n2ライン同時に消してみよう。",
+    successType: "tSpinDouble",
+  },
+  perfectClear: {
+    chapter: 3,
+    title: "Perfect Clear",
+    pieceType: "O",
+    boardPattern: TUTORIAL_BOARD_PATTERNS.perfectClear,
+    allowedActions: ["moveLeft", "moveRight", "softDrop", "hardDrop"],
+    instruction: "ラインを消したあと、\nフィールドにブロックが一つも残らないと\nPerfect Clearになります。",
+    successType: "perfectClear",
+  },
+  cascade: {
+    chapter: 4,
+    title: "Cascade",
+    pieceType: "I",
+    specialMode: "cascade",
+    boardPattern: TUTORIAL_BOARD_PATTERNS.cascade,
+    allowedActions: ["moveLeft", "moveRight", "softDrop", "hardDrop"],
+    instruction: "ラインを消すと、\n支えを失ったブロックが落下します。\n\n落下によってもう一度ラインをそろえ、\n連鎖を起こしてみよう。",
+    successType: "cascade",
+  },
+  square: {
+    chapter: 4,
+    title: "Square",
+    pieceType: "O",
+    specialMode: "square",
+    boardPattern: TUTORIAL_BOARD_PATTERNS.square,
+    allowedActions: ["moveLeft", "moveRight", "softDrop", "hardDrop"],
+    instruction: "4個のミノで4×4を作ると、\nSquareになります。\n\n最後のミノを置いて、\n正方形を完成させてみよう。",
+    successType: "square",
+  },
+  bombliss: {
+    chapter: 4,
+    title: "Bombliss",
+    pieceType: "O",
+    specialMode: "bombliss",
+    bombCells: ["0,1"],
+    boardPattern: TUTORIAL_BOARD_PATTERNS.bombliss,
+    allowedActions: ["moveLeft", "moveRight", "softDrop", "hardDrop"],
+    instruction: "爆弾を含むラインをそろえると、\n爆発が起こります。\n\n爆弾入りのミノを置いてみよう。",
+    successType: "bombliss",
+  },
+  zone: {
+    chapter: 4,
+    title: "ZONE",
+    pieceType: "O",
+    specialMode: "zone",
+    boardPattern: TUTORIAL_BOARD_PATTERNS.single,
+    allowedActions: ["zone", "moveLeft", "moveRight", "softDrop", "hardDrop"],
+    instruction: "ZONEキーを押して、\nZONEを発動してみよう。",
+    successType: "zone",
+  },
+  garbage: {
+    chapter: 4,
+    title: "おじゃまブロック",
+    pieceType: "O",
+    boardPattern: TUTORIAL_BOARD_PATTERNS.garbage,
+    allowedActions: ["moveLeft", "moveRight", "softDrop", "hardDrop"],
+    instruction: "灰色のブロックは\nおじゃまブロックです。\n\n穴へミノを入れて、\n下から消していきましょう。",
+    successType: "garbage",
+  },
+};
+const DEFAULT_CUSTOM_SETTINGS = {
+  levelMode: "marathon",
+  fixedLevel: "1",
+  cascadeEnabled: false,
+  zoneEnabled: false,
+};
 const SAVE_EXPORT_KEYS = [
   PLAYER_PROFILES_STORAGE_KEY,
   LAST_PLAYER_STORAGE_KEY,
@@ -502,6 +827,8 @@ const bombingRevealImage = document.querySelector("#bombingRevealImage");
 const modeMenu = document.querySelector("#modeMenu");
 const onePlayerMenu = document.querySelector("#onePlayerMenu");
 const easyModeMenu = document.querySelector("#easyModeMenu");
+const practiceMenu = document.querySelector("#practiceMenu");
+const tutorialChapterMenu = document.querySelector("#tutorialChapterMenu");
 const globalOptionsButton = document.querySelector("#globalOptionsButton");
 const optionMenu = document.querySelector("#optionMenu");
 const loginMenu = document.querySelector("#loginMenu");
@@ -539,6 +866,12 @@ const fixedLevelToggleRow = document.querySelector("#fixedLevelToggleRow");
 const fixedLevelToggle = document.querySelector("#fixedLevelToggle");
 const fixedLevelRow = document.querySelector("#fixedLevelRow");
 const fixedLevelSelect = document.querySelector("#fixedLevelSelect");
+const customLevelModeRow = document.querySelector("#customLevelModeRow");
+const customLevelModeSelect = document.querySelector("#customLevelModeSelect");
+const customFixedLevelRow = document.querySelector("#customFixedLevelRow");
+const customFixedLevelSelect = document.querySelector("#customFixedLevelSelect");
+const customCascadeToggleButton = document.querySelector("#customCascadeToggleButton");
+const customZoneToggleButton = document.querySelector("#customZoneToggleButton");
 const ghostToggleButton = document.querySelector("#ghostToggleButton");
 const difficultyToggleButton = document.querySelector("#difficultyToggleButton");
 const endlessToggleButton = document.querySelector("#endlessToggleButton");
@@ -555,23 +888,49 @@ const sprintButton = document.querySelector("#sprintButton");
 const ultraButton = document.querySelector("#ultraButton");
 const easyTetrisButton = document.querySelector("#easyTetrisButton");
 const onePlayerButton = document.querySelector("#onePlayerButton");
+const practiceButton = document.querySelector("#practiceButton");
 const catchButton = document.querySelector("#catchButton");
 const allClearSprintButton = document.querySelector("#allClearSprintButton");
 const easyMarathonButton = document.querySelector("#easyMarathonButton");
 const bomblissButton = document.querySelector("#bomblissButton");
 const cascadeButton = document.querySelector("#cascadeButton");
-const zeroGravityButton = document.querySelector("#zeroGravityButton");
 const hotlineButton = document.querySelector("#hotlineButton");
 const zoneButton = document.querySelector("#zoneButton");
+const customButton = document.querySelector("#customButton");
+const tutorialButton = document.querySelector("#tutorialButton");
+const zeroGravityButton = document.querySelector("#zeroGravityButton");
+const tutorialChapter1Button = document.querySelector("#tutorialChapter1Button");
+const tutorialChapter2Button = document.querySelector("#tutorialChapter2Button");
+const tutorialChapter3Button = document.querySelector("#tutorialChapter3Button");
+const tutorialChapter4Button = document.querySelector("#tutorialChapter4Button");
+const tutorialChapter5Button = document.querySelector("#tutorialChapter5Button");
+const tutorialChapterBackButton = document.querySelector("#tutorialChapterBackButton");
 const squareButton = document.querySelector("#squareButton");
 const easyModeBackButton = document.querySelector("#easyModeBackButton");
 const onePlayerBackButton = document.querySelector("#onePlayerBackButton");
+const practiceBackButton = document.querySelector("#practiceBackButton");
 const cheeseRaceButton = document.querySelector("#cheeseRaceButton");
 const shadowButton = document.querySelector("#shadowButton");
 const actionMenu = document.querySelector("#actionMenu");
 const resultSummaryEl = document.querySelector("#resultSummary");
 const startButton = document.querySelector("#startButton");
 const restartButton = document.querySelector("#restartButton");
+const customSettingsButton = document.querySelector("#customSettingsButton");
+const customRestartButton = document.querySelector("#customRestartButton");
+const customTimeResetButton = document.querySelector("#customTimeResetButton");
+const customScoreResetButton = document.querySelector("#customScoreResetButton");
+const customActionLogButton = document.querySelector("#customActionLogButton");
+const customPauseSettingsPanel = document.querySelector("#customPauseSettingsPanel");
+const pauseCustomLevelModeSelect = document.querySelector("#pauseCustomLevelModeSelect");
+const pauseCustomFixedLevelRow = document.querySelector("#pauseCustomFixedLevelRow");
+const pauseCustomFixedLevelSelect = document.querySelector("#pauseCustomFixedLevelSelect");
+const pauseCustomCascadeToggleButton = document.querySelector("#pauseCustomCascadeToggleButton");
+const pauseCustomZoneToggleButton = document.querySelector("#pauseCustomZoneToggleButton");
+const customSettingsBackButton = document.querySelector("#customSettingsBackButton");
+const customActionLogPanel = document.querySelector("#customActionLogPanel");
+const customActionLogCount = document.querySelector("#customActionLogCount");
+const customActionLogList = document.querySelector("#customActionLogList");
+const customActionLogCloseButton = document.querySelector("#customActionLogCloseButton");
 const titleButton = document.querySelector("#titleButton");
 const keybindButtons = document.querySelectorAll(".keybind-button");
 const moveKeysEl = document.querySelector("#moveKeys");
@@ -581,6 +940,16 @@ const rotateLeftKeyEl = document.querySelector("#rotateLeftKey");
 const hardDropKeyEl = document.querySelector("#hardDropKey");
 const holdKeyEl = document.querySelector("#holdKey");
 const pauseKeyEl = document.querySelector("#pauseKey");
+const tutorialPanel = document.querySelector("#tutorialPanel");
+const tutorialStepLabelEl = document.querySelector("#tutorialStepLabel");
+const tutorialTitleEl = document.querySelector("#tutorialTitle");
+const tutorialInstructionEl = document.querySelector("#tutorialInstruction");
+const tutorialSuccessMessageEl = document.querySelector("#tutorialSuccessMessage");
+const tutorialNextButton = document.querySelector("#tutorialNextButton");
+const tutorialMissionPanel = document.querySelector("#tutorialMissionPanel");
+const tutorialMissionProgressEl = document.querySelector("#tutorialMissionProgress");
+const tutorialMissionTitleEl = document.querySelector("#tutorialMissionTitle");
+const tutorialMissionDescriptionEl = document.querySelector("#tutorialMissionDescription");
 
 const KEYBIND_LABELS = {
   moveLeft: "Move Left",
@@ -622,6 +991,7 @@ let bomblissPoints;
 let nextLargeBombId = 1;
 let nextPieceId;
 let nextSquareId = 1;
+let squareGroups = new Map();
 let currentShadowStageIndex = 0;
 let selectedShadowStageIndex = 0;
 let shadowStage = null;
@@ -641,14 +1011,16 @@ let catchCombo = 0;
 let zoneGauge = 0;
 let zoneActive = false;
 let zoneTimer = 0;
+let zoneConsumedGauge = 0;
 let zoneLines = 0;
 let zoneMaxLines = 0;
-let zoneLineLimit = 20;
-let zoneLineLimitUnlimited = false;
 let zoneScoreBuffer = 0;
+let zoneExtensionNoticeText = "";
+let zoneExtensionNoticeUntil = 0;
 let cascadeResolutionActive = false;
 let cascadeResolutionPhase = "idle";
 let cascadeResolutionClears = [];
+let cascadeResolutionUsedZone = false;
 let cascadeClearDelay = 0;
 let cascadeGravityTimer = 0;
 let lines;
@@ -673,6 +1045,14 @@ let easyModeVariant = null;
 let easyDifficulty = "easy";
 let fixedLevelEnabled = false;
 let fixedLevelValue = "1";
+let customSettings = { ...DEFAULT_CUSTOM_SETTINGS };
+let customActionLog = [];
+let customActionLogVisible = false;
+let tutorialChapter = null;
+let tutorialSectionIndex = 0;
+let tutorialState = null;
+let tutorialAdvanceTimer = null;
+let tutorialProgress = { ...TUTORIAL_PROGRESS_DEFAULT };
 let endlessEnabled = false;
 let sprintGoalLines = 40;
 let cheeseGoalLines = 18;
@@ -701,11 +1081,12 @@ let currentPlayer = null;
 let lastResultInfo = null;
 let gameStatsFinalized = false;
 let myPageReturnTarget = "title";
+let optionMenuReturnTarget = "onePlayer";
 const INPUT_BUFFER_MS = 100;
 const PURIFY_DURATION_MS = 180000;
-const PURIFY_INITIAL_SPAWN_MS = 9000;
-const PURIFY_MIN_SPAWN_MS = 4500;
-const PURIFY_SPAWN_STEP_MS = 250;
+const PURIFY_INITIAL_SPAWN_MS = 11000;
+const PURIFY_MIN_SPAWN_MS = 5500;
+const PURIFY_SPAWN_STEP_MS = 300;
 const PURIFY_INITIAL_GARBAGE_LINES = 12;
 let keyBindings = {
   moveLeft: ["KeyA", "ArrowLeft"],
@@ -944,7 +1325,7 @@ function createPiece(type) {
 function spawnPiece() {
   fillQueue();
   active = createPiece(nextQueue.shift());
-  if (isZeroGravityMode() && active) {
+  if ((isZeroGravityMode() || (isCustomMode() && customSettings.levelMode === "fixed" && customSettings.fixedLevel === "zeroGravity")) && active) {
     active.y = 0;
   }
   tsdAssistDirty = true;
@@ -958,9 +1339,13 @@ function spawnPiece() {
     }
   }
   canHold = true;
-  if (isCascadeMode() || isSquareMode()) {
-    active.pieceId = nextPieceId;
-    nextPieceId += 1;
+  if (isCascadeEnabledForCurrentGame() || isSquareMode()) {
+    if (globalThis.PieceIdCore?.allocatePieceIdForSpecialModes) {
+      nextPieceId = globalThis.PieceIdCore.allocatePieceIdForSpecialModes(active, nextPieceId, true);
+    } else {
+      active.pieceId = nextPieceId;
+      nextPieceId += 1;
+    }
   }
   lockCounter = 0;
   lockResetCount = 0;
@@ -1126,11 +1511,17 @@ function nextRotationState(currentState, direction) {
 }
 
 function getKickTests(type, fromState, toState) {
+  if (globalThis.RotationSpecialCore?.getKickTests) {
+    return globalThis.RotationSpecialCore.getKickTests(type, fromState, toState);
+  }
   if (type === "O") {
     return [[0, 0]];
   }
   if (type === "I") {
     return I_KICKS[`${fromState}>${toState}`] ?? [[0, 0]];
+  }
+  if (type === "I2" || type === "I3" || type === "L3" || type === "DOT") {
+    return [[0, 0]];
   }
   if ("TJLSZ".includes(type)) {
     return JLSTZ_KICKS[`${fromState}>${toState}`] ?? [[0, 0]];
@@ -1154,7 +1545,7 @@ function collides(piece, nextX, nextY, matrix) {
 function createLockedCell(type, pieceId, bomb) {
   if (isBomblissMode()) return createBomblissCell(type, bomb);
   if (isSquareMode()) return createSquareCell(type, pieceId);
-  if (isCascadeMode()) return createCascadeCell(type, pieceId);
+  if (isCascadeEnabledForCurrentGame()) return createCascadeCell(type, pieceId);
   return type;
 }
 
@@ -1623,59 +2014,65 @@ function addCheeseGarbageLine() {
 }
 
 function getPurifyHoleColumn() {
-  let hole = Math.floor(rng() * cols);
-  let safety = 0;
-  while (
-    purifyHoleHistory.length >= 2 &&
-    purifyHoleHistory[purifyHoleHistory.length - 1] === hole &&
-    purifyHoleHistory[purifyHoleHistory.length - 2] === hole &&
-    safety < 20
-  ) {
-    hole = Math.floor(rng() * cols);
-    safety += 1;
-  }
-  purifyHoleHistory.push(hole);
-  if (purifyHoleHistory.length > 2) {
-    purifyHoleHistory.shift();
-  }
-  return hole;
+  return globalThis.PurifyCore?.getPurifyHoleColumn
+    ? globalThis.PurifyCore.getPurifyHoleColumn(cols, rng, purifyHoleHistory)
+    : Math.floor(rng() * cols);
 }
 
 function createPurifyGarbageRow() {
+  if (globalThis.PurifyCore?.createPurifyGarbageRow) {
+    const batchRow = globalThis.PurifyCore.createPurifyGarbageRow(cols, rng, purifyHoleHistory);
+    return createPurifyGarbageRowFromSpec(batchRow);
+  }
   const hole = getPurifyHoleColumn();
   const row = Array.from({ length: cols }, (_, x) => {
     if (x === hole) return null;
     return createPurifyCell();
   });
-  const infectedSlots = row
-    .map((cell, index) => (cell ? index : -1))
-    .filter((index) => index >= 0);
-  const infectedCount = Math.max(1, Math.min(infectedSlots.length, 2 + Math.floor(rng() * 2)));
-  const chosen = new Set();
-  while (chosen.size < infectedCount && chosen.size < infectedSlots.length) {
-    chosen.add(infectedSlots[Math.floor(rng() * infectedSlots.length)]);
-  }
-  row.forEach((cell, x) => {
-    if (cell && !chosen.has(x)) {
-      cell.infected = false;
-    }
-  });
   return {
     row,
-    infectedCount: chosen.size,
+    infectedCount: row.filter((cell) => cell && cell.infected).length,
+  };
+}
+
+function createPurifyGarbageRowFromSpec(spec) {
+  return {
+    row: spec.row.map((cell) => {
+      if (!cell.filled) return null;
+      return createCell({ type: "G", garbage: true, infected: cell.infected });
+    }),
+    infectedCount: spec.infectedCount,
   };
 }
 
 function addPurifyInfectionLine() {
-  if (board[0].some(Boolean)) {
+  const helper = globalThis.PurifyCore;
+  const batch = helper?.createPurifyGarbageBatch
+    ? helper.createPurifyGarbageBatch(cols, rng, purifyHoleHistory)
+    : { pattern: "one", rows: [createPurifyGarbageRow()] };
+  const count = Math.min(batch.rows.length, rows);
+  if (board.slice(0, count).some((row) => row.some(Boolean))) {
     return false;
   }
-  const { row, infectedCount } = createPurifyGarbageRow();
-  board.shift();
-  board.push(row);
-  purifyCurrentInfections += infectedCount;
-  purifyWave += 1;
-  purifyNextSpawnMs = Math.max(PURIFY_MIN_SPAWN_MS, PURIFY_INITIAL_SPAWN_MS - purifyWave * PURIFY_SPAWN_STEP_MS);
+  for (let i = 0; i < count; i += 1) {
+    board.shift();
+    const row = batch.rows[i].row.map((cell) => {
+      if (!cell.filled) return null;
+      return createPurifyCell();
+    });
+    row.forEach((cell, x) => {
+      if (cell && !batch.rows[i].row[x].infected) {
+        cell.infected = false;
+      }
+    });
+    board.push(row);
+    purifyCurrentInfections += batch.rows[i].infectedCount;
+  }
+  purifyWave += count;
+  purifyNextSpawnMs = Math.max(
+    PURIFY_MIN_SPAWN_MS,
+    PURIFY_INITIAL_SPAWN_MS - purifyWave * PURIFY_SPAWN_STEP_MS,
+  );
   return true;
 }
 
@@ -1697,10 +2094,19 @@ function seedPurifyGarbage() {
   purifyCurrentInfections = 0;
   purifyHoleHistory = [];
   const initialGarbage = Math.min(PURIFY_INITIAL_GARBAGE_LINES, rows - 2);
-  for (let i = 0; i < initialGarbage; i += 1) {
-    const { row, infectedCount } = createPurifyGarbageRow();
-    board[rows - 1 - i] = row;
-    purifyCurrentInfections += infectedCount;
+  let placed = 0;
+  while (placed < initialGarbage) {
+    const helper = globalThis.PurifyCore;
+    const batch = helper?.createPurifyGarbageBatch
+      ? helper.createPurifyGarbageBatch(cols, rng, purifyHoleHistory)
+      : { rows: [createPurifyGarbageRow()] };
+    for (const spec of batch.rows) {
+      if (placed >= initialGarbage) break;
+      const { row, infectedCount } = createPurifyGarbageRowFromSpec(spec);
+      board[rows - 1 - placed] = row;
+      purifyCurrentInfections += infectedCount;
+      placed += 1;
+    }
   }
 }
 
@@ -1733,64 +2139,50 @@ function collectPieceCells() {
 
 function detectAndMarkSquares() {
   if (!isSquareMode()) return [];
-  const madeSquares = [];
-  for (let top = 0; top <= rows - 4; top += 1) {
-    for (let left = 0; left <= cols - 4; left += 1) {
-      const cells = [];
-      const pieceIds = new Set();
-      let valid = true;
-      for (let y = top; y < top + 4 && valid; y += 1) {
-        for (let x = left; x < left + 4; x += 1) {
-          const cell = board[y][x];
-          const pieceId = getCellPieceId(cell);
-          if (!cell || pieceId === null || getCellSquareType(cell)) {
-            valid = false;
-            break;
-          }
-          cells.push(cell);
-          pieceIds.add(pieceId);
-        }
-      }
-      if (!valid || pieceIds.size !== 4) continue;
-
-      const pieces = collectPieceCells();
-      const ids = [...pieceIds];
-      const allPiecesInside = ids.every((pieceId) => {
-        const piece = pieces.get(pieceId);
-        return (
-          piece?.cells.length === 4 &&
-          piece.cells.every(({ x, y, cell }) => (
-            x >= left &&
-            x < left + 4 &&
-            y >= top &&
-            y < top + 4 &&
-            !getCellSquareType(cell)
-          ))
-        );
-      });
-      if (!allPiecesInside) continue;
-
-      const types = new Set(ids.map((pieceId) => pieces.get(pieceId).type));
-      const squareType = types.size === 1 ? "gold" : "silver";
-      const squareId = nextSquareId;
-      nextSquareId += 1;
-      cells.forEach((cell) => {
-        cell.squareId = squareId;
-        cell.squareType = squareType;
-      });
-      madeSquares.push({ squareId, squareType });
-    }
+  const helper = globalThis.SquareCore;
+  if (helper?.detectAndMarkSquares) {
+    const result = helper.detectAndMarkSquares(board, rows, cols, {
+      getCellPieceId,
+      getCellType,
+      getCellSquareType,
+      squareGroups,
+      createSquareId: () => {
+        const squareId = nextSquareId;
+        nextSquareId += 1;
+        return squareId;
+      },
+      now: () => performance.now(),
+    });
+    squareGroups = result.squareGroups ?? squareGroups;
+    return result.madeSquares ?? [];
   }
-  return madeSquares;
+  return [];
 }
 
 function getSquareLineBonus(clearedCells) {
-  return clearedCells.reduce((bonus, cell) => {
-    const squareType = getCellSquareType(cell);
-    if (squareType === "gold") return bonus + 100 * level;
-    if (squareType === "silver") return bonus + 50 * level;
-    return bonus;
-  }, 0);
+  const helper = globalThis.SquareCore;
+  if (helper?.getSquareLineBonus) {
+    return helper.getSquareLineBonus(clearedCells, level);
+  }
+  const clearedSquares = new Map();
+  for (const cell of clearedCells) {
+    if (!cell?.squareId || !cell?.squareType) continue;
+    clearedSquares.set(cell.squareId, cell.squareType);
+  }
+  let bonus = 0;
+  for (const squareType of clearedSquares.values()) {
+    bonus += squareType === "gold" ? GOLD_SQUARE_LINE_SCORE * level : SILVER_SQUARE_LINE_SCORE * level;
+  }
+  return bonus;
+}
+
+function refreshSquareGroupsAfterLineClear() {
+  const helper = globalThis.SquareCore;
+  if (!helper?.refreshSquareGroupsAfterLineClear) return;
+  const result = helper.refreshSquareGroupsAfterLineClear(board, rows, cols, squareGroups, {
+    getCellSquareType,
+  });
+  squareGroups = result ?? squareGroups;
 }
 
 function getDominantSquareType(clearedCells) {
@@ -1903,14 +2295,33 @@ function startCascadeResolution() {
   }
   cascadeResolutionActive = true;
   cascadeResolutionPhase = "clear";
+  cascadeResolutionUsedZone = false;
   cascadeClearDelay = CASCADE_CLEAR_DELAY_MS;
   cascadeGravityTimer = 0;
   cascadeResolutionClears.push({ chain: 1, lines: fullLines.length });
   clearCascadeLines(fullLines);
+  applyZoneCascadeClear(fullLines.length);
   lines += fullLines.length;
   recordLineClearStats(fullLines.length);
+  recordCustomLineEvents(fullLines.length, false);
   updateStats();
   return true;
+}
+
+function applyZoneCascadeClear(cleared) {
+  if (!zoneActive || cleared <= 0) return;
+  cascadeResolutionUsedZone = true;
+  zoneLines += cleared;
+  zoneMaxLines = Math.max(zoneMaxLines, zoneLines);
+  zoneScoreBuffer += getNormalLineScore(Math.min(cleared, 4));
+  const zoneEventKey = globalThis.ZoneCore ? ZoneCore.getZoneEventKey({ cleared, tSpin: false, perfectClear: false }) : null;
+  const extensionMs = globalThis.ZoneCore ? ZoneCore.getZoneExtensionMs({ cleared, tSpin: false, perfectClear: false }) : 0;
+  const applied = globalThis.ZoneCore ? ZoneCore.applyZoneExtension(zoneTimer, extensionMs) : { after: zoneTimer, applied: 0 };
+  zoneTimer = applied.after;
+  if (applied.applied > 0) {
+    zoneExtensionNoticeText = globalThis.ZoneCore ? ZoneCore.getZoneExtensionText(zoneEventKey, applied.applied) : `${zoneEventKey ?? "ZONE"}  +${(applied.applied / 1000).toFixed(1)}s`;
+    zoneExtensionNoticeUntil = performance.now() + 900;
+  }
 }
 
 function finalizeCascadeResolution() {
@@ -1921,12 +2332,16 @@ function finalizeCascadeResolution() {
     clears: [...cascadeResolutionClears],
     totalLines,
   };
-  applyCascadeScore(result, perfectClear);
+  if (!cascadeResolutionUsedZone) {
+    applyCascadeScore(result, perfectClear);
+  } else {
+    updateStats();
+  }
   updateCascadeLastEvent(result, perfectClear);
   if (perfectClear) {
     recordPerfectClearStat();
   }
-  if (!endlessEnabled && lines >= 150) {
+  if (isCascadeMode() && !endlessEnabled && lines >= 150) {
     finishGame("Cascade Complete");
     return;
   }
@@ -1935,6 +2350,16 @@ function finalizeCascadeResolution() {
   cascadeClearDelay = 0;
   cascadeGravityTimer = 0;
   cascadeResolutionClears = [];
+  cascadeResolutionUsedZone = false;
+  if (evaluateTutorialLockResult({
+    mode: "cascade",
+    cascadeChain: result.chainCount,
+    cascadeClears: result.clears,
+    clearedLines: result.totalLines,
+    isPerfectClear: perfectClear,
+  })) {
+    return;
+  }
   spawnPiece();
   drawNextPreviews();
   drawPreview(holdCtx, holdType);
@@ -1966,8 +2391,10 @@ function processCascadeResolutionFrame(delta) {
         lines: fullLines.length,
       });
       clearCascadeLines(fullLines);
+      applyZoneCascadeClear(fullLines.length);
       lines += fullLines.length;
       recordLineClearStats(fullLines.length);
+      recordCustomLineEvents(fullLines.length, false);
       updateStats();
       cascadeResolutionPhase = "clear";
       cascadeClearDelay = CASCADE_CLEAR_DELAY_MS;
@@ -1981,145 +2408,37 @@ function processCascadeResolutionFrame(delta) {
 }
 
 function findBomblissLineBombs() {
-  const bombs = [];
-  for (let y = 0; y < rows; y += 1) {
-    if (!board[y].every(Boolean)) continue;
-    for (let x = 0; x < cols; x += 1) {
-      const bomb = getCellBomb(board[y][x]);
-      if (bomb === "small" || bomb === "large") {
-        bombs.push({ x, y });
-      }
-    }
-  }
-  return bombs;
-}
-
-function explodeBomblissBombs(initialBombs) {
-  const queue = [...initialBombs];
-  const exploded = new Set();
-  const explodedLargeBombIds = new Set();
-  let usedSmall = false;
-  let usedLarge = false;
-  let minX = cols;
-  let minY = rows;
-  let maxX = -1;
-  let maxY = -1;
-
-  while (queue.length > 0) {
-    const { x, y } = queue.shift();
-    const key = `${x},${y}`;
-    if (exploded.has(key)) continue;
-    const cell = board[y]?.[x];
-    const bomb = getCellBomb(cell);
-    if (bomb !== "small" && bomb !== "large") continue;
-    const largeBombId = getCellLargeBombId(cell);
-    if (bomb === "large" && largeBombId !== null) {
-      if (explodedLargeBombIds.has(largeBombId)) continue;
-      explodedLargeBombIds.add(largeBombId);
-      for (let yy = 0; yy < rows; yy += 1) {
-        for (let xx = 0; xx < cols; xx += 1) {
-          if (getCellLargeBombId(board[yy][xx]) === largeBombId) {
-            exploded.add(`${xx},${yy}`);
-          }
-        }
-      }
-    } else {
-      exploded.add(key);
-    }
-
-    usedLarge ||= bomb === "large";
-    usedSmall ||= bomb === "small";
-    const radius = bomb === "large" ? 2 : 1;
-    minX = Math.min(minX, x - radius);
-    minY = Math.min(minY, y - radius);
-    maxX = Math.max(maxX, x + radius);
-    maxY = Math.max(maxY, y + radius);
-
-    for (let yy = y - radius; yy <= y + radius; yy += 1) {
-      for (let xx = x - radius; xx <= x + radius; xx += 1) {
-        if (xx < 0 || xx >= cols || yy < 0 || yy >= rows || !board[yy][xx]) continue;
-        const chainBomb = getCellBomb(board[yy][xx]);
-        if ((chainBomb === "small" || chainBomb === "large") && !exploded.has(`${xx},${yy}`)) {
-          queue.push({ x: xx, y: yy });
-        }
-        board[yy][xx] = null;
-      }
-    }
-  }
-
-  if (maxX >= 0) {
-    return {
-      usedSmall,
-      usedLarge,
-      revealRect: {
-        x: Math.max(0, minX),
-        y: Math.max(0, minY),
-        width: Math.min(cols, maxX) - Math.max(0, minX) + 1,
-        height: Math.min(rows, maxY) - Math.max(0, minY) + 1,
-      },
-    };
-  }
-
-  return { usedSmall, usedLarge, revealRect: null };
+  return BomblissCore.findBomblissLineBombs(board, rows, cols, getCellBomb);
 }
 
 function applyBomblissGravity() {
-  for (let x = 0; x < cols; x += 1) {
-    const stack = [];
-    for (let y = rows - 1; y >= 0; y -= 1) {
-      if (board[y][x]) stack.push(board[y][x]);
-    }
-    for (let y = rows - 1; y >= 0; y -= 1) {
-      board[y][x] = stack.shift() ?? null;
-    }
-  }
+  return BomblissCore.applyBomblissGravity(board, rows, cols);
 }
 
 function createBomblissLargeBombs() {
-  let created = false;
-  for (let y = 0; y < rows - 1; y += 1) {
-    for (let x = 0; x < cols - 1; x += 1) {
-      const cells = [board[y][x], board[y][x + 1], board[y + 1][x], board[y + 1][x + 1]];
-      if (cells.every((cell) => getCellBomb(cell) === "small")) {
-        const largeBombId = nextLargeBombId;
-        nextLargeBombId += 1;
-        const positions = [
-          [x, y],
-          [x + 1, y],
-          [x, y + 1],
-          [x + 1, y + 1],
-        ];
-        positions.forEach(([cx, cy]) => {
-          const cell = board[cy][cx];
-          board[cy][cx] = createBomblissCell(getCellType(cell), "large", largeBombId);
-        });
-        created = true;
-      }
-    }
-  }
-  return created;
+  const result = BomblissCore.createBomblissLargeBombs(
+    board,
+    rows,
+    cols,
+    getCellBomb,
+    getCellType,
+    (payload) => createBomblissCell(payload.type, payload.bomb, payload.largeBombId),
+    nextLargeBombId,
+  );
+  nextLargeBombId = result.nextLargeBombId;
+  return result.created;
 }
 
 function processBomblissChains() {
-  let chainCount = 0;
-  let usedSmall = false;
-  let usedLarge = false;
-  let madeLarge = false;
-  let revealRect = null;
-
-  while (true) {
-    const bombs = findBomblissLineBombs();
-    if (bombs.length === 0) break;
-    chainCount += 1;
-    const result = explodeBomblissBombs(bombs);
-    usedSmall ||= result.usedSmall;
-    usedLarge ||= result.usedLarge;
-    revealRect = result.revealRect ?? revealRect;
-    applyBomblissGravity();
-    madeLarge ||= createBomblissLargeBombs();
-  }
-
-  return { chainCount, usedSmall, usedLarge, madeLarge, revealRect };
+  const result = BomblissCore.processBomblissChains(board, rows, cols, {
+    getCellBomb,
+    getCellLargeBombId,
+    getCellType,
+    createCell: (payload) => createBomblissCell(payload.type, payload.bomb, payload.largeBombId),
+    nextLargeBombId,
+  });
+  nextLargeBombId = result.nextLargeBombId;
+  return result;
 }
 
 function isBackToBackEligible(cleared, tSpin) {
@@ -2409,6 +2728,7 @@ function isBetterResult(current, best) {
 }
 
 function shouldSaveBestForCurrentPlayer() {
+  if (isTutorialMode()) return false;
   if (isZeroGravityMode()) return false;
   return true;
 }
@@ -2805,6 +3125,7 @@ function clearStatsForCurrentPlayer() {
 }
 
 function finalizePlayerStatsForGame() {
+  if (isTutorialMode()) return;
   updateStatsForCurrentPlayer((stats) => {
     stats.gamesPlayed += 1;
     stats.totalPlayTimeMs += gameTimeMs;
@@ -2814,6 +3135,7 @@ function finalizePlayerStatsForGame() {
 }
 
 function recordLineClearStats(cleared, { tSpin = false, backToBackActive = false, perfectClear = false } = {}) {
+  if (isTutorialMode()) return;
   if (cleared > 0) {
     updateStatsForCurrentPlayer((stats) => {
       if (cleared === 1) stats.singles += 1;
@@ -2850,18 +3172,21 @@ function recordLineClearStats(cleared, { tSpin = false, backToBackActive = false
 }
 
 function recordZoneActivationStat() {
+  if (isTutorialMode()) return;
   updateStatsForCurrentPlayer((stats) => {
     stats.zoneActivations += 1;
   });
 }
 
 function recordZoneMaxLinesStat(value) {
+  if (isTutorialMode()) return;
   updateStatsForCurrentPlayer((stats) => {
     stats.maxZoneLines = Math.max(stats.maxZoneLines ?? 0, value);
   });
 }
 
 function recordCheeseLinesStat(cleared) {
+  if (isTutorialMode()) return;
   if (cleared > 0) {
     updateStatsForCurrentPlayer((stats) => {
       stats.cheeseLinesCleared += cleared;
@@ -2870,24 +3195,28 @@ function recordCheeseLinesStat(cleared) {
 }
 
 function recordPerfectClearStat() {
+  if (isTutorialMode()) return;
   updateStatsForCurrentPlayer((stats) => {
     stats.perfectClears += 1;
   });
 }
 
 function recordShadowStageStat() {
+  if (isTutorialMode()) return;
   updateStatsForCurrentPlayer((stats) => {
     stats.shadowStagesCleared += 1;
   });
 }
 
 function recordBomblissStageStat() {
+  if (isTutorialMode()) return;
   updateStatsForCurrentPlayer((stats) => {
     stats.bomblissStagesCleared += 1;
   });
 }
 
 function recordCatchSquareStat() {
+  if (isTutorialMode()) return;
   updateStatsForCurrentPlayer((stats) => {
     stats.catchSquares += 1;
   });
@@ -3008,6 +3337,8 @@ function renderMyPageStats(stats) {
 
 function showMyPage(source = "title") {
   hideBombingReveal();
+  hideTutorialPanel();
+  hideTutorialMenus();
   myPageReturnTarget = source;
   shell.classList.add("menu-screen");
   overlay.classList.remove("hidden");
@@ -3035,6 +3366,128 @@ function getLevelGravityInterval(levelValue) {
   return Math.max(90, 760 - (levelValue - 1) * 58);
 }
 
+function calculateMarathonLevel(lineCount) {
+  return Math.floor(Math.max(0, lineCount) / 10) + 1;
+}
+
+function calculateDropInterval(levelValue) {
+  return getLevelGravityInterval(levelValue);
+}
+
+function getCustomFixedLevelNumber(value = customSettings.fixedLevel) {
+  if (value === "master") return 15;
+  if (value === "zeroGravity") return 1;
+  return Math.max(1, Number(value) || 1);
+}
+
+function normalizeCustomSettings(value = {}) {
+  const source = value && typeof value === "object" ? value : {};
+  const fixedLevel = String(source.fixedLevel ?? DEFAULT_CUSTOM_SETTINGS.fixedLevel);
+  const validFixedLevels = new Set([
+    "zeroGravity",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "master",
+  ]);
+  return {
+    levelMode: source.levelMode === "fixed" ? "fixed" : "marathon",
+    fixedLevel: validFixedLevels.has(fixedLevel) ? fixedLevel : DEFAULT_CUSTOM_SETTINGS.fixedLevel,
+    cascadeEnabled: Boolean(source.cascadeEnabled),
+    zoneEnabled: Boolean(source.zoneEnabled),
+  };
+}
+
+function syncCustomSettingsControls() {
+  if (customLevelModeSelect) customLevelModeSelect.value = customSettings.levelMode;
+  if (customFixedLevelSelect) customFixedLevelSelect.value = customSettings.fixedLevel;
+  if (pauseCustomLevelModeSelect) pauseCustomLevelModeSelect.value = customSettings.levelMode;
+  if (pauseCustomFixedLevelSelect) pauseCustomFixedLevelSelect.value = customSettings.fixedLevel;
+  if (customCascadeToggleButton) customCascadeToggleButton.textContent = `カスケード: ${customSettings.cascadeEnabled ? "ON" : "OFF"}`;
+  if (customZoneToggleButton) customZoneToggleButton.textContent = `ZONE: ${customSettings.zoneEnabled ? "ON" : "OFF"}`;
+  if (pauseCustomCascadeToggleButton) pauseCustomCascadeToggleButton.textContent = `カスケード: ${customSettings.cascadeEnabled ? "ON" : "OFF"}`;
+  if (pauseCustomZoneToggleButton) pauseCustomZoneToggleButton.textContent = `ZONE: ${customSettings.zoneEnabled ? "ON" : "OFF"}`;
+  if (customFixedLevelRow) customFixedLevelRow.classList.toggle("hidden", !isCustomMode() || customSettings.levelMode !== "fixed");
+  if (pauseCustomFixedLevelRow) pauseCustomFixedLevelRow.classList.toggle("hidden", customSettings.levelMode !== "fixed");
+}
+
+function applyCustomLevelSettings() {
+  if (!isCustomMode()) return;
+  if (customSettings.levelMode === "marathon") {
+    level = calculateMarathonLevel(lines);
+  } else {
+    level = getCustomFixedLevelNumber();
+  }
+  applyGravityInterval();
+  dropCounter = 0;
+  updateStats();
+}
+
+function disableCustomZone() {
+  if (zoneActive) {
+    finishZone();
+  }
+  zoneGauge = 0;
+  zoneActive = false;
+  zoneTimer = 0;
+  zoneConsumedGauge = 0;
+  zoneLines = 0;
+  zoneMaxLines = 0;
+  zoneScoreBuffer = 0;
+  zoneExtensionNoticeText = "";
+  zoneExtensionNoticeUntil = 0;
+  if (lastEventEl.textContent.startsWith("Zone") || lastEventEl.textContent.startsWith("ZONE")) {
+    lastEventEl.textContent = "-";
+  }
+  updateStats();
+}
+
+function applyCustomSettingsChange(settingName, value) {
+  if (!isCustomMode()) return;
+  const before = { ...customSettings };
+  if (settingName === "levelMode") customSettings.levelMode = value === "fixed" ? "fixed" : "marathon";
+  if (settingName === "fixedLevel") customSettings.fixedLevel = normalizeCustomSettings({ ...customSettings, fixedLevel: value }).fixedLevel;
+  if (settingName === "cascadeEnabled") customSettings.cascadeEnabled = Boolean(value);
+  if (settingName === "zoneEnabled") customSettings.zoneEnabled = Boolean(value);
+
+  customSettings = normalizeCustomSettings(customSettings);
+  if (settingName === "levelMode" || settingName === "fixedLevel") {
+    applyCustomLevelSettings();
+  }
+  if (settingName === "zoneEnabled") {
+    if (customSettings.zoneEnabled) {
+      zoneGauge = 0;
+      zoneActive = false;
+      zoneTimer = 0;
+      zoneLines = 0;
+      zoneScoreBuffer = 0;
+      lastEventEl.textContent = "Zone 0%";
+    } else {
+      disableCustomZone();
+    }
+  }
+  syncCustomSettingsControls();
+  saveSettings();
+  recordCustomAction("customSettingChange", {
+    setting: settingName,
+    before: before[settingName],
+    after: customSettings[settingName],
+  });
+  draw();
+}
+
 function isMarathonMode() {
   return (
     selectedGameMode === "マラソン" ||
@@ -3057,11 +3510,11 @@ function isUltraMode() {
 }
 
 function isBomblissMode() {
-  return selectedGameMode === "ボンブリス";
+  return selectedGameMode === "ボンブリス" || tutorialState?.specialMode === "bombliss";
 }
 
 function isCascadeMode() {
-  return selectedGameMode === "カスケード";
+  return selectedGameMode === "カスケード" || tutorialState?.specialMode === "cascade";
 }
 
 function isHotlineMode() {
@@ -3069,11 +3522,27 @@ function isHotlineMode() {
 }
 
 function isZoneMode() {
-  return selectedGameMode === "ゾーン";
+  return selectedGameMode === "ゾーン" || tutorialState?.specialMode === "zone";
+}
+
+function isCustomMode() {
+  return selectedGameMode === "カスタム";
+}
+
+function isTutorialMode() {
+  return selectedGameMode === "チュートリアル";
+}
+
+function isCascadeEnabledForCurrentGame() {
+  return isCascadeMode() || (isCustomMode() && customSettings.cascadeEnabled);
+}
+
+function isZoneEnabledForCurrentGame() {
+  return isZoneMode() || (isCustomMode() && customSettings.zoneEnabled);
 }
 
 function isSquareMode() {
-  return selectedGameMode === "スクエア";
+  return selectedGameMode === "スクエア" || tutorialState?.specialMode === "square";
 }
 
 function isZeroGravityMode() {
@@ -3089,6 +3558,8 @@ function isPracticeGravityOff() {
 }
 
 function hasNaturalGravity() {
+  if (isTutorialMode()) return tutorialChapter === 5;
+  if (isCustomMode() && customSettings.levelMode === "fixed" && customSettings.fixedLevel === "zeroGravity") return false;
   return !isZeroGravityMode() && !isPracticeGravityOff();
 }
 
@@ -3117,10 +3588,13 @@ function isShadowMode() {
 }
 
 function canUseZone() {
-  return isZoneMode();
+  return isZoneEnabledForCurrentGame();
 }
 
 function isMasterMode() {
+  if (isCustomMode()) {
+    return customSettings.levelMode === "fixed" && customSettings.fixedLevel === "master";
+  }
   return isMarathonMode() && fixedLevelEnabled && fixedLevelValue === "master";
 }
 
@@ -3139,8 +3613,16 @@ function getCatchFallInterval(levelValue) {
 }
 
 function applyGravityInterval() {
+  if (isTutorialMode()) {
+    dropInterval = tutorialChapter === 5 ? getLevelGravityInterval(1) : Number.POSITIVE_INFINITY;
+    return;
+  }
   if (isCatchMode()) {
     dropInterval = getCatchFallInterval(level);
+    return;
+  }
+  if (isCustomMode() && customSettings.levelMode === "fixed" && customSettings.fixedLevel === "zeroGravity") {
+    dropInterval = Number.POSITIVE_INFINITY;
     return;
   }
   if (!hasNaturalGravity()) {
@@ -3165,9 +3647,1073 @@ function formatTime(milliseconds) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(ms).padStart(3, "0")}`;
 }
 
+function getCurrentTutorialSection() {
+  return TUTORIAL_CHAPTER_SECTIONS[tutorialChapter]?.[tutorialSectionIndex] ?? null;
+}
+
+function getTutorialActionKeys(action) {
+  return formatKeyCodes(keyBindings[action] ?? []);
+}
+
+function getTutorialSectionContent(sectionId) {
+  const moveKeys = `${getTutorialActionKeys("moveLeft")} / ${getTutorialActionKeys("moveRight")}`;
+  const content = {
+    screenExplanation: {
+      title: "ゲーム画面",
+      instruction:
+        "中央の大きな枠がゲーム盤です。\n上から落ちてくる形が現在ミノです。\nNEXTには次に来るミノ、HOLDには一時的に保管したミノが表示されます。\nScoreは得点、Linesは消したライン数、Levelは落下速度です。",
+      button: true,
+    },
+    moveHorizontal: {
+      title: "左右移動",
+      instruction: `左または右のキー（${moveKeys}）を押して、\nミノを横に動かしてみよう。`,
+      button: false,
+      success: "できました！\nミノは左右に動かせます。",
+    },
+    rotateRight: {
+      title: "右回転",
+      instruction: `右回転キー（${getTutorialActionKeys("rotateRight")}）を押して、\nミノを右向きに回してみよう。`,
+      button: false,
+      success: "できました！\n右回転では時計回りに回ります。",
+    },
+    rotateLeft: {
+      title: "左回転",
+      instruction: `左回転キー（${getTutorialActionKeys("rotateLeft")}）を押して、\nミノを左向きに回してみよう。`,
+      button: false,
+      success: "できました！\n左回転では反時計回りに回ります。",
+    },
+    softDrop: {
+      title: "ソフトドロップ",
+      instruction: `ソフトドロップキー（${getTutorialActionKeys("softDrop")}）を押して、\nミノをゆっくり下へ動かしてみよう。`,
+      button: false,
+      success: "できました！\nソフトドロップでは位置を調整しながら下ろせます。",
+    },
+    hardDrop: {
+      title: "ハードドロップ",
+      instruction: `ハードドロップキー（${getTutorialActionKeys("hardDrop")}）を押して、\nミノを一気に下まで落としてみよう。`,
+      button: false,
+      success: "できました！\nハードドロップではミノを一気に固定できます。",
+    },
+  };
+  if (content[sectionId]) return content[sectionId];
+  const config = TUTORIAL_SECTIONS[sectionId];
+  if (!config) return content.screenExplanation;
+  if (sectionId === "rotationInsert") {
+    const type = tutorialState?.rotationInsertTypes?.[tutorialState?.subStep ?? 0] ?? ROTATION_INSERT_TYPES[0];
+    return {
+      title: config.title,
+      instruction: `${config.instruction}\n\n${type}ミノを回転させて\n隙間へ入れてみよう。`,
+      button: false,
+      success: "できました！",
+    };
+  }
+  if (sectionId === "backToBack" && tutorialState?.subStep === 1) {
+    return {
+      title: config.title,
+      instruction: "次もTetrisを決めよう。\n\n必要ならHOLDを使ってください。",
+      button: false,
+      success: "できました！",
+    };
+  }
+  if (sectionId === "zone" && tutorialState?.subStep === 1) {
+    return {
+      title: config.title,
+      instruction: "ZONE中はラインがすぐには消えず、\n下側へためられます。\n\nラインを1回消してみよう。",
+      button: false,
+      success: "できました！",
+    };
+  }
+  return {
+    title: config.title,
+    instruction: config.instruction,
+    button: false,
+    success: "できました！",
+  };
+}
+
+function isTutorialActionAllowed(action) {
+  if (!isTutorialMode()) return true;
+  if (tutorialChapter === 5) {
+    if (tutorialState?.completed || tutorialState?.waitingForNext) return false;
+    return ["moveLeft", "moveRight", "rotateLeft", "rotateRight", "softDrop", "hardDrop", "hold", "pause"].includes(action);
+  }
+  if (tutorialState?.completed || tutorialState?.waitingForNext) return false;
+  const section = getCurrentTutorialSection();
+  const config = TUTORIAL_SECTIONS[section];
+  if (config?.allowedActions) return config.allowedActions.includes(action);
+  switch (section) {
+    case "moveHorizontal":
+      return action === "moveLeft" || action === "moveRight";
+    case "rotateRight":
+      return action === "rotateRight";
+    case "rotateLeft":
+      return action === "rotateLeft";
+    case "softDrop":
+      return action === "softDrop";
+    case "hardDrop":
+      return action === "hardDrop";
+    default:
+      return false;
+  }
+}
+
+function updateTutorialPanel() {
+  if (!tutorialPanel || !isTutorialMode() || !tutorialChapter) return;
+  const section = getCurrentTutorialSection();
+  const content = getTutorialSectionContent(section);
+  const total = TUTORIAL_CHAPTER_SECTIONS[tutorialChapter]?.length ?? 0;
+  tutorialPanel.classList.remove("hidden");
+  tutorialStepLabelEl.textContent = `Chapter ${tutorialChapter} - ${tutorialSectionIndex + 1}/${total}`;
+  tutorialTitleEl.textContent = content.title;
+  tutorialInstructionEl.textContent = content.instruction;
+  tutorialSuccessMessageEl.textContent = tutorialState?.message ?? content.success ?? "できました！";
+  tutorialSuccessMessageEl.classList.toggle("hidden", !tutorialState?.showSuccess);
+  tutorialNextButton.classList.toggle("hidden", !content.button || Boolean(tutorialState?.completed));
+}
+
+function hideTutorialPanel() {
+  window.clearTimeout(tutorialAdvanceTimer);
+  tutorialAdvanceTimer = null;
+  tutorialPanel?.classList.add("hidden");
+  tutorialMissionPanel?.classList.add("hidden");
+}
+
+function getChapter5MissionTitle(mission) {
+  const titles = {
+    single: "Single",
+    double: "Double",
+    triple: "Triple",
+    tetris: "Tetris",
+    hold: "Hold",
+    backToBack: "Back-to-Back",
+    combo: "Combo",
+    tSpin: "T-Spin",
+    tSpinDouble: "T-Spin Double",
+    rotationInsert: "回転入れ",
+    perfectClear: "Perfect Clear",
+  };
+  return titles[mission] ?? mission;
+}
+
+function getChapter5MissionDescription(mission) {
+  if (mission === "single") return "1ラインだけ消そう";
+  if (mission === "double") return "2ラインを同時に消そう";
+  if (mission === "triple") return "3ラインを同時に消そう";
+  if (mission === "tetris") return "4ラインを同時に消そう";
+  if (mission === "hold") return "HOLDを使ってから\nミノを1個置こう";
+  if (mission === "backToBack") return "TetrisまたはT-Spinを\n2回続けて決めよう";
+  if (mission === "combo") return "3回続けてラインを消そう";
+  if (mission === "tSpin") return "Tミノを回転で入れて\nT-Spinを決めよう";
+  if (mission === "tSpinDouble") return "T-Spinで2ライン同時に消そう";
+  if (mission === "rotationInsert") {
+    const target = tutorialState?.rotationInsertTarget ?? ROTATION_INSERT_TARGETS[0];
+    return `${target}ミノを回転させて\n隙間へ入れよう`;
+  }
+  if (mission === "perfectClear") return "ライン消去後に\n盤面を空にしよう";
+  return "";
+}
+
+function formatChapter5Time(milliseconds) {
+  const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function getCurrentChapter5Mission() {
+  return tutorialState?.chapter5Missions?.[tutorialState.chapter5MissionIndex] ?? null;
+}
+
+function chooseChapter5Missions() {
+  if (Array.isArray(DEBUG_CHAPTER_5_MISSIONS) && DEBUG_CHAPTER_5_MISSIONS.length > 0) {
+    return [...new Set(DEBUG_CHAPTER_5_MISSIONS)].slice(0, CHAPTER_5_MISSION_COUNT);
+  }
+  const missions = shuffle(CHAPTER_5_MISSION_POOL).slice(0, CHAPTER_5_MISSION_COUNT);
+  if (missions.includes("backToBack") && !missions.includes("tetris") && !missions.includes("tSpinDouble")) {
+    const dependency = rng() < 0.5 ? "tetris" : "tSpinDouble";
+    const replaceIndex = missions.findIndex((mission) => mission !== "backToBack");
+    missions[replaceIndex] = dependency;
+  }
+  return missions;
+}
+
+function resetChapter5MissionTemporaryState() {
+  if (!tutorialState) return;
+  const mission = getCurrentChapter5Mission();
+  tutorialState.currentMissionStartedAt = gameTimeMs;
+  tutorialState.usedHoldForCurrentMission = false;
+  tutorialState.currentMissionProgress = 0;
+  tutorialState.lastRotationContext = null;
+  tutorialState.rotationInsertTarget = mission === "rotationInsert"
+    ? ROTATION_INSERT_TARGETS[Math.floor(rng() * ROTATION_INSERT_TARGETS.length)]
+    : null;
+}
+
+function showChapter5Mission(message = "", missionOverride = null) {
+  if (!tutorialMissionPanel || !tutorialState || tutorialChapter !== 5) return;
+  const mission = missionOverride ?? getCurrentChapter5Mission();
+  const total = tutorialState.chapter5Missions.length;
+  const remaining = tutorialState.chapter5Missions
+    .slice(tutorialState.chapter5MissionIndex + 1)
+    .map(getChapter5MissionTitle)
+    .join("\n");
+  tutorialMissionPanel.classList.remove("hidden");
+  tutorialPanel?.classList.add("hidden");
+  tutorialMissionProgressEl.textContent = message || `Mission ${tutorialState.chapter5MissionIndex + 1} / ${total}   Time ${formatChapter5Time(tutorialState.chapter5TimeRemainingMs)}`;
+  tutorialMissionTitleEl.textContent = getChapter5MissionTitle(mission);
+  tutorialMissionDescriptionEl.textContent = `${getChapter5MissionDescription(mission)}${remaining ? `\n\n残り:\n${remaining}` : ""}`;
+}
+
+function updateChapter5MissionPanel() {
+  if (isTutorialMode() && tutorialChapter === 5 && tutorialState && !gameOver) {
+    showChapter5Mission(
+      tutorialState.waitingForNext ? tutorialState.message : "",
+      tutorialState.waitingForNext ? tutorialState.clearedMissionDisplay : null,
+    );
+  }
+}
+
+function isChapter5RotationInsertSuccess(result) {
+  if (result.piece !== tutorialState.rotationInsertTarget) return false;
+  if (result.lastAction !== "rotate" || result.clearedLines < 1) return false;
+  const context = tutorialState.lastRotationContext;
+  // Chapter 5は空盤面からの実践なので、回転入れはSRSキック使用+ライン消去を簡易条件にする。
+  // 平地での単なる回転ライン消去を避けるため、キックなし回転は成功にしない。
+  return Boolean(context?.usedKick && context.type === result.piece);
+}
+
+function isChapter5MissionSuccess(mission, result) {
+  if (mission === "single") return result.clearedLines === 1 && !result.isTSpin;
+  if (mission === "double") return result.clearedLines === 2 && !result.isTSpin;
+  if (mission === "triple") return result.clearedLines === 3 && !result.isTSpin;
+  if (mission === "tetris") return result.clearedLines === 4;
+  if (mission === "hold") return tutorialState.usedHoldForCurrentMission && result.lockedAfterHold;
+  if (mission === "backToBack") return Boolean(result.isBackToBack);
+  if (mission === "combo") return result.comboCount >= 3;
+  if (mission === "tSpin") return result.piece === "T" && result.isTSpin;
+  if (mission === "tSpinDouble") return result.piece === "T" && result.isTSpin && result.clearedLines === 2;
+  if (mission === "rotationInsert") return isChapter5RotationInsertSuccess(result);
+  if (mission === "perfectClear") return result.clearedLines > 0 && result.isPerfectClear;
+  return false;
+}
+
+function evaluateChapter5LockResult(result) {
+  if (!isTutorialMode() || tutorialChapter !== 5 || !tutorialState || tutorialState.completed) return false;
+  tutorialState.chapter5PieceCount += 1;
+  const mission = getCurrentChapter5Mission();
+  if (mission && isChapter5MissionSuccess(mission, result)) {
+    completeChapter5Mission();
+    return tutorialState.chapter5MissionIndex >= tutorialState.chapter5Missions.length;
+  }
+  return false;
+}
+
+function completeChapter5Mission() {
+  const mission = getCurrentChapter5Mission();
+  if (!mission || !tutorialState) return;
+  tutorialState.chapter5CompletedMissions.push({
+    mission,
+    title: getChapter5MissionTitle(mission),
+  });
+  tutorialState.chapter5MissionIndex += 1;
+  tutorialState.showSuccess = true;
+  tutorialState.message = "Mission Clear!";
+  tutorialState.waitingForNext = true;
+  tutorialState.clearedMissionDisplay = mission;
+  resetAllInputState();
+  if (tutorialState.chapter5MissionIndex >= tutorialState.chapter5Missions.length) {
+    running = false;
+    active = null;
+  }
+  showChapter5Mission("Mission Clear!", mission);
+  window.clearTimeout(tutorialAdvanceTimer);
+  tutorialAdvanceTimer = window.setTimeout(() => {
+    if (!isTutorialMode() || tutorialChapter !== 5 || !tutorialState) return;
+    if (tutorialState.chapter5MissionIndex >= tutorialState.chapter5Missions.length) {
+      completeTutorialChapter5();
+      return;
+    }
+    tutorialState.waitingForNext = false;
+    tutorialState.clearedMissionDisplay = null;
+    resetChapter5MissionTemporaryState();
+    showChapter5Mission();
+  }, TUTORIAL_SUCCESS_DELAY_MS);
+}
+
+function getChapter5ResultSummary() {
+  const completedTitles = (tutorialState?.chapter5CompletedMissions ?? []).map(({ title }) => title).join("\n");
+  const elapsed = CHAPTER_5_TIME_LIMIT_MS - (tutorialState?.chapter5TimeRemainingMs ?? CHAPTER_5_TIME_LIMIT_MS);
+  return [
+    `Clear Time ${formatTime(elapsed)}`,
+    "",
+    completedTitles,
+    "",
+    `Score ${score.toLocaleString("ja-JP")}`,
+    `Lines ${lines}`,
+    `Pieces ${tutorialState?.chapter5PieceCount ?? 0}`,
+  ].join("\n");
+}
+
+function completeTutorialChapter5() {
+  if (!tutorialState) return;
+  tutorialState.completed = true;
+  running = false;
+  gameOver = true;
+  active = null;
+  resetAllInputState();
+  tutorialProgress = { ...tutorialProgress, chapter5Completed: true };
+  hideTutorialPanel();
+  stopBgm();
+  const summary = getChapter5ResultSummary();
+  tutorialState = null;
+  updateStats();
+  showActionOverlay("Chapter 5 Complete", "もう一度", true, `実戦ミッションをすべて達成しました。\n\n${summary}`);
+}
+
+function failTutorialChapter5() {
+  running = false;
+  gameOver = true;
+  active = null;
+  resetAllInputState();
+  hideTutorialPanel();
+  stopBgm();
+  updateStats();
+  showActionOverlay("Challenge Failed", "もう一度", true, "もう一度挑戦しよう");
+}
+
+function spawnTutorialPiece(type, options = {}) {
+  active = createPiece(type);
+  if (!active) return;
+  active.x = options.x ?? Math.floor((cols - active.matrix[0].length) / 2);
+  active.y = options.y ?? 1;
+  active.rotationState = options.rotationState ?? "0";
+  if (options.rotationState && options.rotationState !== "0") {
+    const turns = ROTATION_STATES.indexOf(options.rotationState);
+    for (let i = 0; i < turns; i += 1) {
+      active.matrix = rotate(active.matrix, 1);
+    }
+  }
+  if (options.bombCells) {
+    active.bombCells = new Set(options.bombCells);
+  }
+  if (isCascadeEnabledForCurrentGame() || isSquareMode()) {
+    active.pieceId = nextPieceId;
+    nextPieceId += 1;
+  }
+  active.lastAction = null;
+  canHold = true;
+  if (collides(active, active.x, active.y, active.matrix)) {
+    failTutorialSection();
+  }
+}
+
+function createTutorialBoard(pattern, options = {}) {
+  const nextBoard = createBoard();
+  const cellFactory = options.cellFactory ?? (() => createGarbageCell());
+  pattern.forEach((row, y) => {
+    [...row].forEach((value, x) => {
+      if (value === "X" || value === "1") {
+        nextBoard[y][x] = cellFactory(x, y);
+      }
+    });
+  });
+  return nextBoard;
+}
+
+function createTutorialCellForSection(sectionId) {
+  const config = TUTORIAL_SECTIONS[sectionId];
+  if (config?.specialMode === "bombliss") return createBomblissCell("Z");
+  if (config?.specialMode === "square") {
+    const pieceId = nextPieceId;
+    nextPieceId += 1;
+    return createSquareCell("G", pieceId);
+  }
+  if (config?.specialMode === "cascade") {
+    const pieceId = nextPieceId;
+    nextPieceId += 1;
+    return createCascadeCell("G", pieceId);
+  }
+  return createGarbageCell();
+}
+
+function getRotationInsertBoard(type) {
+  const pattern = [
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "..........", "..........",
+    "..........", "..........", "..........", "XXXX..XXXX", "XXXX..XXXX",
+  ];
+  if (type === "I") {
+    pattern[16] = "XXXX.XXXXX";
+    pattern[17] = "XXXX.XXXXX";
+    pattern[18] = "XXXX.XXXXX";
+    pattern[19] = "XXXX.XXXXX";
+  }
+  return pattern;
+}
+
+function resetTutorialRuntimeState(options = {}) {
+  const preservedBackToBack = options.preserveBackToBack ? backToBackStreak : 0;
+  const preservedRen = options.preserveRen ? renStreak : 0;
+  board = createBoard();
+  active = null;
+  holdType = null;
+  nextQueue = [];
+  score = 0;
+  lines = 0;
+  level = 1;
+  renStreak = preservedRen;
+  backToBackStreak = preservedBackToBack;
+  perfectClearCount = 0;
+  bomblissStageIndex = 0;
+  bomblissPoints = 100;
+  gameTimeMs = 0;
+  softDropDistance = 0;
+  dropCounter = 0;
+  lockCounter = 0;
+  lockResetCount = 0;
+  canHold = false;
+  zoneGauge = 0;
+  zoneActive = false;
+  zoneTimer = 0;
+  zoneConsumedGauge = 0;
+  zoneLines = 0;
+  zoneMaxLines = 0;
+  zoneScoreBuffer = 0;
+  zoneExtensionNoticeText = "";
+  zoneExtensionNoticeUntil = 0;
+  cascadeResolutionActive = false;
+  cascadeResolutionPhase = "idle";
+  cascadeResolutionClears = [];
+  cascadeResolutionUsedZone = false;
+  cascadeClearDelay = 0;
+  cascadeGravityTimer = 0;
+  nextLargeBombId = 1;
+  nextPieceId = 1;
+  nextSquareId = 1;
+  squareGroups = new Map();
+  tsdAssistCandidate = null;
+  tsdAssistDirty = true;
+  hideBombingReveal();
+  clearInputBuffer();
+  resetAllInputState();
+}
+
+function setupTutorialSectionBoard(sectionId) {
+  const config = TUTORIAL_SECTIONS[sectionId];
+  if (!config) return;
+  if (sectionId === "square") {
+    board = createBoard();
+    const pieces = [
+      { id: nextPieceId++, type: "J", cells: [[0, 16], [1, 16], [0, 17], [1, 17]] },
+      { id: nextPieceId++, type: "L", cells: [[0, 18], [1, 18], [0, 19], [1, 19]] },
+      { id: nextPieceId++, type: "S", cells: [[2, 18], [3, 18], [2, 19], [3, 19]] },
+    ];
+    pieces.forEach((piece) => {
+      piece.cells.forEach(([x, y]) => {
+        board[y][x] = createSquareCell(piece.type, piece.id);
+      });
+    });
+    return;
+  }
+  let pattern = config.boardPattern;
+  if (sectionId === "rotationInsert") {
+    const type = tutorialState.rotationInsertTypes[tutorialState.subStep];
+    pattern = getRotationInsertBoard(type);
+  }
+  if (pattern) {
+    board = createTutorialBoard(pattern, {
+      cellFactory: () => createTutorialCellForSection(sectionId),
+    });
+  }
+  if (sectionId === "zone") {
+    zoneGauge = ZONE_ACTIVATE_COST;
+    lastEventEl.textContent = `Zone ${zoneGauge}%`;
+  }
+  if (config.nextQueue) {
+    nextQueue = [...config.nextQueue];
+  }
+  holdType = null;
+  canHold = Boolean(config.holdEnabled);
+}
+
+function setupTutorialActivePiece(sectionId) {
+  const config = TUTORIAL_SECTIONS[sectionId];
+  if (!config) return;
+  let pieceType = config.pieceType;
+  if (sectionId === "rotationInsert") {
+    pieceType = tutorialState.rotationInsertTypes[tutorialState.subStep];
+  }
+  const options = { y: 1 };
+  if (pieceType === "I") options.x = 3;
+  if (pieceType === "O") options.x = 4;
+  if (config.bombCells) options.bombCells = config.bombCells;
+  spawnTutorialPiece(pieceType, options);
+}
+
+function startTutorialSection(sectionId) {
+  window.clearTimeout(tutorialAdvanceTimer);
+  tutorialAdvanceTimer = null;
+  resetTutorialRuntimeState();
+  const config = TUTORIAL_SECTIONS[sectionId];
+  tutorialState = {
+    sectionId,
+    startX: null,
+    startY: null,
+    startRotationState: "0",
+    specialMode: config?.specialMode ?? null,
+    subStep: 0,
+    completedLocks: 0,
+    usedHold: false,
+    usedHoldDuringBackToBack: false,
+    rotatedSinceSpawn: false,
+    lastSuccessfulAction: null,
+    rotationInsertTypes: [...ROTATION_INSERT_TYPES],
+    completed: false,
+    showSuccess: false,
+    message: "",
+  };
+
+  if (config) {
+    setupTutorialSectionBoard(sectionId);
+    setupTutorialActivePiece(sectionId);
+  } else if (sectionId === "screenExplanation") {
+    spawnTutorialPiece("T", { y: 2 });
+  } else if (sectionId === "moveHorizontal") {
+    spawnTutorialPiece("O", { y: 2 });
+  } else if (sectionId === "rotateRight" || sectionId === "rotateLeft") {
+    spawnTutorialPiece("L", { y: 8, rotationState: "0" });
+  } else if (sectionId === "softDrop") {
+    spawnTutorialPiece("O", { y: 1 });
+  } else if (sectionId === "hardDrop") {
+    spawnTutorialPiece("I", { y: 1 });
+  }
+
+  tutorialState.startX = active?.x ?? null;
+  tutorialState.startY = active?.y ?? null;
+  tutorialState.startRotationState = active?.rotationState ?? "0";
+  if (sectionId !== "zone") {
+    lastEventEl.textContent = "-";
+  }
+  lastTime = performance.now();
+  updateStats();
+  drawNextPreviews();
+  drawPreview(holdCtx, holdType);
+  updateTutorialPanel();
+  draw();
+}
+
+function completeTutorialSection(message = "") {
+  if (!isTutorialMode() || tutorialState?.completed) return;
+  tutorialState.completed = true;
+  tutorialState.showSuccess = true;
+  tutorialState.message = message || getTutorialSectionContent(getCurrentTutorialSection()).success || "できました！";
+  active = null;
+  resetAllInputState();
+  updateTutorialPanel();
+  window.clearTimeout(tutorialAdvanceTimer);
+  tutorialAdvanceTimer = window.setTimeout(() => {
+    advanceTutorialSection();
+  }, TUTORIAL_SUCCESS_DELAY_MS);
+}
+
+function advanceTutorialSection() {
+  if (!isTutorialMode()) return;
+  window.clearTimeout(tutorialAdvanceTimer);
+  tutorialAdvanceTimer = null;
+  tutorialSectionIndex += 1;
+  if (tutorialSectionIndex >= (TUTORIAL_CHAPTER_SECTIONS[tutorialChapter]?.length ?? 0)) {
+    completeTutorialChapter();
+    return;
+  }
+  startTutorialSection(getCurrentTutorialSection());
+}
+
+function failTutorialSection() {
+  if (!isTutorialMode()) return;
+  tutorialState = {
+    ...(tutorialState ?? {}),
+    waitingForNext: true,
+  };
+  resetAllInputState();
+  if (tutorialSuccessMessageEl) {
+    tutorialSuccessMessageEl.textContent = "もう一度やってみよう";
+    tutorialSuccessMessageEl.classList.remove("hidden");
+  }
+  window.clearTimeout(tutorialAdvanceTimer);
+  tutorialAdvanceTimer = window.setTimeout(() => {
+    startTutorialSection(getCurrentTutorialSection());
+  }, TUTORIAL_SUCCESS_DELAY_MS);
+}
+
+function handleTutorialMove(deltaX) {
+  if (getCurrentTutorialSection() !== "moveHorizontal" || !tutorialState || tutorialState.completed) return;
+  if (Math.abs((active?.x ?? tutorialState.startX) - tutorialState.startX) >= 1) {
+    completeTutorialSection();
+  }
+}
+
+function handleTutorialRotate(direction, fromState, toState) {
+  const section = getCurrentTutorialSection();
+  if (!tutorialState || tutorialState.completed || fromState === toState) return;
+  if (section === "rotateRight" && direction > 0 && toState === nextRotationState(fromState, 1)) {
+    completeTutorialSection();
+  }
+  if (section === "rotateLeft" && direction < 0 && toState === nextRotationState(fromState, -1)) {
+    completeTutorialSection();
+  }
+}
+
+function handleTutorialSoftDrop() {
+  if (getCurrentTutorialSection() !== "softDrop" || !tutorialState || tutorialState.completed) return;
+  if (softDropDistance >= 3) {
+    completeTutorialSection();
+  }
+}
+
+function lockTutorialPiece() {
+  if (getCurrentTutorialSection() !== "hardDrop" || !tutorialState || tutorialState.completed) {
+    failTutorialSection();
+    return;
+  }
+  mergePiece();
+  active = null;
+  completeTutorialSection();
+  updateStats();
+  draw();
+}
+
+function getTutorialLineEventType(cleared, tSpin, perfectClear) {
+  if (tSpin && cleared === 1) return "tSpinSingle";
+  if (tSpin && cleared === 2) return "tSpinDouble";
+  if (tSpin && cleared === 3) return "tSpinTriple";
+  if (tSpin) return "tSpin";
+  if (cleared === 1) return "single";
+  if (cleared === 2) return "double";
+  if (cleared === 3) return "triple";
+  if (cleared === 4) return "tetris";
+  if (perfectClear) return "perfectClear";
+  return "none";
+}
+
+function resetTutorialSectionForSubStep(options = {}) {
+  const sectionId = getCurrentTutorialSection();
+  const previous = tutorialState;
+  resetTutorialRuntimeState({
+    preserveBackToBack: options.preserveBackToBack,
+    preserveRen: options.preserveRen,
+  });
+  tutorialState = {
+    ...previous,
+    completed: false,
+    showSuccess: false,
+    message: "",
+    waitingForNext: false,
+    rotatedSinceSpawn: false,
+    lastSuccessfulAction: null,
+  };
+  setupTutorialSectionBoard(sectionId);
+  setupTutorialActivePiece(sectionId);
+  updateStats();
+  drawNextPreviews();
+  drawPreview(holdCtx, holdType);
+  updateTutorialPanel();
+  draw();
+}
+
+function advanceTutorialSubStep(message = "できました！", options = {}) {
+  if (!tutorialState) return;
+  tutorialState.showSuccess = true;
+  tutorialState.message = message;
+  active = null;
+  resetAllInputState();
+  updateTutorialPanel();
+  window.clearTimeout(tutorialAdvanceTimer);
+  tutorialAdvanceTimer = window.setTimeout(() => {
+    if (!isTutorialMode() || tutorialState?.completed) return;
+    tutorialState.showSuccess = false;
+    tutorialState.message = "";
+    if (options.nextSubStep !== undefined) {
+      tutorialState.subStep = options.nextSubStep;
+    }
+    if (options.completedLocks !== undefined) {
+      tutorialState.completedLocks = options.completedLocks;
+    }
+    resetTutorialSectionForSubStep({
+      preserveBackToBack: options.preserveBackToBack,
+      preserveRen: options.preserveRen,
+    });
+  }, TUTORIAL_SUCCESS_DELAY_MS);
+}
+
+function isTutorialLockSuccess(sectionId, result) {
+  switch (sectionId) {
+    case "single":
+      return result.clearedLines === 1 && result.eventType === "single";
+    case "double":
+      return result.clearedLines === 2 && result.eventType === "double";
+    case "triple":
+      return result.piece === "I" && result.clearedLines === 3 && result.eventType === "triple";
+    case "tetris":
+      return result.clearedLines === 4 && result.eventType === "tetris";
+    case "hold":
+      return tutorialState.usedHold && result.piece === "I" && result.clearedLines === 4 && result.eventType === "tetris";
+    case "tSpin":
+      return result.piece === "T" && result.lastAction === "rotate" && result.isTSpin && result.clearedLines === 1;
+    case "tSpinDouble":
+      return result.piece === "T" && result.lastAction === "rotate" && result.isTSpin && result.clearedLines === 2 && result.eventType === "tSpinDouble";
+    case "perfectClear":
+      return result.clearedLines > 0 && result.isPerfectClear;
+    case "cascade":
+      return result.mode === "cascade" && result.cascadeChain >= 2 && result.clearedLines >= 2;
+    case "square":
+      return result.mode === "square" && result.madeSquareCount >= 1;
+    case "bombliss":
+      return result.mode === "bombliss" && result.chainCount > 0 && (result.usedSmall || result.usedLarge);
+    case "zone":
+      return tutorialState.subStep === 1 && result.mode === "zone" && result.zoneActive && result.zoneLines > 0;
+    case "garbage":
+      return result.clearedGarbageLines > 0 || result.clearedGarbageCells > 0;
+    default:
+      return false;
+  }
+}
+
+function evaluateTutorialLockResult(result) {
+  if (!isTutorialMode() || tutorialChapter === 1 || !tutorialState || tutorialState.completed) return false;
+  if (tutorialChapter === 5) {
+    return evaluateChapter5LockResult(result);
+  }
+  const sectionId = getCurrentTutorialSection();
+
+  if (sectionId === "backToBack") {
+    if (result.clearedLines === 4 && result.eventType === "tetris") {
+      if (tutorialState.subStep === 0) {
+        tutorialState.subStep = 1;
+        advanceTutorialSubStep("できました！", {
+          nextSubStep: 1,
+          preserveBackToBack: true,
+        });
+        return true;
+      }
+      if (tutorialState.subStep === 1 && result.isBackToBack && tutorialState.usedHoldDuringBackToBack) {
+        completeTutorialSection();
+        return true;
+      }
+    }
+    failTutorialSection();
+    return true;
+  }
+
+  if (sectionId === "combo") {
+    if (result.clearedLines > 0) {
+      const completedLocks = (tutorialState.completedLocks ?? 0) + 1;
+      if (completedLocks >= 2 && result.comboCount >= 2) {
+        completeTutorialSection();
+        return true;
+      }
+      advanceTutorialSubStep("できました！", {
+        completedLocks,
+        preserveRen: true,
+      });
+      return true;
+    }
+    failTutorialSection();
+    return true;
+  }
+
+  if (sectionId === "rotationInsert") {
+    const type = tutorialState.rotationInsertTypes[tutorialState.subStep];
+    if (result.piece === type && result.lastAction === "rotate" && tutorialState.rotatedSinceSpawn) {
+      const nextSubStep = tutorialState.subStep + 1;
+      if (nextSubStep >= tutorialState.rotationInsertTypes.length) {
+        completeTutorialSection();
+        return true;
+      }
+      advanceTutorialSubStep("できました！", { nextSubStep });
+      return true;
+    }
+    failTutorialSection();
+    return true;
+  }
+
+  if (isTutorialLockSuccess(sectionId, result)) {
+    completeTutorialSection(sectionId === "square" ? "Square完成！\n\n4個とも同じ種類なら\nGold Squareになります。" : "できました！");
+    return true;
+  }
+
+  failTutorialSection();
+  return true;
+}
+
+function completeTutorialChapter() {
+  running = false;
+  gameOver = true;
+  active = null;
+  resetAllInputState();
+  const completedKey = `chapter${tutorialChapter}Completed`;
+  tutorialProgress = { ...tutorialProgress, [completedKey]: true };
+  hideTutorialPanel();
+  stopBgm();
+  finishZone();
+  tutorialState = null;
+  updateStats();
+  const content = TUTORIAL_CHAPTER_COMPLETE[tutorialChapter] ?? TUTORIAL_CHAPTER_COMPLETE[1];
+  showActionOverlay(
+    content.title,
+    "もう一度",
+    true,
+    content.body,
+  );
+}
+
+function startTutorialChapter(chapter) {
+  if (chapter === 5) {
+    startTutorialChapter5();
+    return;
+  }
+  selectedGameMode = "チュートリアル";
+  tutorialChapter = chapter;
+  tutorialSectionIndex = 0;
+  tutorialState = null;
+  seedRng(`tutorial-${Date.now()}`);
+  easyModeVariant = null;
+  cols = DEFAULT_COLS;
+  rows = DEFAULT_ROWS;
+  configureBoardForMode();
+  board = createBoard();
+  nextQueue = [];
+  holdType = null;
+  score = 0;
+  lines = 0;
+  level = 1;
+  gameTimeMs = 0;
+  dropInterval = Number.POSITIVE_INFINITY;
+  dropCounter = 0;
+  lockCounter = 0;
+  lockResetCount = 0;
+  softDropDistance = 0;
+  tsdAssistCandidate = null;
+  tsdAssistDirty = true;
+  paused = false;
+  gameOver = false;
+  running = true;
+  clearInputBuffer();
+  resetAllInputState();
+  stopBgm();
+  hideOverlay();
+  if (!running) {
+    running = true;
+  }
+  startTutorialSection(getCurrentTutorialSection());
+  requestAnimationFrame(update);
+}
+
+function startTutorialChapter1() {
+  startTutorialChapter(1);
+}
+
+function startTutorialChapter5() {
+  selectedGameMode = "チュートリアル";
+  tutorialChapter = 5;
+  tutorialSectionIndex = 0;
+  seedRng(`tutorial-5-${Date.now()}`);
+  easyModeVariant = null;
+  cols = DEFAULT_COLS;
+  rows = DEFAULT_ROWS;
+  configureBoardForMode();
+  board = createBoard();
+  nextQueue = [];
+  holdType = null;
+  canHold = true;
+  score = 0;
+  lines = 0;
+  level = 1;
+  renStreak = 0;
+  backToBackStreak = 0;
+  perfectClearCount = 0;
+  gameTimeMs = 0;
+  dropCounter = 0;
+  lockCounter = 0;
+  lockResetCount = 0;
+  softDropDistance = 0;
+  zoneGauge = 0;
+  zoneActive = false;
+  zoneTimer = 0;
+  zoneConsumedGauge = 0;
+  zoneLines = 0;
+  zoneMaxLines = 0;
+  zoneScoreBuffer = 0;
+  cascadeResolutionActive = false;
+  cascadeResolutionPhase = "idle";
+  cascadeResolutionClears = [];
+  cascadeResolutionUsedZone = false;
+  cascadeClearDelay = 0;
+  cascadeGravityTimer = 0;
+  squareGroups = new Map();
+  bomblissStageIndex = 0;
+  bomblissPoints = 100;
+  nextPieceId = 1;
+  nextSquareId = 1;
+  nextLargeBombId = 1;
+  tsdAssistCandidate = null;
+  tsdAssistDirty = true;
+  paused = false;
+  gameOver = false;
+  running = true;
+  tutorialState = {
+    chapter: 5,
+    completed: false,
+    chapter5Missions: chooseChapter5Missions(),
+    chapter5MissionIndex: 0,
+    chapter5CompletedMissions: [],
+    chapter5TimeRemainingMs: CHAPTER_5_TIME_LIMIT_MS,
+    chapter5PieceCount: 0,
+    currentMissionStartedAt: 0,
+    usedHoldForCurrentMission: false,
+    rotationInsertTarget: null,
+    currentMissionProgress: 0,
+    lastRotationContext: null,
+    lastSuccessfulAction: null,
+    clearedMissionDisplay: null,
+  };
+  if (tutorialState.chapter5Missions.length === 0) {
+    tutorialState.chapter5Missions = CHAPTER_5_MISSION_POOL.slice(0, CHAPTER_5_MISSION_COUNT);
+  }
+  console.debug("Chapter 5 missions", tutorialState.chapter5Missions);
+  resetChapter5MissionTemporaryState();
+  clearInputBuffer();
+  resetAllInputState();
+  stopBgm();
+  hideOverlay();
+  hideTutorialPanel();
+  applyGravityInterval();
+  lastEventEl.textContent = "-";
+  lastTime = performance.now();
+  updateStats();
+  fillQueue();
+  spawnPiece();
+  drawNextPreviews();
+  drawPreview(holdCtx, holdType);
+  showChapter5Mission();
+  draw();
+  requestAnimationFrame(update);
+}
+
+function showTutorialChapterMenu() {
+  hideBombingReveal();
+  hideCustomOverlayPanels();
+  hideTutorialPanel();
+  hidePracticeMenu();
+  shell.classList.add("menu-screen");
+  overlay.classList.remove("hidden");
+  overlayTitle.textContent = "チュートリアル";
+  modeMenu.classList.add("hidden");
+  if (myPageButton) myPageButton.classList.add("hidden");
+  if (playerSwitchButton) playerSwitchButton.classList.add("hidden");
+  if (onePlayerMenu) onePlayerMenu.classList.add("hidden");
+  easyModeMenu.classList.add("hidden");
+  tutorialChapterMenu?.classList.remove("hidden");
+  globalOptionsButton.classList.add("hidden");
+  optionMenu.classList.add("hidden");
+  globalOptionsMenu.classList.add("hidden");
+  if (keybindMenu) keybindMenu.classList.add("hidden");
+  if (myPageMenu) myPageMenu.classList.add("hidden");
+  loginMenu.classList.add("hidden");
+  actionMenu.classList.add("hidden");
+}
+
+function recordCustomAction(action, details = {}) {
+  if (!isCustomMode()) return;
+  customActionLog.push({
+    gameTimeMs: Math.max(0, Math.floor(gameTimeMs)),
+    action,
+    details,
+  });
+  if (customActionLog.length > CUSTOM_ACTION_LOG_LIMIT) {
+    customActionLog.splice(0, customActionLog.length - CUSTOM_ACTION_LOG_LIMIT);
+  }
+  if (customActionLogVisible) {
+    renderCustomActionLog();
+  }
+}
+
+function formatCustomActionLabel(entry) {
+  const details = entry.details ?? {};
+  switch (entry.action) {
+    case "moveLeft":
+      return "Move Left";
+    case "moveRight":
+      return "Move Right";
+    case "softDropStart":
+      return "Soft Drop Start";
+    case "softDropEnd":
+      return "Soft Drop End";
+    case "hardDrop":
+      return "Hard Drop";
+    case "rotateRight":
+      return "Rotate Right";
+    case "rotateLeft":
+      return "Rotate Left";
+    case "hold":
+      return "Hold";
+    case "zoneActivate":
+      return "ZONE Activate";
+    case "lock":
+      return `Lock ${details.piece ?? ""} at x=${details.x ?? "-"}, y=${details.y ?? "-"}, rotation=${details.rotationState ?? "-"}`;
+    case "lineClear":
+      return `${details.tSpin ? "T-Spin " : ""}${details.cleared === 4 ? "Tetris" : `${details.cleared ?? 0} Line Clear`}`;
+    case "tSpin":
+      return details.name ?? "T-Spin";
+    case "tetris":
+      return "Tetris";
+    case "restart":
+      return "Restart";
+    case "timeReset":
+      return "Time Reset";
+    case "scoreReset":
+      return "Score Reset";
+    case "customSettingChange":
+      return `Custom Setting ${details.setting}: ${details.before} -> ${details.after}`;
+    default:
+      return entry.action;
+  }
+}
+
+function renderCustomActionLog() {
+  if (!customActionLogList) return;
+  customActionLogList.innerHTML = "";
+  if (customActionLogCount) customActionLogCount.textContent = String(customActionLog.length);
+  const entries = customActionLog.slice(-120);
+  if (entries.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "custom-log-entry";
+    empty.textContent = "ログなし";
+    customActionLogList.appendChild(empty);
+    return;
+  }
+  entries.forEach((entry) => {
+    const row = document.createElement("div");
+    row.className = "custom-log-entry";
+    row.textContent = `${formatTime(entry.gameTimeMs)}  ${formatCustomActionLabel(entry)}`;
+    customActionLogList.appendChild(row);
+  });
+  customActionLogList.scrollTop = customActionLogList.scrollHeight;
+}
+
+function resetCustomActionLog() {
+  customActionLog = [];
+  customActionLogVisible = false;
+  renderCustomActionLog();
+}
+
 function updateTimeDisplay() {
   if (isCatchMode()) {
     timeDisplayEl.textContent = formatTime(Math.max(0, CATCH_DURATION_MS - gameTimeMs));
+    return;
+  }
+  if (canUseZone() && zoneActive) {
+    timeDisplayEl.textContent = globalThis.ZoneCore ? ZoneCore.formatZoneTimer(zoneTimer) : `${(Math.max(0, zoneTimer) / 1000).toFixed(1)}s`;
     return;
   }
   if (isUltraMode() || isPurifyMode()) {
@@ -3181,6 +4727,8 @@ function updateTimeDisplay() {
 function updateLineGoalDisplay() {
   if (isAllClearSprintMode()) {
     currentLinesEl.textContent = `${perfectClearCount} / 20 PC`;
+  } else if (isTutorialMode()) {
+    currentLinesEl.textContent = tutorialChapter ? `Chapter ${tutorialChapter}` : "-";
   } else if (isBomblissMode()) {
     currentLinesEl.textContent = `Stage ${bomblissStageIndex + 1}`;
   } else if (isSprintMode()) {
@@ -3195,6 +4743,8 @@ function updateLineGoalDisplay() {
     currentLinesEl.textContent = `Core ${catchCore?.cells.length ?? 0}`;
   } else if (isUltraMode()) {
     currentLinesEl.textContent = `${lines}`;
+  } else if (isCustomMode()) {
+    currentLinesEl.textContent = `Lines ${lines}`;
   } else if (isCascadeMode()) {
     currentLinesEl.textContent = endlessEnabled ? `${lines}` : `${Math.min(lines, 150)} / 150`;
   } else if (isHotlineMode()) {
@@ -3217,6 +4767,7 @@ function updateOptionButtons() {
   }
   sprintGoalValueEl.textContent = sprintGoalLines;
   cheeseGoalSelect.value = String(cheeseGoalLines);
+  syncCustomSettingsControls();
 }
 
 function getModeRulesText() {
@@ -3256,6 +4807,8 @@ function getModeRulesText() {
       return "指定されたホットライン上で消したラインだけが進行になります。\nHot-Lineポイントを集めてレベルを上げます。";
     case "ゾーン":
       return "Zoneゲージを溜めて発動し、落下を止めてラインを貯めるモードです。\n終了時にまとめてボーナスが入ります。";
+    case "カスタム":
+      return "レベル方式、カスケード重力、ZONEを自由に組み合わせて遊ぶモードです。";
     case "スクエア":
       return "4x4の完全な正方形を作って加点するモードです。\n通常ライン消去も行います。";
     case "無重力":
@@ -3279,12 +4832,17 @@ function updateOptionVisibility() {
   const shadow = isShadowMode();
   const catchMode = isCatchMode();
   const zeroGravity = isZeroGravityMode();
+  const custom = isCustomMode();
   const marathonLike = isMarathonMode();
   const sprint = selectedGameMode === "スプリント";
   const easyVariant = Boolean(easyModeVariant);
   shadowStageRow.classList.toggle("hidden", !shadow);
-  fixedLevelToggleRow.classList.toggle("hidden", !marathon);
-  fixedLevelRow.classList.toggle("hidden", !marathon || !fixedLevelEnabled);
+  fixedLevelToggleRow.classList.toggle("hidden", !marathon || custom);
+  fixedLevelRow.classList.toggle("hidden", !marathon || !fixedLevelEnabled || custom);
+  if (customLevelModeRow) customLevelModeRow.classList.toggle("hidden", !custom);
+  if (customFixedLevelRow) customFixedLevelRow.classList.toggle("hidden", !custom || customSettings.levelMode !== "fixed");
+  if (customCascadeToggleButton) customCascadeToggleButton.classList.toggle("hidden", !custom);
+  if (customZoneToggleButton) customZoneToggleButton.classList.toggle("hidden", !custom);
   endlessToggleButton.classList.toggle("hidden", !marathonLike && !cascade && !hotline);
   sprintGoalRow.classList.toggle("hidden", !sprint);
   cheeseGoalRow.classList.toggle("hidden", !cheese);
@@ -3292,6 +4850,12 @@ function updateOptionVisibility() {
   if (zeroGravity) {
     fixedLevelToggleRow.classList.add("hidden");
     fixedLevelRow.classList.add("hidden");
+    endlessToggleButton.classList.add("hidden");
+    sprintGoalRow.classList.add("hidden");
+    cheeseGoalRow.classList.add("hidden");
+    cheesePurifyToggleButton.classList.add("hidden");
+  }
+  if (custom) {
     endlessToggleButton.classList.add("hidden");
     sprintGoalRow.classList.add("hidden");
     cheeseGoalRow.classList.add("hidden");
@@ -3320,6 +4884,7 @@ function updateOptionVisibility() {
     ghostToggleButton.classList.remove("hidden");
   }
   difficultyToggleButton.classList.toggle("hidden", !easyVariant || isBomblissMode());
+  syncCustomSettingsControls();
   updateModeRules();
 }
 
@@ -3333,6 +4898,7 @@ function getPerfectClearScore(cleared) {
 }
 
 function canAutoLevelUp() {
+  if (isCustomMode()) return customSettings.levelMode === "marathon";
   if (fixedLevelEnabled) return false;
   if (isZeroGravityMode()) return false;
   if (isPracticeMode()) return false;
@@ -3352,7 +4918,7 @@ function applyLockScore(cleared, tSpin, backToBackActive, perfectClear) {
     score += backToBackActive ? Math.floor(scoreIncrease * 1.5) : scoreIncrease;
     lines += cleared;
     if (canAutoLevelUp()) {
-      level = Math.floor(lines / 10) + 1;
+      level = calculateMarathonLevel(lines);
       if (isEasyTetrisMode()) {
         level = Math.min(level, 10);
       }
@@ -3381,8 +4947,10 @@ function applyCascadeScore(result, perfectClear) {
   });
 
   if (result.totalLines > 0) {
-    level = Math.floor(lines / 10) + 1;
-    applyGravityInterval();
+    if (canAutoLevelUp()) {
+      level = calculateMarathonLevel(lines);
+      applyGravityInterval();
+    }
   }
   if (perfectClear) {
     score += getPerfectClearScore(Math.min(result.totalLines, 4));
@@ -3432,6 +5000,19 @@ function getTSpinEventName(cleared) {
   return names[cleared] ?? "T-Spin";
 }
 
+function recordCustomLineEvents(cleared, tSpin = false) {
+  if (!isCustomMode()) return;
+  if (cleared > 0) {
+    recordCustomAction("lineClear", { cleared, tSpin });
+  }
+  if (tSpin) {
+    recordCustomAction("tSpin", { cleared, name: getTSpinEventName(cleared) });
+  }
+  if (cleared === 4) {
+    recordCustomAction("tetris", { cleared });
+  }
+}
+
 function updateLastEvent(cleared, tSpin, backToBackActive, perfectClear) {
   const backToBackEligible = isBackToBackEligible(cleared, tSpin);
   const normalLineClear = cleared > 0 && !backToBackEligible;
@@ -3461,7 +5042,11 @@ function updateLastEvent(cleared, tSpin, backToBackActive, perfectClear) {
 function updateZoneStatus() {
   if (!canUseZone()) return;
   if (zoneActive) {
-    lastEventEl.textContent = `ZONE ${zoneLines}`;
+    if (zoneExtensionNoticeText && performance.now() < zoneExtensionNoticeUntil) {
+      lastEventEl.textContent = zoneExtensionNoticeText;
+      return;
+    }
+    lastEventEl.textContent = globalThis.ZoneCore ? ZoneCore.getZoneStatusText(zoneTimer) : `ZONE ${(Math.max(0, zoneTimer) / 1000).toFixed(1)}s`;
   } else if (lastEventEl.textContent === "-" || /^Zone \d+%$/.test(lastEventEl.textContent)) {
     lastEventEl.textContent = `Zone ${zoneGauge}%`;
   }
@@ -3469,26 +5054,56 @@ function updateZoneStatus() {
 
 function activateZone() {
   if (!running || paused || !canUseZone() || zoneActive || zoneGauge < ZONE_ACTIVATE_COST) return;
+  const consumedGauge = zoneGauge;
   zoneActive = true;
-  zoneTimer = ZONE_DURATION_MS;
+  zoneConsumedGauge = consumedGauge;
+  zoneTimer = globalThis.ZoneCore ? ZoneCore.getZoneBaseDurationMs(consumedGauge) : consumedGauge * 200;
   zoneLines = 0;
   zoneMaxLines = 0;
-  zoneLineLimit = 20;
-  zoneLineLimitUnlimited = false;
   zoneScoreBuffer = 0;
-  zoneGauge -= ZONE_ACTIVATE_COST;
+  zoneGauge = 0;
+  zoneExtensionNoticeText = "";
+  zoneExtensionNoticeUntil = 0;
   dropCounter = 0;
   recordZoneActivationStat();
-  lastEventEl.textContent = "ZONE 0";
+  recordCustomAction("zoneActivate", { consumedGauge });
+  lastEventEl.textContent = globalThis.ZoneCore ? ZoneCore.getZoneStatusText(zoneTimer) : `ZONE ${(Math.max(0, zoneTimer) / 1000).toFixed(1)}s`;
+  if (isTutorialMode() && getCurrentTutorialSection() === "zone" && tutorialState?.subStep === 0) {
+    tutorialState.subStep = 1;
+    tutorialState.showSuccess = true;
+    tutorialState.message = "できました！";
+    updateTutorialPanel();
+    window.setTimeout(() => {
+      if (isTutorialMode() && getCurrentTutorialSection() === "zone" && tutorialState && !tutorialState.completed) {
+        tutorialState.showSuccess = false;
+        tutorialState.message = "";
+        updateTutorialPanel();
+      }
+    }, TUTORIAL_SUCCESS_DELAY_MS);
+  }
+  console.debug("activateZone", {
+    zoneTimer,
+    zoneConsumedGauge,
+    running,
+    paused,
+    gameOver,
+  });
   draw();
 }
 
 function finishZone() {
+  console.debug("finishZone called", {
+    zoneActive,
+    zoneTimer,
+    zoneLines,
+  });
   if (!zoneActive) return;
   zoneActive = false;
   zoneTimer = 0;
-  zoneLineLimit = 20;
-  zoneLineLimitUnlimited = false;
+  zoneConsumedGauge = 0;
+  zoneGauge = 0;
+  zoneExtensionNoticeText = "";
+  zoneExtensionNoticeUntil = 0;
   if (zoneLines > 0) {
     const zoneBonus = zoneLines * 100 * level;
     const multiplier = getZoneMultiplier(zoneLines);
@@ -3502,6 +5117,12 @@ function finishZone() {
   zoneMaxLines = 0;
   zoneScoreBuffer = 0;
   updateStats();
+  console.debug("finishZone complete", {
+    zoneActive,
+    zoneTimer,
+    zoneGauge,
+    lastEvent: lastEventEl.textContent,
+  });
 }
 
 function movePiece(deltaX) {
@@ -3511,7 +5132,15 @@ function movePiece(deltaX) {
     active.x += deltaX;
     active.lastAction = "move";
     tsdAssistDirty = true;
-    resetLockDelayAfterPlayerAction(wasGrounded);
+    if (!isTutorialMode()) {
+      resetLockDelayAfterPlayerAction(wasGrounded);
+    }
+    recordCustomAction(deltaX < 0 ? "moveLeft" : "moveRight", {
+      piece: active.type,
+      x: active.x,
+      y: active.y,
+    });
+    handleTutorialMove(deltaX);
     draw();
   }
 }
@@ -3637,6 +5266,7 @@ function loadSettings() {
     return {
       keyBindings: normalized,
       tsdAssistEnabled: Boolean(source.tsdAssistEnabled),
+      customSettings: normalizeCustomSettings(source.customSettings),
     };
   } catch {
     const normalized = {};
@@ -3646,6 +5276,7 @@ function loadSettings() {
     return {
       keyBindings: normalized,
       tsdAssistEnabled: false,
+      customSettings: { ...DEFAULT_CUSTOM_SETTINGS },
     };
   }
 }
@@ -3657,6 +5288,7 @@ function saveSettings() {
       JSON.stringify({
         keyBindings,
         tsdAssistEnabled,
+        customSettings,
       }),
     );
   } catch {
@@ -3711,6 +5343,7 @@ function loadKeyBindingsFromSettings() {
   const settings = loadSettings();
   keyBindings = settings.keyBindings;
   tsdAssistEnabled = Boolean(settings.tsdAssistEnabled);
+  customSettings = normalizeCustomSettings(settings.customSettings);
 }
 
 function clearKeyBinding(action) {
@@ -3727,8 +5360,26 @@ function isEditableTarget(target) {
   );
 }
 
+function hideCustomOverlayPanels() {
+  customActionLogVisible = false;
+  if (customPauseSettingsPanel) customPauseSettingsPanel.classList.add("hidden");
+  if (customActionLogPanel) customActionLogPanel.classList.add("hidden");
+}
+
+function hideTutorialMenus() {
+  tutorialChapterMenu?.classList.add("hidden");
+}
+
+function hidePracticeMenu() {
+  practiceMenu?.classList.add("hidden");
+}
+
 function showTitleMenu() {
   hideBombingReveal();
+  hideCustomOverlayPanels();
+  hideTutorialPanel();
+  hideTutorialMenus();
+  hidePracticeMenu();
   shell.classList.add("menu-screen");
   overlay.classList.remove("hidden");
   overlayTitle.textContent = "Blockfall";
@@ -3747,8 +5398,35 @@ function showTitleMenu() {
   actionMenu.classList.add("hidden");
 }
 
+function showPracticeMenu() {
+  hideBombingReveal();
+  hideCustomOverlayPanels();
+  hideTutorialPanel();
+  hideTutorialMenus();
+  shell.classList.add("menu-screen");
+  overlay.classList.remove("hidden");
+  overlayTitle.textContent = "練習";
+  modeMenu.classList.add("hidden");
+  if (myPageButton) myPageButton.classList.add("hidden");
+  if (playerSwitchButton) playerSwitchButton.classList.add("hidden");
+  if (onePlayerMenu) onePlayerMenu.classList.add("hidden");
+  easyModeMenu.classList.add("hidden");
+  practiceMenu?.classList.remove("hidden");
+  globalOptionsButton.classList.add("hidden");
+  optionMenu.classList.add("hidden");
+  globalOptionsMenu.classList.add("hidden");
+  if (keybindMenu) keybindMenu.classList.add("hidden");
+  if (myPageMenu) myPageMenu.classList.add("hidden");
+  loginMenu.classList.add("hidden");
+  actionMenu.classList.add("hidden");
+}
+
 function showGlobalOptionsMenu() {
   hideBombingReveal();
+  hideCustomOverlayPanels();
+  hideTutorialPanel();
+  hideTutorialMenus();
+  hidePracticeMenu();
   updateKeybindDisplay();
   updateOptionButtons();
   shell.classList.add("menu-screen");
@@ -3770,6 +5448,10 @@ function showGlobalOptionsMenu() {
 
 function showEasyModeMenu() {
   hideBombingReveal();
+  hideCustomOverlayPanels();
+  hideTutorialPanel();
+  hideTutorialMenus();
+  hidePracticeMenu();
   easyModeVariant = null;
   shell.classList.add("menu-screen");
   overlay.classList.remove("hidden");
@@ -3790,6 +5472,10 @@ function showEasyModeMenu() {
 
 function showOnePlayerMenu() {
   hideBombingReveal();
+  hideCustomOverlayPanels();
+  hideTutorialPanel();
+  hideTutorialMenus();
+  hidePracticeMenu();
   shell.classList.add("menu-screen");
   overlay.classList.remove("hidden");
   overlayTitle.textContent = "一人でテトリス";
@@ -3808,6 +5494,10 @@ function showOnePlayerMenu() {
 
 function showOptionMenu(modeName) {
   hideBombingReveal();
+  hideCustomOverlayPanels();
+  hideTutorialPanel();
+  hideTutorialMenus();
+  hidePracticeMenu();
   selectedGameMode = modeName;
   selectedModeEl.textContent = modeName;
   if (isShadowMode()) {
@@ -3834,6 +5524,10 @@ function showOptionMenu(modeName) {
 
 function showKeybindMenu() {
   hideBombingReveal();
+  hideCustomOverlayPanels();
+  hideTutorialPanel();
+  hideTutorialMenus();
+  hidePracticeMenu();
   updateKeybindDisplay();
   shell.classList.add("menu-screen");
   overlay.classList.remove("hidden");
@@ -3854,6 +5548,9 @@ function showKeybindMenu() {
 
 function showActionOverlay(title, buttonText, showRestart = false, resultText = "") {
   hideBombingReveal();
+  hideCustomOverlayPanels();
+  hideTutorialMenus();
+  hidePracticeMenu();
   shell.classList.remove("menu-screen");
   overlay.classList.remove("hidden");
   overlayTitle.textContent = title;
@@ -3872,11 +5569,22 @@ function showActionOverlay(title, buttonText, showRestart = false, resultText = 
   resultSummaryEl.textContent = resultText;
   resultSummaryEl.classList.toggle("hidden", !resultText);
   startButton.textContent = buttonText;
-  restartButton.classList.toggle("hidden", !showRestart);
+  restartButton.textContent = isTutorialMode() && gameOver ? "Chapter選択へ" : "Restart";
+  const customPause = paused && isCustomMode() && !gameOver;
+  customSettingsButton?.classList.toggle("hidden", !customPause);
+  customRestartButton?.classList.toggle("hidden", !customPause);
+  customTimeResetButton?.classList.toggle("hidden", !customPause);
+  customScoreResetButton?.classList.toggle("hidden", !customPause);
+  customActionLogButton?.classList.toggle("hidden", !customPause);
+  restartButton.classList.toggle("hidden", customPause || !showRestart);
 }
 
 function showCountdownOverlay(text) {
   hideBombingReveal();
+  hideCustomOverlayPanels();
+  hideTutorialPanel();
+  hideTutorialMenus();
+  hidePracticeMenu();
   shell.classList.remove("menu-screen");
   overlay.classList.remove("hidden");
   overlayTitle.textContent = text;
@@ -3893,6 +5601,10 @@ function showCountdownOverlay(text) {
 
 function hideOverlay() {
   hideBombingReveal();
+  hideCustomOverlayPanels();
+  hideTutorialPanel();
+  hideTutorialMenus();
+  hidePracticeMenu();
   shell.classList.remove("menu-screen");
   overlay.classList.add("hidden");
   modeMenu.classList.add("hidden");
@@ -3951,6 +5663,7 @@ function movePieceDown(isSoftDrop = false) {
     active.lastAction = "drop";
     if (isSoftDrop) {
       softDropDistance += 1;
+      handleTutorialSoftDrop();
     }
     tsdAssistDirty = true;
     return true;
@@ -3977,6 +5690,9 @@ function movePieceToGround(isSoftDrop = false) {
 
 function hardDrop() {
   if (!running || paused) return;
+  const dropPiece = active
+    ? { piece: active.type, x: active.x, y: active.y, rotationState: active.rotationState }
+    : {};
   let distance = 0;
   while (!collides(active, active.x, active.y + 1, active.matrix)) {
     active.y += 1;
@@ -3985,9 +5701,13 @@ function hardDrop() {
   if (!isBomblissMode()) {
     score += distance * 2;
   }
+  if (isTutorialMode()) {
+    score = 0;
+  }
   if (distance > 0) {
     active.lastAction = "hardDrop";
   }
+  recordCustomAction("hardDrop", { ...dropPiece, distance });
   tsdAssistDirty = true;
   lockPiece();
   updateStats();
@@ -3996,9 +5716,15 @@ function hardDrop() {
 
 function rotatePiece(direction) {
   if (!running || paused) return;
+  if (active?.type === "DOT" || active?.type === "O") {
+    return;
+  }
   const wasGrounded = isActiveGrounded();
   const fromState = active.rotationState;
   const toState = nextRotationState(fromState, direction);
+  const fromMatrix = cloneMatrix(active.matrix);
+  const fromX = active.x;
+  const fromY = active.y;
   const nextMatrix = rotate(active.matrix, direction);
   const nextBombCells = rotateBombCells(active.bombCells, active.matrix.length, direction);
   const kicks = getKickTests(active.type, fromState, toState);
@@ -4026,9 +5752,25 @@ function rotatePiece(direction) {
     active.bombCells = nextBombCells;
     active.rotationState = toState;
     active.lastAction = "rotate";
+    if (isTutorialMode() && tutorialState) {
+      tutorialState.rotatedSinceSpawn = true;
+      tutorialState.lastSuccessfulAction = "rotate";
+      tutorialState.lastRotationContext = {
+        type: active.type,
+        fromMatrix,
+        fromX,
+        fromY,
+        toMatrix: cloneMatrix(nextMatrix),
+        toX: active.x,
+        toY: active.y,
+        usedKick: kickX !== 0 || kickY !== 0,
+      };
+    }
     tsdAssistDirty = true;
 
     console.log("rotate success", {
+      type: active.type,
+      transition: `${fromState}>${toState}`,
       kickX,
       kickY,
       x: active.x,
@@ -4039,6 +5781,13 @@ function rotatePiece(direction) {
     });
 
     resetLockDelayAfterPlayerAction(wasGrounded);
+    recordCustomAction(direction > 0 ? "rotateRight" : "rotateLeft", {
+      piece: active.type,
+      x: active.x,
+      y: active.y,
+      rotationState: active.rotationState,
+    });
+    handleTutorialRotate(direction, fromState, toState);
     draw();
     return;
   }
@@ -4054,6 +5803,10 @@ function rotatePiece(direction) {
 }
 
 function lockPiece() {
+  if (isTutorialMode() && tutorialChapter === 1) {
+    lockTutorialPiece();
+    return;
+  }
   if (isCatchMode()) {
     return;
   }
@@ -4061,7 +5814,7 @@ function lockPiece() {
     lockBomblissPiece();
     return;
   }
-  if (isCascadeMode()) {
+  if (isCascadeEnabledForCurrentGame()) {
     lockCascadePiece();
     return;
   }
@@ -4093,13 +5846,17 @@ function lockPiece() {
     lockZonePiece();
     return;
   }
+  const lockedPiece = active
+    ? { piece: active.type, x: active.x, y: active.y, rotationState: active.rotationState }
+    : {};
   lockCounter = 0;
   lockResetCount = 0;
   resetSoftDropAfterLock();
   score += softDropDistance;
   const tSpin = isTSpin(active);
   mergePiece();
-  const cleared = clearLines();
+  recordCustomAction("lock", lockedPiece);
+  const { cleared, clearedRowCells } = clearLinesWithRowsAndCells();
   const perfectClear = cleared > 0 && isPerfectClear();
   const backToBackActive = isBackToBackEligible(cleared, tSpin) && backToBackStreak > 0;
   applyLockScore(cleared, tSpin, backToBackActive, perfectClear);
@@ -4109,6 +5866,34 @@ function lockPiece() {
   }
   updateLastEvent(cleared, tSpin, backToBackActive, perfectClear);
   recordLineClearStats(cleared, { tSpin, backToBackActive, perfectClear });
+  recordCustomLineEvents(cleared, tSpin);
+  const lockResult = {
+    mode: "normal",
+    piece: lockedPiece.piece,
+    pieceType: lockedPiece.piece,
+    x: lockedPiece.x,
+    y: lockedPiece.y,
+    finalX: lockedPiece.x,
+    finalY: lockedPiece.y,
+    rotationState: lockedPiece.rotationState,
+    lastAction: active?.lastAction ?? null,
+    lastSuccessfulAction: active?.lastAction ?? null,
+    clearedLines: cleared,
+    eventType: getTutorialLineEventType(cleared, tSpin, perfectClear),
+    isTSpin: tSpin,
+    tSpinType: tSpin ? getTSpinEventName(cleared) : null,
+    isPerfectClear: perfectClear,
+    isBackToBack: backToBackActive,
+    comboCount: renStreak,
+    backToBackStreak,
+    usedHold: Boolean(tutorialState?.usedHoldForCurrentMission),
+    lockedAfterHold: Boolean(tutorialState?.usedHoldForCurrentMission),
+    clearedGarbageCells: clearedRowCells.flat().filter(getCellGarbage).length,
+    clearedGarbageLines: clearedRowCells.filter((row) => row.some(getCellGarbage)).length,
+  };
+  if (evaluateTutorialLockResult(lockResult)) {
+    return;
+  }
   if (isAllClearSprintMode() && perfectClearCount >= 20) {
     finishGame("All Clear Sprint Complete");
     return;
@@ -4117,7 +5902,7 @@ function lockPiece() {
     finishGame("Sprint Complete");
     return;
   }
-  if (isMarathonMode() && !endlessEnabled && lines >= 150) {
+  if (isMarathonMode() && !isCustomMode() && !endlessEnabled && lines >= 150) {
     finishGame(isZoneMode() ? "Zone Complete" : "Marathon Complete");
     return;
   }
@@ -4127,6 +5912,9 @@ function lockPiece() {
 }
 
 function lockCascadePiece() {
+  const lockedPiece = active
+    ? { piece: active.type, x: active.x, y: active.y, rotationState: active.rotationState }
+    : {};
   lockCounter = 0;
   lockResetCount = 0;
   resetSoftDropAfterLock();
@@ -4134,7 +5922,20 @@ function lockCascadePiece() {
     score += softDropDistance;
   }
   mergePiece();
+  recordCustomAction("lock", lockedPiece);
   if (!startCascadeResolution()) {
+    if (evaluateTutorialLockResult({
+      mode: "cascade",
+      piece: lockedPiece.piece,
+      x: lockedPiece.x,
+      y: lockedPiece.y,
+      rotationState: lockedPiece.rotationState,
+      clearedLines: 0,
+      cascadeChain: 0,
+      cascadeClears: [],
+    })) {
+      return;
+    }
     updateCascadeLastEvent({ chainCount: 0, clears: [], totalLines: 0 }, false);
     spawnPiece();
     drawNextPreviews();
@@ -4183,11 +5984,15 @@ function lockHotlinePiece() {
 }
 
 function lockZonePiece() {
+  const lockedPiece = active
+    ? { piece: active.type, x: active.x, y: active.y, rotationState: active.rotationState }
+    : {};
   lockCounter = 0;
   lockResetCount = 0;
   resetSoftDropAfterLock();
   score += softDropDistance;
   mergePiece();
+  recordCustomAction("lock", lockedPiece);
   const tSpin = isTSpin(active);
   const cleared = clearLines();
   const perfectClear = cleared > 0 && isPerfectClear();
@@ -4195,22 +6000,35 @@ function lockZonePiece() {
     zoneLines += cleared;
     zoneMaxLines = Math.max(zoneMaxLines, zoneLines);
     zoneScoreBuffer += getNormalLineScore(Math.min(cleared, 4));
-    if (isZoneBonusLineClear(cleared, tSpin)) {
-      zoneTimer += 100;
-      if (!zoneLineLimitUnlimited) {
-        zoneLineLimit += 2;
-      }
-    }
-    if (perfectClear) {
-      zoneGauge = ZONE_GAUGE_MAX;
-      zoneLineLimitUnlimited = true;
+    const zoneEventKey = globalThis.ZoneCore ? ZoneCore.getZoneEventKey({ cleared, tSpin, perfectClear }) : null;
+    const extensionMs = globalThis.ZoneCore ? ZoneCore.getZoneExtensionMs({ cleared, tSpin, perfectClear }) : 0;
+    const applied = globalThis.ZoneCore ? ZoneCore.applyZoneExtension(zoneTimer, extensionMs) : { after: zoneTimer, applied: 0 };
+    zoneTimer = applied.after;
+    if (applied.applied > 0) {
+      zoneExtensionNoticeText = globalThis.ZoneCore ? ZoneCore.getZoneExtensionText(zoneEventKey, applied.applied) : `${zoneEventKey ?? "ZONE"}  +${(applied.applied / 1000).toFixed(1)}s`;
+      zoneExtensionNoticeUntil = performance.now() + 900;
     }
   }
   recordLineClearStats(cleared, { tSpin, perfectClear });
+  recordCustomLineEvents(cleared, tSpin);
   updateStats();
   updateZoneStatus();
-  if (!zoneLineLimitUnlimited && zoneLines >= zoneLineLimit) {
-    finishZone();
+  const lockResult = {
+    mode: "zone",
+    piece: lockedPiece.piece,
+    x: lockedPiece.x,
+    y: lockedPiece.y,
+    rotationState: lockedPiece.rotationState,
+    lastAction: active?.lastAction ?? null,
+    clearedLines: cleared,
+    eventType: getTutorialLineEventType(cleared, tSpin, perfectClear),
+    isTSpin: tSpin,
+    isPerfectClear: perfectClear,
+    zoneActive,
+    zoneLines,
+    zoneMaxLines,
+  };
+  if (evaluateTutorialLockResult(lockResult)) {
     return;
   }
   spawnPiece();
@@ -4226,22 +6044,33 @@ function lockSquarePiece() {
   mergePiece();
   const madeSquares = detectAndMarkSquares();
   const { cleared, clearedCells } = clearLinesWithCellData();
+  refreshSquareGroupsAfterLineClear();
+  const squareCreateScore = madeSquares.reduce(
+    (total, { squareType }) =>
+      total + (squareType === "gold" ? GOLD_SQUARE_CREATE_SCORE : SILVER_SQUARE_CREATE_SCORE) * level,
+    0,
+  );
+  const normalLineScore = cleared > 0 ? getNormalLineScore(Math.min(cleared, 4)) : 0;
   const squareLineBonus = getSquareLineBonus(clearedCells);
   const lineSquareType = getDominantSquareType(clearedCells);
   const perfectClear = cleared > 0 && isPerfectClear();
+  const perfectClearScore = perfectClear ? getPerfectClearScore(Math.min(cleared, 4)) : 0;
 
-  madeSquares.forEach(({ squareType }) => {
-    score += (squareType === "gold" ? 2000 : 1000) * level;
+  score += squareCreateScore + normalLineScore + squareLineBonus + perfectClearScore;
+
+  console.debug("square score", {
+    squareCreateScore,
+    normalLineScore,
+    squareLineBonus,
+    perfectClearScore,
+    cleared,
+    madeSquares,
   });
+
   if (cleared > 0) {
-    score += getNormalLineScore(Math.min(cleared, 4));
-    score += squareLineBonus;
     lines += cleared;
     level = Math.floor(lines / 10) + 1;
     applyGravityInterval();
-    if (perfectClear) {
-      score += getPerfectClearScore(Math.min(cleared, 4));
-    }
   }
   recordLineClearStats(cleared, { perfectClear });
 
@@ -4262,6 +6091,16 @@ function lockSquarePiece() {
   }
 
   updateStats();
+  if (evaluateTutorialLockResult({
+    mode: "square",
+    clearedLines: cleared,
+    madeSquares,
+    madeSquareCount: madeSquares.length,
+    squareTypes: madeSquares.map(({ squareType }) => squareType),
+    isPerfectClear: perfectClear,
+  })) {
+    return;
+  }
   if (!endlessEnabled && lines >= 150) {
     finishGame("Square Complete");
     return;
@@ -4347,12 +6186,16 @@ function lockPurifyPiece() {
 }
 
 function lockZeroGravityPiece() {
+  const lockedPiece = active
+    ? { piece: active.type, x: active.x, y: active.y, rotationState: active.rotationState }
+    : {};
   lockCounter = 0;
   lockResetCount = 0;
   resetSoftDropAfterLock();
   score += softDropDistance;
   const tSpin = isTSpin(active);
   mergePiece();
+  recordCustomAction("lock", lockedPiece);
   const cleared = clearLines();
   const perfectClear = cleared > 0 && isPerfectClear();
   const backToBackActive = isBackToBackEligible(cleared, tSpin) && backToBackStreak > 0;
@@ -4362,6 +6205,7 @@ function lockZeroGravityPiece() {
   }
   updateLastEvent(cleared, tSpin, backToBackActive, perfectClear);
   recordLineClearStats(cleared, { tSpin, backToBackActive, perfectClear });
+  recordCustomLineEvents(cleared, tSpin);
   updateStats();
   spawnPiece();
   drawNextPreviews();
@@ -4426,6 +6270,9 @@ function finishShadowStage() {
 }
 
 function lockBomblissPiece() {
+  const lockedPiece = active
+    ? { piece: active.type, x: active.x, y: active.y, rotationState: active.rotationState }
+    : {};
   lockCounter = 0;
   lockResetCount = 0;
   resetSoftDropAfterLock();
@@ -4433,6 +6280,22 @@ function lockBomblissPiece() {
   const result = processBomblissChains();
   if (result.chainCount > 0) {
     showBombingRevealRect(result.revealRect ?? { x: 0, y: 0, width: cols, height: rows });
+  }
+
+  if (evaluateTutorialLockResult({
+    mode: "bombliss",
+    piece: lockedPiece.piece,
+    x: lockedPiece.x,
+    y: lockedPiece.y,
+    rotationState: lockedPiece.rotationState,
+    chainCount: result.chainCount,
+    usedSmall: Boolean(result.usedSmall),
+    usedLarge: Boolean(result.usedLarge),
+    madeLarge: Boolean(result.madeLarge),
+    explodedBombCount: result.usedSmall || result.usedLarge ? 1 : 0,
+    clearedLines: result.lastLineCount ?? 0,
+  })) {
+    return;
   }
 
   if (isPerfectClear()) {
@@ -4471,12 +6334,16 @@ function holdPiece() {
   const currentType = active.type;
   if (holdType) {
     active = createPiece(holdType);
-    if (isZeroGravityMode() && active) {
+    if ((isZeroGravityMode() || (isCustomMode() && customSettings.levelMode === "fixed" && customSettings.fixedLevel === "zeroGravity")) && active) {
       active.y = 0;
     }
-    if (isCascadeMode() || isSquareMode()) {
-      active.pieceId = nextPieceId;
-      nextPieceId += 1;
+    if (isCascadeEnabledForCurrentGame() || isSquareMode()) {
+      if (globalThis.PieceIdCore?.allocatePieceIdForSpecialModes) {
+        nextPieceId = globalThis.PieceIdCore.allocatePieceIdForSpecialModes(active, nextPieceId, true);
+      } else {
+        active.pieceId = nextPieceId;
+        nextPieceId += 1;
+      }
     }
     holdType = currentType;
     softDropDistance = 0;
@@ -4490,22 +6357,86 @@ function holdPiece() {
   lockCounter = 0;
   lockResetCount = 0;
   canHold = false;
+  if (isTutorialMode() && tutorialState) {
+    tutorialState.usedHold = true;
+    if (tutorialChapter === 5) {
+      tutorialState.usedHoldForCurrentMission = true;
+    }
+    if (getCurrentTutorialSection() === "backToBack") {
+      tutorialState.usedHoldDuringBackToBack = true;
+    }
+  }
+  recordCustomAction("hold", { piece: currentType, hold: holdType });
   drawPreview(holdCtx, holdType);
   drawNextPreviews();
   applyBufferedInputsForSpawn();
   draw();
 }
 
+function showCustomPauseSettingsPanel() {
+  if (!isCustomMode()) return;
+  customActionLogVisible = false;
+  syncCustomSettingsControls();
+  overlayTitle.textContent = "カスタム設定";
+  actionMenu.classList.add("hidden");
+  if (customActionLogPanel) customActionLogPanel.classList.add("hidden");
+  if (customPauseSettingsPanel) customPauseSettingsPanel.classList.remove("hidden");
+}
+
+function showCustomActionLogPanel() {
+  if (!isCustomMode()) return;
+  customActionLogVisible = true;
+  renderCustomActionLog();
+  overlayTitle.textContent = "操作ログ";
+  actionMenu.classList.add("hidden");
+  if (customPauseSettingsPanel) customPauseSettingsPanel.classList.add("hidden");
+  if (customActionLogPanel) customActionLogPanel.classList.remove("hidden");
+}
+
+function showCustomPauseMenu() {
+  customActionLogVisible = false;
+  overlayTitle.textContent = "Paused";
+  if (customPauseSettingsPanel) customPauseSettingsPanel.classList.add("hidden");
+  if (customActionLogPanel) customActionLogPanel.classList.add("hidden");
+  actionMenu.classList.remove("hidden");
+}
+
+function restartCustomGame() {
+  if (!isCustomMode()) return;
+  startGame();
+  recordCustomAction("restart", { settings: { ...customSettings } });
+}
+
+function resetCustomTime() {
+  if (!isCustomMode()) return;
+  gameTimeMs = 0;
+  lastTime = performance.now();
+  dropCounter = 0;
+  lockCounter = 0;
+  recordCustomAction("timeReset");
+  updateStats();
+}
+
+function resetCustomScore() {
+  if (!isCustomMode()) return;
+  score = 0;
+  softDropDistance = 0;
+  zoneScoreBuffer = 0;
+  recordCustomAction("scoreReset");
+  updateStats();
+}
+
 function togglePause() {
   if (!running || gameOver) return;
   paused = !paused;
   if (!paused) {
+    customActionLogVisible = false;
     hideOverlay();
     resumeBgm();
     lastTime = performance.now();
     requestAnimationFrame(update);
   } else {
-    showActionOverlay("Paused", "Resume", true);
+    showActionOverlay("Paused", isCustomMode() ? "再開" : "Resume", true);
     pauseBgm();
   }
 }
@@ -4514,6 +6445,10 @@ function returnToTitle() {
   running = false;
   paused = false;
   gameOver = false;
+  tutorialChapter = null;
+  tutorialSectionIndex = 0;
+  tutorialState = null;
+  hideTutorialPanel();
   lastResultInfo = null;
   tsdAssistCandidate = null;
   tsdAssistDirty = true;
@@ -4534,11 +6469,12 @@ function returnToTitle() {
   zoneGauge = 0;
   zoneActive = false;
   zoneTimer = 0;
+  zoneConsumedGauge = 0;
   zoneLines = 0;
   zoneMaxLines = 0;
-  zoneLineLimit = 20;
-  zoneLineLimitUnlimited = false;
   zoneScoreBuffer = 0;
+  zoneExtensionNoticeText = "";
+  zoneExtensionNoticeUntil = 0;
   purifyCleansed = 0;
   purifyWave = 0;
   purifySpawnTimer = 0;
@@ -4546,11 +6482,16 @@ function returnToTitle() {
   purifyCurrentInfections = 0;
   purifyHoleHistory = [];
   nextLargeBombId = 1;
+  squareGroups = new Map();
   cascadeResolutionActive = false;
   cascadeResolutionPhase = "idle";
   cascadeResolutionClears = [];
+  cascadeResolutionUsedZone = false;
   cascadeClearDelay = 0;
   cascadeGravityTimer = 0;
+  if (isCustomMode()) {
+    resetCustomActionLog();
+  }
   catchCore = null;
   fallingCatchPiece = null;
   catchFallTimer = 0;
@@ -4571,12 +6512,14 @@ function update(time = 0) {
   const delta = time - lastTime;
   lastTime = time;
   gameTimeMs += delta;
-  if (isCascadeMode() && cascadeResolutionActive) {
-    processCascadeResolutionFrame(delta);
-    draw();
-    updateTimeDisplay();
-    requestAnimationFrame(update);
-    return;
+  if (isTutorialMode() && tutorialChapter === 5 && tutorialState) {
+    const safeDelta = Number.isFinite(delta) && delta >= 0 ? delta : 0;
+    tutorialState.chapter5TimeRemainingMs = Math.max(0, tutorialState.chapter5TimeRemainingMs - safeDelta);
+    if (tutorialState.chapter5TimeRemainingMs <= 0) {
+      failTutorialChapter5();
+      return;
+    }
+    updateChapter5MissionPanel();
   }
   if (isCatchMode()) {
     updateCatch(delta);
@@ -4596,10 +6539,32 @@ function update(time = 0) {
     return;
   }
   if (zoneActive) {
-    zoneTimer -= delta;
-    if (zoneTimer <= 0) {
+    const safeDelta = Number.isFinite(delta) && delta >= 0 ? delta : 0;
+    if (!Number.isFinite(zoneTimer)) {
+      console.error("Invalid zoneTimer", zoneTimer);
       finishZone();
+    } else {
+      zoneTimer = Math.max(0, zoneTimer - safeDelta);
+      console.debug("ZONE TIMER", {
+        time,
+        lastTime,
+        delta,
+        zoneTimer,
+        finiteDelta: Number.isFinite(delta),
+        finiteTimer: Number.isFinite(zoneTimer),
+      });
+      if (zoneTimer === 0) {
+        finishZone();
+      }
     }
+  }
+  if (isCascadeEnabledForCurrentGame() && cascadeResolutionActive) {
+    processCascadeResolutionFrame(delta);
+    draw();
+    updateTimeDisplay();
+    updateZoneStatus();
+    requestAnimationFrame(update);
+    return;
   }
   if (isPurifyMode()) {
     purifySpawnTimer += delta;
@@ -4613,6 +6578,24 @@ function update(time = 0) {
         return;
       }
     }
+  }
+  if (isTutorialMode() && tutorialChapter !== 5) {
+    updateHorizontalAutoShift(delta);
+    if (isSoftDropActive()) {
+      dropCounter += delta;
+      while (dropCounter >= SOFT_DROP_INTERVAL_MS && running && !paused && !gameOver) {
+        if (!movePieceDown(true)) {
+          break;
+        }
+        dropCounter -= SOFT_DROP_INTERVAL_MS;
+      }
+    } else {
+      dropCounter = 0;
+    }
+    draw();
+    updateTimeDisplay();
+    requestAnimationFrame(update);
+    return;
   }
   updateHorizontalAutoShift(delta);
   if (isSoftDropActive()) {
@@ -4888,60 +6871,6 @@ function mergePlacementToBoard(boardState, placement) {
   });
 }
 
-function getMatrixForRotation(type, rotationState) {
-  const shape = SHAPES[type];
-  if (!shape) return [];
-  const targetIndex = ROTATION_STATES.indexOf(rotationState);
-  if (targetIndex <= 0) {
-    return cloneMatrix(shape);
-  }
-  let matrix = cloneMatrix(shape);
-  for (let i = 0; i < targetIndex; i += 1) {
-    matrix = rotate(matrix, 1);
-  }
-  return matrix;
-}
-
-function countTOccupiedCorners(boardState, tPlacement) {
-  const centerX = tPlacement.x + Math.floor(tPlacement.matrix[0].length / 2);
-  const centerY = tPlacement.y + Math.floor(tPlacement.matrix.length / 2);
-  const corners = [
-    [centerX - 1, centerY - 1],
-    [centerX + 1, centerY - 1],
-    [centerX - 1, centerY + 1],
-    [centerX + 1, centerY + 1],
-  ];
-  return corners.reduce((count, [x, y]) => {
-    if (x < 0 || x >= cols || y >= rows) return count + 1;
-    if (y < 0) return count;
-    return count + (boardState[y][x] ? 1 : 0);
-  }, 0);
-}
-
-function getAllTFinalPlacements(boardState) {
-  const placements = [];
-  const rotationStates = ["0", "R", "2", "L"];
-
-  rotationStates.forEach((rotationState) => {
-    const matrix = getMatrixForRotation("T", rotationState);
-    for (let y = -4; y < rows + 4; y += 1) {
-      for (let x = -4; x < cols + 4; x += 1) {
-        if (collidesOnBoard(boardState, x, y, matrix)) continue;
-        if (!collidesOnBoard(boardState, x, y + 1, matrix)) continue;
-        placements.push({
-          x,
-          y,
-          matrix: cloneMatrix(matrix),
-          rotationState,
-          type: "T",
-        });
-      }
-    }
-  });
-
-  return placements;
-}
-
 function getAllLegalPlacementsForPiece(piece, boardState) {
   if (!piece || !piece.matrix) return [];
   const placements = [];
@@ -4973,97 +6902,92 @@ function getAllLegalPlacementsForPiece(piece, boardState) {
   return placements;
 }
 
-function sameTsdOpportunity(a, b) {
-  return Boolean(a && b) && a.x === b.x && a.y === b.y && a.rotationState === b.rotationState;
-}
+function findTsdTemplateSlots(boardState) {
+  const slots = [];
+  const patterns = [
+    {
+      roofSide: "left",
+      rows: [
+        [1, 1, 0, 0, 0],
+        [1, 0, 0, 0, 1],
+        [1, 1, 0, 1, 1],
+      ],
+    },
+    {
+      roofSide: "right",
+      rows: [
+        [0, 0, 0, 1, 1],
+        [1, 0, 0, 0, 1],
+        [1, 1, 0, 1, 1],
+      ],
+    },
+  ];
 
-function canTReachBySrsRotation(boardState, finalPlacement) {
-  const targetRotation = finalPlacement.rotationState;
-  const directions = [
-    { from: "0", to: "R" },
-    { from: "R", to: "2" },
-    { from: "2", to: "L" },
-    { from: "L", to: "0" },
-    { from: "0", to: "L" },
-    { from: "L", to: "2" },
-    { from: "2", to: "R" },
-    { from: "R", to: "0" },
-  ].filter((rotation) => rotation.to === targetRotation);
-
-  for (const rotation of directions) {
-    const fromMatrix = getMatrixForRotation("T", rotation.from);
-    const toMatrix = getMatrixForRotation("T", rotation.to);
-    const kicks = getKickTests("T", rotation.from, rotation.to);
-
-    for (const [kickX, kickY] of kicks) {
-      const preX = finalPlacement.x - kickX;
-      const preY = finalPlacement.y - kickY;
-
-      if (collidesOnBoard(boardState, preX, preY, fromMatrix)) {
-        continue;
-      }
-
-      const kickedX = preX + kickX;
-      const kickedY = preY + kickY;
-
-      if (
-        kickedX === finalPlacement.x &&
-        kickedY === finalPlacement.y &&
-        !collidesOnBoard(boardState, kickedX, kickedY, toMatrix)
-      ) {
-        return true;
+  for (let y = 0; y <= rows - 3; y += 1) {
+    for (let x = 0; x <= cols - 5; x += 1) {
+      for (const pattern of patterns) {
+        let matched = true;
+        for (let py = 0; py < 3 && matched; py += 1) {
+          for (let px = 0; px < 5; px += 1) {
+            const expected = pattern.rows[py][px];
+            const occupied = Boolean(boardState[y + py][x + px]);
+            if (expected === 1 && !occupied) {
+              matched = false;
+              break;
+            }
+            if (expected === 0 && occupied) {
+              matched = false;
+              break;
+            }
+          }
+        }
+        if (matched) {
+          slots.push({
+            x,
+            y,
+            roofSide: pattern.roofSide,
+            key: `${x},${y},${pattern.roofSide}`,
+          });
+        }
       }
     }
   }
 
-  return false;
+  return slots;
 }
 
-function isRealTsdOpportunity(boardState, tPlacement) {
-  const boardWithT = cloneBoard(boardState);
-  mergePlacementToBoard(boardWithT, tPlacement);
-
-  if (countFullLines(boardWithT) !== 2) return false;
-
-  const cornerCount = countTOccupiedCorners(boardState, tPlacement);
-  if (cornerCount < 3) return false;
-
-  if (!canTReachBySrsRotation(boardState, tPlacement)) return false;
-
-  return true;
+function getBoardHoleCount(boardState) {
+  let holes = 0;
+  for (let x = 0; x < cols; x += 1) {
+    let blockSeen = false;
+    for (let y = 0; y < rows; y += 1) {
+      if (boardState[y][x]) {
+        blockSeen = true;
+      } else if (blockSeen) {
+        holes += 1;
+      }
+    }
+  }
+  return holes;
 }
 
-function findRealTsdOpportunities(boardState) {
-  const tPlacements = getAllTFinalPlacements(boardState);
-
-  return tPlacements
-    .filter((placement) => isRealTsdOpportunity(boardState, placement))
-    .map((placement, order) => ({
-      x: placement.x,
-      y: placement.y,
-      matrix: cloneMatrix(placement.matrix),
-      rotationState: placement.rotationState,
-      type: placement.type,
-      cleared: 2,
-      cornerCount: countTOccupiedCorners(boardState, placement),
-      order,
-    }));
+function getBoardMaxHeight(boardState) {
+  for (let y = 0; y < rows; y += 1) {
+    if (boardState[y].some(Boolean)) {
+      return rows - y;
+    }
+  }
+  return 0;
 }
 
 function chooseBestTsdAssistCandidate(candidates) {
   if (!candidates.length) return null;
-  const center = (cols - 1) / 2;
   return candidates
     .slice()
     .sort((a, b) => {
-      if (b.futurePlacement.y !== a.futurePlacement.y) return b.futurePlacement.y - a.futurePlacement.y;
-      if (b.currentPlacement.y !== a.currentPlacement.y) return b.currentPlacement.y - a.currentPlacement.y;
-      const distanceA = Math.abs(a.futurePlacement.x - center);
-      const distanceB = Math.abs(b.futurePlacement.x - center);
-      if (distanceA !== distanceB) return distanceA - distanceB;
-      const currentDistanceA = Math.abs(a.currentPlacement.x - center);
-      const currentDistanceB = Math.abs(b.currentPlacement.x - center);
-      if (currentDistanceA !== currentDistanceB) return currentDistanceA - currentDistanceB;
+      if (b.slot.y !== a.slot.y) return b.slot.y - a.slot.y;
+      if (a.holes !== b.holes) return a.holes - b.holes;
+      if (a.maxHeight !== b.maxHeight) return a.maxHeight - b.maxHeight;
       return a.order - b.order;
     })[0] ?? null;
 }
@@ -5075,6 +6999,7 @@ function shouldUseTsdAssist() {
     running &&
     !paused &&
     !gameOver &&
+    !isTutorialMode() &&
     !isCatchMode() &&
     !isShadowMode() &&
     !isBomblissMode() &&
@@ -5095,20 +7020,6 @@ function shouldUseTsdAssist() {
   );
 }
 
-function chooseBestTsdOpportunity(candidates) {
-  if (!candidates.length) return null;
-  const center = (cols - 1) / 2;
-  return candidates
-    .slice()
-    .sort((a, b) => {
-      if (b.y !== a.y) return b.y - a.y;
-      const distanceA = Math.abs(a.x - center);
-      const distanceB = Math.abs(b.x - center);
-      if (distanceA !== distanceB) return distanceA - distanceB;
-      return a.order - b.order;
-    })[0] ?? null;
-}
-
 function updateTsdAssistCandidate() {
   if (!shouldUseTsdAssist()) {
     tsdAssistCandidate = null;
@@ -5120,7 +7031,8 @@ function updateTsdAssistCandidate() {
   }
 
   const placements = getAllLegalPlacementsForPiece(active, board);
-  const beforeOpportunities = findRealTsdOpportunities(board);
+  const beforeSlots = findTsdTemplateSlots(board);
+  const beforeSlotKeys = new Set(beforeSlots.map((slot) => slot.key));
   const candidates = [];
   placements.forEach((placement, index) => {
     const boardCopy = cloneBoard(board);
@@ -5128,30 +7040,27 @@ function updateTsdAssistCandidate() {
     if (countFullLines(boardCopy) > 0) {
       return;
     }
-    const afterOpportunities = findRealTsdOpportunities(boardCopy);
-    const newOpportunities = afterOpportunities.filter(
-      (after) => !beforeOpportunities.some((before) => sameTsdOpportunity(before, after)),
-    );
-    if (!newOpportunities.length) {
+    const afterSlots = findTsdTemplateSlots(boardCopy);
+    const newSlots = afterSlots.filter((slot) => !beforeSlotKeys.has(slot.key));
+    if (!newSlots.length) {
       return;
     }
 
-    const futurePlacement = chooseBestTsdOpportunity(newOpportunities);
-    if (!futurePlacement) {
-      return;
-    }
-
-    candidates.push({
-      currentPlacement: placement,
-      futurePlacement,
-      order: index,
+    newSlots.forEach((slot) => {
+      candidates.push({
+        currentPlacement: placement,
+        slot,
+        holes: getBoardHoleCount(boardCopy),
+        maxHeight: getBoardMaxHeight(boardCopy),
+        order: index,
+      });
     });
   });
   tsdAssistCandidate = chooseBestTsdAssistCandidate(candidates);
   if (window.__TSD_ASSIST_DEBUG__) {
     console.debug("TSD Assist", {
       currentPlacements: placements.length,
-      beforeOpportunities: beforeOpportunities.length,
+      beforeSlots: beforeSlots.length,
       afterCandidates: candidates.length,
       finalCandidate: tsdAssistCandidate,
     });
@@ -5174,14 +7083,6 @@ function drawTsdAssist() {
   if (!shouldUseTsdAssist()) return;
   updateTsdAssistCandidate();
   if (!tsdAssistCandidate) return;
-  boardCtx.globalAlpha = 0.08;
-  drawOverlayMatrix(
-    boardCtx,
-    tsdAssistCandidate.futurePlacement.matrix,
-    tsdAssistCandidate.futurePlacement.x,
-    tsdAssistCandidate.futurePlacement.y,
-    "#c58bff",
-  );
   boardCtx.globalAlpha = 0.14;
   drawOverlayMatrix(
     boardCtx,
@@ -5244,7 +7145,15 @@ function drawNextPreviews() {
 function updateStats() {
   scoreEl.textContent = score.toLocaleString("ja-JP");
   linesEl.textContent = isBomblissMode() ? bomblissStageIndex + 1 : lines;
-  levelEl.textContent = isBomblissMode() ? "-" : isMasterMode() ? "Master" : level;
+  levelEl.textContent = isBomblissMode()
+    ? "-"
+    : isTutorialMode()
+      ? tutorialChapter === 5 ? level : "-"
+    : isCustomMode() && customSettings.levelMode === "fixed" && customSettings.fixedLevel === "zeroGravity"
+      ? "無重力"
+      : isMasterMode()
+        ? "Master"
+        : level;
   if (isShadowMode()) {
     linesEl.textContent = `${currentShadowStageIndex + 1} / ${SHADOW_STAGES.length}`;
     levelEl.textContent = "1";
@@ -5275,6 +7184,7 @@ function startGame() {
   bomblissPoints = 100;
   nextPieceId = 1;
   nextSquareId = 1;
+  squareGroups = new Map();
   currentShadowStageIndex = selectedShadowStageIndex;
   shadowStage = null;
   shadowSilhouette = new Set();
@@ -5299,17 +7209,23 @@ function startGame() {
   zoneGauge = 0;
   zoneActive = false;
   zoneTimer = 0;
+  zoneConsumedGauge = 0;
   zoneLines = 0;
   zoneMaxLines = 0;
-  zoneLineLimit = 20;
-  zoneLineLimitUnlimited = false;
   zoneScoreBuffer = 0;
+  zoneExtensionNoticeText = "";
+  zoneExtensionNoticeUntil = 0;
   nextLargeBombId = 1;
+  squareGroups = new Map();
   cascadeResolutionActive = false;
   cascadeResolutionPhase = "idle";
   cascadeResolutionClears = [];
+  cascadeResolutionUsedZone = false;
   cascadeClearDelay = 0;
   cascadeGravityTimer = 0;
+  if (isCustomMode()) {
+    resetCustomActionLog();
+  }
   catchCore = null;
   fallingCatchPiece = null;
   catchFallTimer = 0;
@@ -5328,6 +7244,8 @@ function startGame() {
     isCatchMode()
   ) {
     level = 1;
+  } else if (isCustomMode()) {
+    level = customSettings.levelMode === "fixed" ? getCustomFixedLevelNumber() : calculateMarathonLevel(lines);
   } else if (fixedLevelEnabled) {
     level = fixedLevelValue === "master" ? 15 : Number(fixedLevelValue);
     if (isEasyTetrisMode()) {
@@ -5452,6 +7370,10 @@ function getFinishSummary() {
 }
 
 function finishGame(title = "Game Over") {
+  if (isTutorialMode() && tutorialChapter === 5) {
+    failTutorialChapter5();
+    return;
+  }
   running = false;
   gameOver = true;
   if (!gameStatsFinalized) {
@@ -5460,12 +7382,14 @@ function finishGame(title = "Game Over") {
   }
   zoneActive = false;
   zoneTimer = 0;
-  zoneLineLimit = 20;
-  zoneLineLimitUnlimited = false;
+  zoneConsumedGauge = 0;
+  zoneExtensionNoticeText = "";
+  zoneExtensionNoticeUntil = 0;
   nextLargeBombId = 1;
   cascadeResolutionActive = false;
   cascadeResolutionPhase = "idle";
   cascadeResolutionClears = [];
+  cascadeResolutionUsedZone = false;
   cascadeClearDelay = 0;
   cascadeGravityTimer = 0;
   clearInputBuffer();
@@ -5502,6 +7426,13 @@ document.addEventListener("keydown", (event) => {
     waitingForKeybind = null;
     updateKeybindDisplay();
     return;
+  }
+
+  if (isTutorialMode() && action) {
+    event.preventDefault();
+    if (!isTutorialActionAllowed(action)) {
+      return;
+    }
   }
 
   if (isCatchMode() && running) {
@@ -5588,6 +7519,7 @@ document.addEventListener("keydown", (event) => {
       }
       dropCounter = 0;
       syncHeldFlags();
+      if (running && !paused) recordCustomAction("softDropStart", active ? { piece: active.type, x: active.x, y: active.y } : {});
       break;
     case "hardDrop":
       hardDrop();
@@ -5622,6 +7554,7 @@ document.addEventListener("keyup", (event) => {
   if (action === "softDrop" && !isActionPhysicallyHeld("softDrop")) {
     softDropSuppressedUntilKeyup = false;
     dropCounter = 0;
+    if (running && !paused) recordCustomAction("softDropEnd", active ? { piece: active.type, x: active.x, y: active.y } : {});
   }
 
   syncHeldFlags();
@@ -5646,6 +7579,10 @@ window.addEventListener("blur", () => {
 });
 
 startButton.addEventListener("click", () => {
+  if (isTutorialMode() && gameOver) {
+    startTutorialChapter(tutorialChapter ?? 1);
+    return;
+  }
   if (paused) {
     togglePause();
   } else {
@@ -5654,7 +7591,39 @@ startButton.addEventListener("click", () => {
 });
 
 restartButton.addEventListener("click", () => {
+  if (isTutorialMode() && gameOver) {
+    showTutorialChapterMenu();
+    return;
+  }
   startGame();
+});
+
+customSettingsButton?.addEventListener("click", () => {
+  showCustomPauseSettingsPanel();
+});
+
+customRestartButton?.addEventListener("click", () => {
+  restartCustomGame();
+});
+
+customTimeResetButton?.addEventListener("click", () => {
+  resetCustomTime();
+});
+
+customScoreResetButton?.addEventListener("click", () => {
+  resetCustomScore();
+});
+
+customActionLogButton?.addEventListener("click", () => {
+  showCustomActionLogPanel();
+});
+
+customSettingsBackButton?.addEventListener("click", () => {
+  showCustomPauseMenu();
+});
+
+customActionLogCloseButton?.addEventListener("click", () => {
+  showCustomPauseMenu();
 });
 
 titleButton.addEventListener("click", () => {
@@ -5674,6 +7643,47 @@ if (onePlayerButton) {
     showOnePlayerMenu();
   });
 }
+
+practiceButton?.addEventListener("click", () => {
+  showPracticeMenu();
+});
+
+practiceBackButton?.addEventListener("click", () => {
+  showTitleMenu();
+});
+
+tutorialButton?.addEventListener("click", () => {
+  showTutorialChapterMenu();
+});
+
+tutorialChapter1Button?.addEventListener("click", () => {
+  startTutorialChapter1();
+});
+
+tutorialChapter2Button?.addEventListener("click", () => {
+  startTutorialChapter(2);
+});
+
+tutorialChapter3Button?.addEventListener("click", () => {
+  startTutorialChapter(3);
+});
+
+tutorialChapter4Button?.addEventListener("click", () => {
+  startTutorialChapter(4);
+});
+
+tutorialChapter5Button?.addEventListener("click", () => {
+  startTutorialChapter(5);
+});
+
+tutorialChapterBackButton?.addEventListener("click", () => {
+  showPracticeMenu();
+});
+
+tutorialNextButton?.addEventListener("click", () => {
+  if (!isTutorialMode() || getCurrentTutorialSection() !== "screenExplanation") return;
+  advanceTutorialSection();
+});
 
 if (myPageButton) {
   myPageButton.addEventListener("click", () => {
@@ -5757,16 +7767,19 @@ globalOptionsBackButton.addEventListener("click", () => {
 
 marathonButton.addEventListener("click", () => {
   easyModeVariant = null;
+  optionMenuReturnTarget = "onePlayer";
   showOptionMenu("マラソン");
 });
 
 sprintButton.addEventListener("click", () => {
   easyModeVariant = null;
+  optionMenuReturnTarget = "onePlayer";
   showOptionMenu("スプリント");
 });
 
 ultraButton.addEventListener("click", () => {
   easyModeVariant = null;
+  optionMenuReturnTarget = "onePlayer";
   showOptionMenu("ウルトラ");
 });
 
@@ -5782,6 +7795,7 @@ if (onePlayerBackButton) {
 
 catchButton.addEventListener("click", () => {
   easyModeVariant = null;
+  optionMenuReturnTarget = "onePlayer";
   showOptionMenu("Catch");
 });
 
@@ -5791,12 +7805,14 @@ easyModeBackButton.addEventListener("click", () => {
 
 easyMarathonButton.addEventListener("click", () => {
   easyModeVariant = "marathon";
+  optionMenuReturnTarget = "onePlayer";
   showOptionMenu("やさしいマラソン");
 });
 
 cheeseRaceButton.addEventListener("click", () => {
   easyModeVariant = null;
   cheeseRacePurifyEnabled = false;
+  optionMenuReturnTarget = "onePlayer";
   showOptionMenu("Cheese Race");
 });
 
@@ -5810,41 +7826,56 @@ if (cheesePurifyToggleButton) {
 
 shadowButton.addEventListener("click", () => {
   easyModeVariant = null;
+  optionMenuReturnTarget = "onePlayer";
   showOptionMenu("Shadow");
 });
 
 allClearSprintButton.addEventListener("click", () => {
   easyModeVariant = "allClearSprint";
+  optionMenuReturnTarget = "onePlayer";
   showOptionMenu("オールクリアスプリント");
 });
 
 bomblissButton.addEventListener("click", () => {
   easyModeVariant = null;
+  optionMenuReturnTarget = "onePlayer";
   showOptionMenu("ボンブリス");
 });
 
 cascadeButton.addEventListener("click", () => {
   easyModeVariant = null;
+  optionMenuReturnTarget = "onePlayer";
   showOptionMenu("カスケード");
-});
-
-zeroGravityButton.addEventListener("click", () => {
-  easyModeVariant = null;
-  showOptionMenu("無重力");
 });
 
 hotlineButton.addEventListener("click", () => {
   easyModeVariant = null;
+  optionMenuReturnTarget = "onePlayer";
   showOptionMenu("ホットライン");
 });
 
 zoneButton.addEventListener("click", () => {
   easyModeVariant = null;
+  optionMenuReturnTarget = "onePlayer";
   showOptionMenu("ゾーン");
+});
+
+customButton?.addEventListener("click", () => {
+  easyModeVariant = null;
+  customSettings = normalizeCustomSettings(customSettings);
+  optionMenuReturnTarget = "practice";
+  showOptionMenu("カスタム");
+});
+
+zeroGravityButton?.addEventListener("click", () => {
+  easyModeVariant = null;
+  optionMenuReturnTarget = "practice";
+  showOptionMenu("無重力");
 });
 
 squareButton.addEventListener("click", () => {
   easyModeVariant = null;
+  optionMenuReturnTarget = "onePlayer";
   showOptionMenu("スクエア");
 });
 
@@ -5853,7 +7884,11 @@ optionStartButton.addEventListener("click", () => {
 });
 
 optionBackButton.addEventListener("click", () => {
-  showTitleMenu();
+  if (optionMenuReturnTarget === "practice") {
+    showPracticeMenu();
+  } else {
+    showOnePlayerMenu();
+  }
 });
 
 createProfileButton.addEventListener("click", () => {
@@ -5889,6 +7924,41 @@ fixedLevelToggle.addEventListener("change", () => {
 
 fixedLevelSelect.addEventListener("change", () => {
   fixedLevelValue = fixedLevelSelect.value;
+});
+
+customLevelModeSelect?.addEventListener("change", () => {
+  applyCustomSettingsChange("levelMode", customLevelModeSelect.value);
+  updateOptionVisibility();
+});
+
+customFixedLevelSelect?.addEventListener("change", () => {
+  applyCustomSettingsChange("fixedLevel", customFixedLevelSelect.value);
+});
+
+customCascadeToggleButton?.addEventListener("click", () => {
+  applyCustomSettingsChange("cascadeEnabled", !customSettings.cascadeEnabled);
+  updateOptionVisibility();
+});
+
+customZoneToggleButton?.addEventListener("click", () => {
+  applyCustomSettingsChange("zoneEnabled", !customSettings.zoneEnabled);
+  updateOptionVisibility();
+});
+
+pauseCustomLevelModeSelect?.addEventListener("change", () => {
+  applyCustomSettingsChange("levelMode", pauseCustomLevelModeSelect.value);
+});
+
+pauseCustomFixedLevelSelect?.addEventListener("change", () => {
+  applyCustomSettingsChange("fixedLevel", pauseCustomFixedLevelSelect.value);
+});
+
+pauseCustomCascadeToggleButton?.addEventListener("click", () => {
+  applyCustomSettingsChange("cascadeEnabled", !customSettings.cascadeEnabled);
+});
+
+pauseCustomZoneToggleButton?.addEventListener("click", () => {
+  applyCustomSettingsChange("zoneEnabled", !customSettings.zoneEnabled);
 });
 
 sprintGoalRange.addEventListener("input", () => {
