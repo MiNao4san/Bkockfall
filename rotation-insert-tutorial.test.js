@@ -84,6 +84,10 @@ function countClearedLinesAfterPlacement(board, type, expected) {
   return nextBoard.filter((row) => row.every(Boolean)).length;
 }
 
+function countFullLines(board) {
+  return board.filter((row) => row.every(Boolean)).length;
+}
+
 function getReachableStates(type, board) {
   const startX = Math.floor((cols - SHAPES[type][0].length) / 2);
   const start = { x: startX, y: 1, rotationState: "0", path: [] };
@@ -157,6 +161,12 @@ function applyRotation(board, type, state, direction) {
         x: nextX,
         y: nextY,
         rotationState: toState,
+        lastKick: {
+          from: state.rotationState,
+          to: toState,
+          kick: [kickX, kickY],
+          action: direction > 0 ? "Rotate Right" : "Rotate Left",
+        },
       };
     }
   }
@@ -168,6 +178,7 @@ function replaySolution(type, board, solution) {
     x: Math.floor((cols - SHAPES[type][0].length) / 2),
     y: 1,
     rotationState: "0",
+    lastKick: null,
   };
 
   for (const action of solution) {
@@ -176,6 +187,7 @@ function replaySolution(type, board, solution) {
         x: state.x + (action === "Left" ? -1 : action === "Right" ? 1 : 0),
         y: state.y + (action === "Soft Drop" ? 1 : 0),
         rotationState: state.rotationState,
+        lastKick: state.lastKick,
       };
       if (collides(board, next.x, next.y, matrixFor(type, next.rotationState))) {
         throw new Error(`${type} solution ${action} failed at ${JSON.stringify(state)}`);
@@ -243,6 +255,7 @@ for (const sectionId of [
     const expected = setup.expected;
     const expectedMatrix = matrixFor(type, expected.rotationState);
 
+    assert.equal(countFullLines(board), 0, `${sectionId} starts with a full line`);
     assert.equal(collides(board, expected.x, expected.y, expectedMatrix), false);
     assert.equal(collides(board, expected.x, expected.y + 1, expectedMatrix), true);
     assert.equal(
@@ -253,7 +266,11 @@ for (const sectionId of [
     const solution = setup.verifiedSolution;
     assert.ok(solution?.length > 0, `${type} solution is missing`);
     const finalState = replaySolution(type, board, solution);
-    assert.deepEqual(finalState, {
+    assert.deepEqual({
+      x: finalState.x,
+      y: finalState.y,
+      rotationState: finalState.rotationState,
+    }, {
       x: expected.x,
       y: expected.y,
       rotationState: expected.rotationState,
@@ -271,3 +288,19 @@ for (const sectionId of [
     );
   });
 }
+
+test("J rotation insert board is the horizontal mirror of the L board", () => {
+  const jBoard = CHAPTER_3_SETUPS.rotationInsertJ.board;
+  const lBoard = CHAPTER_3_SETUPS.rotationInsertL.board;
+  assert.deepEqual(jBoard, lBoard.map((row) => [...row].reverse().join("")));
+});
+
+test("J and L registered solutions use a non-zero SRS kick into the cavity", () => {
+  for (const sectionId of ["rotationInsertJ", "rotationInsertL"]) {
+    const setup = CHAPTER_3_SETUPS[sectionId];
+    const board = boardFromPattern(setup.board);
+    const finalState = replaySolution(setup.pieceType, board, setup.verifiedSolution);
+    assert.ok(finalState.lastKick, `${sectionId} did not rotate`);
+    assert.notDeepEqual(finalState.lastKick.kick, [0, 0]);
+  }
+});
