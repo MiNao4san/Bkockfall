@@ -100,6 +100,26 @@ function countFullLines(board) {
   return board.filter((row) => row.every(Boolean)).length;
 }
 
+function getTSpinCorners(expected) {
+  const centerX = expected.x + 1;
+  const centerY = expected.y + 1;
+  return [
+    [centerX - 1, centerY - 1],
+    [centerX + 1, centerY - 1],
+    [centerX - 1, centerY + 1],
+    [centerX + 1, centerY + 1],
+  ];
+}
+
+function countTSpinFilledCorners(board, expected) {
+  return getTSpinCorners(expected).filter(([x, y]) => (
+    x < 0 ||
+    x >= cols ||
+    y >= rows ||
+    (y >= 0 && Boolean(board[y][x]))
+  )).length;
+}
+
 function getReachableStates(type, board) {
   const startX = Math.floor((cols - SHAPES[type][0].length) / 2);
   const start = { x: startX, y: 1, rotationState: "0", path: [] };
@@ -434,4 +454,37 @@ test("Z rotation insert board is the horizontal mirror of the S board", () => {
   const zBoard = CHAPTER_3_SETUPS.rotationInsertZ.board;
   const sBoard = CHAPTER_3_SETUPS.rotationInsertS.board;
   assert.deepEqual(zBoard, sBoard.map((row) => [...row].reverse().join("")));
+});
+
+test("T-Spin Single setup is reachable only with rotation and satisfies 3-corner detection", () => {
+  const setup = CHAPTER_3_SETUPS.tSpin;
+  const board = boardFromPattern(setup.board);
+  const expected = setup.expected;
+
+  assert.equal(countFullLines(board), 0);
+  assert.equal(collides(board, expected.x, expected.y, matrixFor("T", expected.rotationState)), false);
+  assert.equal(collides(board, expected.x, expected.y + 1, matrixFor("T", expected.rotationState)), true);
+  assert.equal(countClearedLinesAfterPlacement(board, "T", expected), 1);
+  assert.equal(countTSpinFilledCorners(board, expected), 3);
+
+  const finalState = replaySolution("T", board, setup.verifiedSolution);
+  assert.deepEqual({
+    x: finalState.x,
+    y: finalState.y,
+    rotationState: finalState.rotationState,
+  }, {
+    x: expected.x,
+    y: expected.y,
+    rotationState: expected.rotationState,
+  });
+
+  const noRotationStates = getReachableStatesWithRotationLimit("T", board, 0);
+  assert.equal(
+    [...noRotationStates.values()].some((state) => (
+      state.x === expected.x &&
+      state.y === expected.y &&
+      state.rotationState === expected.rotationState
+    )),
+    false,
+  );
 });

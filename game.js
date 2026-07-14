@@ -171,11 +171,13 @@ const CHAPTER_3_SETUPS = {
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
-      "..........", "....X.....", "...X.X....", "XXXX.XXXXX", "XXXXX.XXXX",
+      "..........", "..........", "....X.....", "XXX....XXX", "XXXXX.XXXX",
     ],
-    expected: { minClearedLines: 1 },
+    expected: { x: 4, y: 17, rotationState: "2", clearedLines: 1 },
     requireTSpin: true,
-    instruction: "T-Spinを決めよう",
+    instruction: "Tミノを穴の近くまで下ろし、\n最後に回転してT-Spin Singleを決めよう。",
+    verifiedSolution: ["Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop", "Soft Drop", "Rotate Right"],
+    usedKick: { x: 0, y: 0 },
   },
   tSpinDouble: {
     pieceType: "T",
@@ -1454,6 +1456,7 @@ function createPiece(type) {
     y: -1,
     rotationState: "0",
     lastAction: null,
+    lastSuccessfulRotation: null,
   };
   if (isBomblissMode()) {
     const cells = [];
@@ -4733,7 +4736,13 @@ function isTSpinTutorialSuccess(sectionId, result) {
     return false;
   }
   if (sectionId === "tSpin") {
-    return result.clearedLines >= 1;
+    const expected = CHAPTER_3_SETUPS.tSpin.expected;
+    return (
+      result.x === expected.x &&
+      result.y === expected.y &&
+      result.rotationState === expected.rotationState &&
+      result.clearedLines === expected.clearedLines
+    );
   }
   if (sectionId === "tSpinDouble") {
     return result.clearedLines === 2;
@@ -4751,6 +4760,18 @@ function evaluateChapter3Result(result) {
   if (sectionId.startsWith("rotationInsert")) {
     success = isRotationInsertSuccess(sectionId, result);
   } else if (sectionId === "tSpin" || sectionId === "tSpinDouble") {
+    if (sectionId === "tSpin") {
+      console.debug("T-Spin tutorial check", {
+        piece: result.piece,
+        x: result.x,
+        y: result.y,
+        rotationState: result.rotationState,
+        lastAction: result.lastAction,
+        isTSpin: result.isTSpin,
+        clearedLines: result.clearedLines,
+        corners: result.tSpinCornerCount,
+      });
+    }
     success = isTSpinTutorialSuccess(sectionId, result);
   } else if (sectionId === "perfectClear") {
     success = isPerfectClearTutorialSuccess(result);
@@ -5366,17 +5387,22 @@ function isTSpinCornerFilled(x, y) {
   return Boolean(board[y][x]);
 }
 
-function isTSpin(piece) {
-  if (piece.type !== "T" || piece.lastAction !== "rotate") return false;
+function getTSpinCornerCount(piece) {
+  if (!piece || piece.type !== "T") return 0;
   const centerX = piece.x + 1;
   const centerY = piece.y + 1;
-  const filledCorners = [
+  return [
     [centerX - 1, centerY - 1],
     [centerX + 1, centerY - 1],
     [centerX - 1, centerY + 1],
     [centerX + 1, centerY + 1],
   ].filter(([x, y]) => isTSpinCornerFilled(x, y)).length;
-  return filledCorners >= 3;
+}
+
+function isTSpin(piece) {
+  if (!piece || piece.type !== "T") return false;
+  const hasRecentRotation = piece.lastAction === "rotate" || Boolean(piece.lastSuccessfulRotation);
+  return hasRecentRotation && getTSpinCornerCount(piece) >= 3;
 }
 
 function getTSpinEventName(cleared) {
@@ -5520,6 +5546,7 @@ function movePiece(deltaX) {
     const wasGrounded = isActiveGrounded();
     active.x += deltaX;
     active.lastAction = "move";
+    active.lastSuccessfulRotation = null;
     tsdAssistDirty = true;
     if (!isTutorialMode()) {
       resetLockDelayAfterPlayerAction(wasGrounded);
@@ -6168,6 +6195,14 @@ function rotatePiece(direction) {
     active.bombCells = nextBombCells;
     active.rotationState = toState;
     active.lastAction = "rotate";
+    active.lastSuccessfulRotation = {
+      rotationState: active.rotationState,
+      x: active.x,
+      y: active.y,
+      usedKick: kickX !== 0 || kickY !== 0,
+      kickX,
+      kickY,
+    };
     if (isTutorialMode() && tutorialState) {
       tutorialState.rotatedSinceSpawn = true;
       tutorialState.rotationCount = (tutorialState.rotationCount ?? 0) + 1;
@@ -6267,6 +6302,7 @@ function lockPiece() {
   const lockedPiece = active
     ? { piece: active.type, x: active.x, y: active.y, rotationState: active.rotationState }
     : {};
+  const tSpinCornerCount = getTSpinCornerCount(active);
   lockCounter = 0;
   lockResetCount = 0;
   resetSoftDropAfterLock();
@@ -6303,7 +6339,9 @@ function lockPiece() {
     clearedLines: cleared,
     eventType: getTutorialLineEventType(cleared, tSpin, perfectClear),
     isTSpin: tSpin,
+    tSpinCornerCount,
     tSpinType: tSpin ? getTSpinEventName(cleared) : null,
+    lastSuccessfulRotation: active?.lastSuccessfulRotation ?? null,
     isTetris: cleared === 4,
     isPerfectClear: perfectClear,
     isBackToBack: backToBackActive,
