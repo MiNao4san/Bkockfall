@@ -139,12 +139,13 @@ const CHAPTER_3_SETUPS = {
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "..........", "XXXXX..XXX", "XXXXXX.XXX",
+      "..........", "..........", "...X......", "XXXXX..XXX", "XXXX..XXXX",
     ],
-    expected: { x: 4, y: 17, rotationState: "R", minClearedLines: 1 },
+    expected: { x: 4, y: 17, rotationState: "2", clearedLines: 2 },
     requireRotation: true,
-    instruction: "Sミノを回転させて隙間へ入れよう",
-    verifiedSolution: ["Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop"],
+    instruction: "Sミノを縦向きにして地形へ引っ掛け、\nもう一度回転して隙間へ入れよう。",
+    verifiedSolution: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop", "Rotate Right"],
+    usedKick: { x: 1, y: 1 },
   },
   rotationInsertZ: {
     pieceType: "Z",
@@ -152,12 +153,13 @@ const CHAPTER_3_SETUPS = {
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "..........", "XXXX..XXXX", "XXXX.XXXXX",
+      "..........", "..........", "......X...", "XXX..XXXXX", "XXXX..XXXX",
     ],
-    expected: { x: 3, y: 17, rotationState: "R", minClearedLines: 1 },
+    expected: { x: 3, y: 17, rotationState: "2", clearedLines: 2 },
     requireRotation: true,
-    instruction: "Zミノを回転させて隙間へ入れよう",
-    verifiedSolution: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right"],
+    instruction: "Zミノを縦向きにして地形へ引っ掛け、\nもう一度回転して隙間へ入れよう。",
+    verifiedSolution: ["Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Left", "Soft Drop", "Rotate Left"],
+    usedKick: { x: -1, y: 1 },
   },
   tSpin: {
     pieceType: "T",
@@ -4268,7 +4270,10 @@ function validateChapter3Setup(id, setup) {
       !Number.isFinite(expected.x) ||
       !Number.isFinite(expected.y) ||
       typeof expected.rotationState !== "string" ||
-      !Number.isFinite(expected.minClearedLines)
+      (
+        !Number.isFinite(expected.minClearedLines) &&
+        !Number.isFinite(expected.clearedLines)
+      )
     ) {
       throw new Error(`${id}: invalid rotation insert expected placement`);
     }
@@ -4708,7 +4713,11 @@ function isRotationInsertSuccess(sectionId, result) {
     result.x === expected.x &&
     result.y === expected.y &&
     result.rotationState === expected.rotationState &&
-    result.clearedLines >= expected.minClearedLines
+    (
+      Number.isFinite(expected.clearedLines)
+        ? result.clearedLines === expected.clearedLines
+        : result.clearedLines >= expected.minClearedLines
+    )
   );
 }
 

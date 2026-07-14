@@ -84,6 +84,12 @@ function countClearedLinesAfterPlacement(board, type, expected) {
   return nextBoard.filter((row) => row.every(Boolean)).length;
 }
 
+function expectedClearedLines(expected) {
+  return Number.isFinite(expected.clearedLines)
+    ? expected.clearedLines
+    : expected.minClearedLines;
+}
+
 function countFullLines(board) {
   return board.filter((row) => row.every(Boolean)).length;
 }
@@ -259,8 +265,8 @@ for (const sectionId of [
     assert.equal(collides(board, expected.x, expected.y, expectedMatrix), false);
     assert.equal(collides(board, expected.x, expected.y + 1, expectedMatrix), true);
     assert.equal(
-      countClearedLinesAfterPlacement(board, type, expected) >= expected.minClearedLines,
-      true,
+      countClearedLinesAfterPlacement(board, type, expected),
+      expectedClearedLines(expected),
     );
 
     const solution = setup.verifiedSolution;
@@ -280,6 +286,13 @@ for (const sectionId of [
       true,
       `${type} solution does not use rotation`,
     );
+    if (sectionId === "rotationInsertS" || sectionId === "rotationInsertZ") {
+      assert.equal(
+        solution.filter((action) => action === "Rotate Right" || action === "Rotate Left").length >= 2,
+        true,
+        `${type} solution does not use two rotations`,
+      );
+    }
 
     const reachableStates = getReachableStates(type, board);
     assert.ok(
@@ -295,8 +308,8 @@ test("J rotation insert board is the horizontal mirror of the L board", () => {
   assert.deepEqual(jBoard, lBoard.map((row) => [...row].reverse().join("")));
 });
 
-test("J and L registered solutions use a non-zero SRS kick into the cavity", () => {
-  for (const sectionId of ["rotationInsertJ", "rotationInsertL"]) {
+test("J, L, S, and Z registered solutions use the stored non-zero SRS kick into the cavity", () => {
+  for (const sectionId of ["rotationInsertJ", "rotationInsertL", "rotationInsertS", "rotationInsertZ"]) {
     const setup = CHAPTER_3_SETUPS[sectionId];
     const board = boardFromPattern(setup.board);
     const finalState = replaySolution(setup.pieceType, board, setup.verifiedSolution);
@@ -304,4 +317,10 @@ test("J and L registered solutions use a non-zero SRS kick into the cavity", () 
     assert.notDeepEqual(finalState.lastKick.kick, [0, 0]);
     assert.deepEqual(finalState.lastKick.kick, [setup.usedKick.x, setup.usedKick.y]);
   }
+});
+
+test("Z rotation insert board is the horizontal mirror of the S board", () => {
+  const zBoard = CHAPTER_3_SETUPS.rotationInsertZ.board;
+  const sBoard = CHAPTER_3_SETUPS.rotationInsertS.board;
+  assert.deepEqual(zBoard, sBoard.map((row) => [...row].reverse().join("")));
 });
