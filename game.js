@@ -185,11 +185,13 @@ const CHAPTER_3_SETUPS = {
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
-      "..........", "...X.X....", "....X.....", "XXXX.XXXXX", "XXXX.XXXXX",
+      "..........", "..........", "....X.....", "XXXXX..XXX", "XXXXX.XXXX",
     ],
-    expected: { clearedLines: 2 },
+    expected: { x: 4, y: 17, rotationState: "R", clearedLines: 2 },
     requireTSpin: true,
-    instruction: "T-Spin Doubleを決めよう",
+    instruction: "Tミノを穴の近くまで下ろし、\n最後に回転してT-Spin Doubleを決めよう。",
+    verifiedSolution: ["Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop", "Soft Drop"],
+    usedKick: { x: 0, y: 0 },
   },
   perfectClear: {
     pieceType: "O",
@@ -4745,7 +4747,13 @@ function isTSpinTutorialSuccess(sectionId, result) {
     );
   }
   if (sectionId === "tSpinDouble") {
-    return result.clearedLines === 2;
+    const expected = CHAPTER_3_SETUPS.tSpinDouble.expected;
+    return (
+      result.x === expected.x &&
+      result.y === expected.y &&
+      result.rotationState === expected.rotationState &&
+      result.clearedLines === expected.clearedLines
+    );
   }
   return false;
 }
@@ -4760,7 +4768,7 @@ function evaluateChapter3Result(result) {
   if (sectionId.startsWith("rotationInsert")) {
     success = isRotationInsertSuccess(sectionId, result);
   } else if (sectionId === "tSpin" || sectionId === "tSpinDouble") {
-    if (sectionId === "tSpin") {
+    if (sectionId === "tSpin" || sectionId === "tSpinDouble") {
       console.debug("T-Spin tutorial check", {
         piece: result.piece,
         x: result.x,

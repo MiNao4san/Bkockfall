@@ -488,3 +488,38 @@ test("T-Spin Single setup is reachable only with rotation and satisfies 3-corner
     false,
   );
 });
+
+test("T-Spin Double setup is reachable only with rotation and clears exactly two lines", () => {
+  const setup = CHAPTER_3_SETUPS.tSpinDouble;
+  const board = boardFromPattern(setup.board);
+  const expected = setup.expected;
+
+  assert.equal(countFullLines(board), 0);
+  assert.equal(collides(board, expected.x, expected.y, matrixFor("T", expected.rotationState)), false);
+  assert.equal(collides(board, expected.x, expected.y + 1, matrixFor("T", expected.rotationState)), true);
+  assert.equal(countClearedLinesAfterPlacement(board, "T", expected), 2);
+  assert.equal(countTSpinFilledCorners(board, expected), 3);
+
+  const finalState = replaySolution("T", board, setup.verifiedSolution);
+  assert.deepEqual({
+    x: finalState.x,
+    y: finalState.y,
+    rotationState: finalState.rotationState,
+  }, {
+    x: expected.x,
+    y: expected.y,
+    rotationState: expected.rotationState,
+  });
+  assert.ok(finalState.lastKick);
+  assert.deepEqual(finalState.lastKick.kick, [setup.usedKick.x, setup.usedKick.y]);
+
+  const noRotationStates = getReachableStatesWithRotationLimit("T", board, 0);
+  assert.equal(
+    [...noRotationStates.values()].some((state) => (
+      state.x === expected.x &&
+      state.y === expected.y &&
+      state.rotationState === expected.rotationState
+    )),
+    false,
+  );
+});
