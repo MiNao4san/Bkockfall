@@ -85,7 +85,6 @@ const CHAPTER_5_MISSION_POOL = [
   "tSpin",
   "tSpinDouble",
   "rotationInsert",
-  "perfectClear",
 ];
 const CHAPTER_5_MISSION_COUNT = 5;
 const CHAPTER_5_TIME_LIMIT_MS = 300000;
@@ -3979,13 +3978,12 @@ function getChapter5MissionTitle(mission) {
     tSpin: "T-Spin",
     tSpinDouble: "T-Spin Double",
     rotationInsert: "回転入れ",
-    perfectClear: "Perfect Clear",
   };
   return titles[mission] ?? mission;
 }
 
 function getChapter5MissionDescription(mission) {
-  if (mission === "single") return "1ラインだけ消そう";
+  if (mission === "single") return "1ライン以上消そう";
   if (mission === "double") return "2ラインを同時に消そう";
   if (mission === "triple") return "3ラインを同時に消そう";
   if (mission === "tetris") return "4ラインを同時に消そう";
@@ -3998,7 +3996,6 @@ function getChapter5MissionDescription(mission) {
     const target = tutorialState?.rotationInsertTarget ?? CHAPTER_5_ROTATION_INSERT_TARGETS[0];
     return `${target}ミノを回転させて\n隙間へ入れよう`;
   }
-  if (mission === "perfectClear") return "ライン消去後に\n盤面を空にしよう";
   return "";
 }
 
@@ -4013,17 +4010,38 @@ function getCurrentChapter5Mission() {
   return tutorialState?.chapter5Missions?.[tutorialState.chapter5MissionIndex] ?? null;
 }
 
-function chooseChapter5Missions() {
-  if (Array.isArray(DEBUG_CHAPTER_5_MISSIONS) && DEBUG_CHAPTER_5_MISSIONS.length > 0) {
-    return [...new Set(DEBUG_CHAPTER_5_MISSIONS)].slice(0, CHAPTER_5_MISSION_COUNT);
+function normalizeChapter5Missions(candidates = []) {
+  const allowedMissions = new Set(CHAPTER_5_MISSION_POOL);
+  const missions = [];
+  candidates.forEach((mission) => {
+    if (allowedMissions.has(mission) && !missions.includes(mission)) {
+      missions.push(mission);
+    }
+  });
+
+  const fillers = shuffle(CHAPTER_5_MISSION_POOL.filter((mission) => !missions.includes(mission)));
+  while (missions.length < CHAPTER_5_MISSION_COUNT && fillers.length > 0) {
+    missions.push(fillers.shift());
   }
-  const missions = shuffle(CHAPTER_5_MISSION_POOL).slice(0, CHAPTER_5_MISSION_COUNT);
+
   if (missions.includes("backToBack") && !missions.includes("tetris") && !missions.includes("tSpinDouble")) {
     const dependency = rng() < 0.5 ? "tetris" : "tSpinDouble";
     const replaceIndex = missions.findIndex((mission) => mission !== "backToBack");
-    missions[replaceIndex] = dependency;
+    if (replaceIndex >= 0) {
+      missions[replaceIndex] = dependency;
+    } else if (missions.length < CHAPTER_5_MISSION_COUNT) {
+      missions.push(dependency);
+    }
   }
-  return missions;
+
+  return missions.slice(0, CHAPTER_5_MISSION_COUNT);
+}
+
+function chooseChapter5Missions() {
+  const sourceMissions = Array.isArray(DEBUG_CHAPTER_5_MISSIONS) && DEBUG_CHAPTER_5_MISSIONS.length > 0
+    ? DEBUG_CHAPTER_5_MISSIONS
+    : shuffle(CHAPTER_5_MISSION_POOL);
+  return normalizeChapter5Missions(sourceMissions);
 }
 
 function resetChapter5MissionTemporaryState() {
@@ -4071,8 +4089,12 @@ function isChapter5RotationInsertSuccess(result) {
   return Boolean(context?.usedKick && context.type === result.piece);
 }
 
+function isChapter5SingleSuccess(result) {
+  return result.clearedLines >= 1;
+}
+
 function isChapter5MissionSuccess(mission, result) {
-  if (mission === "single") return result.clearedLines === 1 && !result.isTSpin;
+  if (mission === "single") return isChapter5SingleSuccess(result);
   if (mission === "double") return result.clearedLines === 2 && !result.isTSpin;
   if (mission === "triple") return result.clearedLines === 3 && !result.isTSpin;
   if (mission === "tetris") return result.clearedLines === 4;
@@ -4082,7 +4104,6 @@ function isChapter5MissionSuccess(mission, result) {
   if (mission === "tSpin") return result.piece === "T" && result.isTSpin;
   if (mission === "tSpinDouble") return result.piece === "T" && result.isTSpin && result.clearedLines === 2;
   if (mission === "rotationInsert") return isChapter5RotationInsertSuccess(result);
-  if (mission === "perfectClear") return result.clearedLines > 0 && result.isPerfectClear;
   return false;
 }
 
