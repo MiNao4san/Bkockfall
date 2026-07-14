@@ -58,7 +58,11 @@ const TUTORIAL_CHAPTER_2_SECTIONS = [
   "combo",
 ];
 const TUTORIAL_CHAPTER_3_SECTIONS = [
-  "rotationInsert",
+  "rotationInsertI",
+  "rotationInsertJ",
+  "rotationInsertL",
+  "rotationInsertS",
+  "rotationInsertZ",
   "tSpin",
   "tSpinDouble",
   "perfectClear",
@@ -86,53 +90,107 @@ const CHAPTER_5_MISSION_POOL = [
 const CHAPTER_5_MISSION_COUNT = 5;
 const CHAPTER_5_TIME_LIMIT_MS = 300000;
 const DEBUG_CHAPTER_5_MISSIONS = null;
-const ROTATION_INSERT_TARGETS = ["I", "J", "L", "S", "Z"];
-const ROTATION_INSERT_TYPES = ["I", "J", "L", "S", "Z"];
-const ROTATION_INSERT_EMPTY_BOARD = [
-  "..........", "..........", "..........", "..........", "..........",
-  "..........", "..........", "..........", "..........", "..........",
-  "..........", "..........", "..........", "..........", "..........",
-  "..........", "..........", "..........", "..........", "..........",
-];
-const ROTATION_INSERT_SETUPS = {
-  I: {
+const CHAPTER_5_ROTATION_INSERT_TARGETS = ["I", "J", "L", "S", "Z"];
+const CHAPTER_3_SETUPS = {
+  rotationInsertI: {
+    pieceType: "I",
     board: [
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "...X..X...", "...X..X...", "XXX....XXX", "XXX....XXX",
     ],
-    expected: { x: 3, y: 17, rotationState: "2", clearedLines: 1 },
+    expected: { x: 3, y: 17, rotationState: "2", minClearedLines: 1 },
+    requireRotation: true,
+    instruction: "Iミノを回転させて隙間へ入れよう",
     verifiedSolution: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop"],
-    verified: true,
   },
-  J: {
-    board: ROTATION_INSERT_EMPTY_BOARD,
-    expected: null,
-    verifiedSolution: [],
-    verified: false,
-    errorMessage: "J rotation insert tutorial setup is not verified",
+  rotationInsertJ: {
+    pieceType: "J",
+    board: [
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "....XX....", "..........", "..........", "XXXX.XXXXX", "XXXXXXXXXX",
+    ],
+    expected: { x: 3, y: 16, rotationState: "R", minClearedLines: 1 },
+    requireRotation: true,
+    instruction: "Jミノを回転させて隙間へ入れよう",
+    verifiedSolution: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop", "Rotate Left", "Soft Drop", "Rotate Right"],
   },
-  L: {
-    board: ROTATION_INSERT_EMPTY_BOARD,
-    expected: null,
-    verifiedSolution: [],
-    verified: false,
-    errorMessage: "L rotation insert tutorial setup is not verified",
+  rotationInsertL: {
+    pieceType: "L",
+    board: [
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "....XX....", "..........", "..........", "XXXXX.XXXX", "XXXXXXXXXX",
+    ],
+    expected: { x: 4, y: 16, rotationState: "L", minClearedLines: 1 },
+    requireRotation: true,
+    instruction: "Lミノを回転させて隙間へ入れよう",
+    verifiedSolution: ["Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Left", "Soft Drop", "Rotate Right", "Soft Drop", "Rotate Left"],
   },
-  S: {
-    board: ROTATION_INSERT_EMPTY_BOARD,
-    expected: null,
-    verifiedSolution: [],
-    verified: false,
-    errorMessage: "S rotation insert tutorial setup is not verified",
+  rotationInsertS: {
+    pieceType: "S",
+    board: [
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "XXXXX..XXX", "XXXXXX.XXX",
+    ],
+    expected: { x: 4, y: 17, rotationState: "R", minClearedLines: 1 },
+    requireRotation: true,
+    instruction: "Sミノを回転させて隙間へ入れよう",
+    verifiedSolution: ["Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop"],
   },
-  Z: {
-    board: ROTATION_INSERT_EMPTY_BOARD,
-    expected: null,
-    verifiedSolution: [],
-    verified: false,
-    errorMessage: "Z rotation insert tutorial setup is not verified",
+  rotationInsertZ: {
+    pieceType: "Z",
+    board: [
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "XXXX..XXXX", "XXXX.XXXXX",
+    ],
+    expected: { x: 3, y: 17, rotationState: "R", minClearedLines: 1 },
+    requireRotation: true,
+    instruction: "Zミノを回転させて隙間へ入れよう",
+    verifiedSolution: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right"],
+  },
+  tSpin: {
+    pieceType: "T",
+    board: [
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "....X.....", "...X.X....", "XXXX.XXXXX", "XXXXX.XXXX",
+    ],
+    expected: { minClearedLines: 1 },
+    requireTSpin: true,
+    instruction: "T-Spinを決めよう",
+  },
+  tSpinDouble: {
+    pieceType: "T",
+    board: [
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "...X.X....", "....X.....", "XXXX.XXXXX", "XXXX.XXXXX",
+    ],
+    expected: { clearedLines: 2 },
+    requireTSpin: true,
+    instruction: "T-Spin Doubleを決めよう",
+  },
+  perfectClear: {
+    pieceType: "O",
+    board: [
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "..........", "..........",
+      "..........", "..........", "..........", "XXXX..XXXX", "XXXX..XXXX",
+    ],
+    expected: { requirePerfectClear: true },
+    instruction: "Perfect Clearを決めよう",
   },
 };
 const TUTORIAL_CHAPTER_SECTIONS = {
@@ -314,13 +372,45 @@ const TUTORIAL_SECTIONS = {
     instruction: "ライン消去を続けて行うと、\nComboになります。\n\n2回続けてラインを消してみよう。",
     successType: "combo",
   },
-  rotationInsert: {
+  rotationInsertI: {
     chapter: 3,
-    title: "回転入れ",
+    title: "回転入れ I",
     pieceType: "I",
     allowedActions: ["moveLeft", "moveRight", "rotateLeft", "rotateRight", "softDrop", "hardDrop"],
-    instruction: "回転を使うと、\nそのままでは入らない隙間へ\nミノを入れられます。",
-    successType: "rotationInsert",
+    instruction: CHAPTER_3_SETUPS.rotationInsertI.instruction,
+    successType: "rotationInsertI",
+  },
+  rotationInsertJ: {
+    chapter: 3,
+    title: "回転入れ J",
+    pieceType: "J",
+    allowedActions: ["moveLeft", "moveRight", "rotateLeft", "rotateRight", "softDrop", "hardDrop"],
+    instruction: CHAPTER_3_SETUPS.rotationInsertJ.instruction,
+    successType: "rotationInsertJ",
+  },
+  rotationInsertL: {
+    chapter: 3,
+    title: "回転入れ L",
+    pieceType: "L",
+    allowedActions: ["moveLeft", "moveRight", "rotateLeft", "rotateRight", "softDrop", "hardDrop"],
+    instruction: CHAPTER_3_SETUPS.rotationInsertL.instruction,
+    successType: "rotationInsertL",
+  },
+  rotationInsertS: {
+    chapter: 3,
+    title: "回転入れ S",
+    pieceType: "S",
+    allowedActions: ["moveLeft", "moveRight", "rotateLeft", "rotateRight", "softDrop", "hardDrop"],
+    instruction: CHAPTER_3_SETUPS.rotationInsertS.instruction,
+    successType: "rotationInsertS",
+  },
+  rotationInsertZ: {
+    chapter: 3,
+    title: "回転入れ Z",
+    pieceType: "Z",
+    allowedActions: ["moveLeft", "moveRight", "rotateLeft", "rotateRight", "softDrop", "hardDrop"],
+    instruction: CHAPTER_3_SETUPS.rotationInsertZ.instruction,
+    successType: "rotationInsertZ",
   },
   tSpin: {
     chapter: 3,
@@ -3739,17 +3829,17 @@ function getTutorialSectionContent(sectionId) {
     },
   };
   if (content[sectionId]) return content[sectionId];
-  const config = TUTORIAL_SECTIONS[sectionId];
-  if (!config) return content.screenExplanation;
-  if (sectionId === "rotationInsert") {
-    const type = tutorialState?.rotationInsertTypes?.[tutorialState?.subStep ?? 0] ?? ROTATION_INSERT_TYPES[0];
+  const chapter3Setup = CHAPTER_3_SETUPS[sectionId];
+  if (chapter3Setup) {
     return {
-      title: config.title,
-      instruction: `${config.instruction}\n\n${type}ミノを回転させて\n隙間へ入れてみよう。`,
+      title: TUTORIAL_SECTIONS[sectionId]?.title ?? "回転入れ",
+      instruction: chapter3Setup.instruction,
       button: false,
       success: "できました！",
     };
   }
+  const config = TUTORIAL_SECTIONS[sectionId];
+  if (!config) return content.screenExplanation;
   if (sectionId === "backToBack" && tutorialState?.subStep === 1) {
     return {
       title: config.title,
@@ -3892,7 +3982,7 @@ function getChapter5MissionDescription(mission) {
   if (mission === "tSpin") return "Tミノを回転で入れて\nT-Spinを決めよう";
   if (mission === "tSpinDouble") return "T-Spinで2ライン同時に消そう";
   if (mission === "rotationInsert") {
-    const target = tutorialState?.rotationInsertTarget ?? ROTATION_INSERT_TARGETS[0];
+    const target = tutorialState?.rotationInsertTarget ?? CHAPTER_5_ROTATION_INSERT_TARGETS[0];
     return `${target}ミノを回転させて\n隙間へ入れよう`;
   }
   if (mission === "perfectClear") return "ライン消去後に\n盤面を空にしよう";
@@ -3931,7 +4021,7 @@ function resetChapter5MissionTemporaryState() {
   tutorialState.currentMissionProgress = 0;
   tutorialState.lastRotationContext = null;
   tutorialState.rotationInsertTarget = mission === "rotationInsert"
-    ? ROTATION_INSERT_TARGETS[Math.floor(rng() * ROTATION_INSERT_TARGETS.length)]
+    ? CHAPTER_5_ROTATION_INSERT_TARGETS[Math.floor(rng() * CHAPTER_5_ROTATION_INSERT_TARGETS.length)]
     : null;
 }
 
@@ -4137,41 +4227,6 @@ function createTutorialCellForSection(sectionId) {
   return createGarbageCell();
 }
 
-function getRotationInsertBoard(type) {
-  return getRotationInsertSetup(type).board;
-}
-
-function getRotationInsertSetup(type) {
-  return ROTATION_INSERT_SETUPS[type] ?? ROTATION_INSERT_SETUPS.I;
-}
-
-function isRotationInsertSetupAvailable(type) {
-  const setup = ROTATION_INSERT_SETUPS[type];
-  return Boolean(
-    setup &&
-    setup.verified === true &&
-    setup.expected &&
-    Array.isArray(setup.board),
-  );
-}
-
-function getAvailableRotationInsertTypes() {
-  return ROTATION_INSERT_TYPES.filter((type) => isRotationInsertSetupAvailable(type));
-}
-
-function handleUnavailableRotationInsertSubStep(subStep, context = "start") {
-  const type = tutorialState?.rotationInsertTypes?.[subStep];
-  const setup = type ? ROTATION_INSERT_SETUPS[type] : null;
-  console.error("Rotation insert setup unavailable", {
-    context,
-    subStep,
-    type,
-    setup,
-  });
-  completeTutorialSection("", { clearActive: true });
-  return false;
-}
-
 function validateTutorialBoardPattern(name, pattern) {
   if (pattern.length !== rows) {
     throw new Error(`${name}: expected ${rows} rows, got ${pattern.length}`);
@@ -4186,18 +4241,90 @@ function validateTutorialBoardPattern(name, pattern) {
   });
 }
 
-function validateRotationInsertBoards() {
-  ROTATION_INSERT_TYPES.forEach((type) => {
-    validateTutorialBoardPattern(
-      `rotationInsert-${type}`,
-      getRotationInsertBoard(type),
-    );
+function validateChapter3Setup(id, setup) {
+  if (!setup) {
+    throw new Error(`${id}: missing setup`);
+  }
+  if (!Array.isArray(setup.board) || setup.board.length !== 20) {
+    throw new Error(`${id}: board must have 20 rows`);
+  }
+  setup.board.forEach((row, y) => {
+    if (row.length !== 10) {
+      throw new Error(`${id}: row ${y} must have 10 columns`);
+    }
+    if (!/^[.X]+$/.test(row)) {
+      throw new Error(`${id}: invalid board characters`);
+    }
+  });
+  if (!setup.pieceType) {
+    throw new Error(`${id}: missing pieceType`);
+  }
+  if (id.startsWith("rotationInsert")) {
+    const expected = setup.expected;
+    if (
+      !expected ||
+      !Number.isFinite(expected.x) ||
+      !Number.isFinite(expected.y) ||
+      typeof expected.rotationState !== "string" ||
+      !Number.isFinite(expected.minClearedLines)
+    ) {
+      throw new Error(`${id}: invalid rotation insert expected placement`);
+    }
+  }
+  if ((id === "tSpin" || id === "tSpinDouble" || id === "perfectClear") && !setup.expected) {
+    throw new Error(`${id}: missing expected result`);
+  }
+}
+
+function validateChapter3Setups() {
+  TUTORIAL_CHAPTER_3_SECTIONS.forEach((sectionId) => {
+    validateChapter3Setup(sectionId, CHAPTER_3_SETUPS[sectionId]);
   });
 }
 
-function getRotationInsertExpectedPlacement(type) {
-  const setup = getRotationInsertSetup(type);
-  return setup.expected ?? null;
+function startChapter3Section(sectionId) {
+  const setup = CHAPTER_3_SETUPS[sectionId];
+  validateChapter3Setup(sectionId, setup);
+  window.clearTimeout(tutorialAdvanceTimer);
+  tutorialAdvanceTimer = null;
+  resetTutorialRuntimeState();
+  tutorialState = {
+    sectionId,
+    startX: null,
+    startY: null,
+    startRotationState: "0",
+    specialMode: null,
+    completedLocks: 0,
+    usedHold: false,
+    usedHoldDuringBackToBack: false,
+    rotatedSinceSpawn: false,
+    lastSuccessfulAction: null,
+    lastRotationContext: null,
+    completed: false,
+    showSuccess: false,
+    message: "",
+    waitingForAdvance: false,
+    waitingForNext: false,
+    pendingAdvanceCallback: null,
+  };
+  board = createTutorialBoard(setup.board, {
+    cellFactory: () => createTutorialCellForSection(sectionId),
+  });
+  spawnTutorialPiece(setup.pieceType, {
+    y: 1,
+    x: setup.pieceType === "I" ? 3 : undefined,
+  });
+  tutorialState.startX = active?.x ?? null;
+  tutorialState.startY = active?.y ?? null;
+  tutorialState.startRotationState = active?.rotationState ?? "0";
+  lastEventEl.textContent = "-";
+  lastTime = performance.now();
+  updateStats();
+  drawNextPreviews();
+  drawPreview(holdCtx, holdType);
+  updateTutorialPanel();
+  draw();
+  logTutorialSectionStart(sectionId);
 }
 
 function resetTutorialRuntimeState(options = {}) {
@@ -4268,23 +4395,6 @@ function setupTutorialSectionBoard(sectionId) {
     return;
   }
   let pattern = config.boardPattern;
-  if (sectionId === "rotationInsert") {
-    validateRotationInsertBoards();
-    const type = tutorialState.rotationInsertTypes[tutorialState.subStep];
-    const setup = getRotationInsertSetup(type);
-    if (!type || !isRotationInsertSetupAvailable(type)) {
-      handleUnavailableRotationInsertSubStep(tutorialState.subStep, "setup");
-      return;
-    }
-    pattern = setup.board;
-    console.log("Rotation insert setup", {
-      type,
-      pattern,
-      rowCount: pattern.length,
-      rowLengths: pattern.map((row) => row.length),
-    });
-    console.debug(`${type} tutorial solution:`, setup.verifiedSolution ?? []);
-  }
   if (pattern) {
     board = createTutorialBoard(pattern, {
       cellFactory: () => createTutorialCellForSection(sectionId),
@@ -4305,9 +4415,6 @@ function setupTutorialActivePiece(sectionId) {
   const config = TUTORIAL_SECTIONS[sectionId];
   if (!config) return;
   let pieceType = config.pieceType;
-  if (sectionId === "rotationInsert") {
-    pieceType = tutorialState.rotationInsertTypes[tutorialState.subStep];
-  }
   const options = { y: 1 };
   if (pieceType === "I") options.x = 3;
   if (pieceType === "O") options.x = 4;
@@ -4320,15 +4427,15 @@ function setupTutorialActivePiece(sectionId) {
 }
 
 function startTutorialSection(sectionId, options = {}) {
+  if (tutorialChapter === 3 && CHAPTER_3_SETUPS[sectionId]) {
+    startChapter3Section(sectionId);
+    return;
+  }
   window.clearTimeout(tutorialAdvanceTimer);
   tutorialAdvanceTimer = null;
   resetTutorialRuntimeState();
   const config = TUTORIAL_SECTIONS[sectionId];
   const initialSubStep = options.initialSubStep ?? 0;
-  const rotationInsertTypes =
-    sectionId === "rotationInsert"
-      ? getAvailableRotationInsertTypes()
-      : [...ROTATION_INSERT_TYPES];
   tutorialState = {
     sectionId,
     startX: null,
@@ -4342,7 +4449,6 @@ function startTutorialSection(sectionId, options = {}) {
     rotatedSinceSpawn: false,
     lastSuccessfulAction: null,
     lastRotationContext: null,
-    rotationInsertTypes,
     completed: false,
     showSuccess: false,
     message: "",
@@ -4575,12 +4681,6 @@ function isTutorialLockSuccess(sectionId, result) {
       return result.clearedLines === 4 && result.eventType === "tetris";
     case "hold":
       return tutorialState.usedHold && result.piece === "I" && result.clearedLines === 4 && result.eventType === "tetris";
-    case "tSpin":
-      return result.piece === "T" && result.lastAction === "rotate" && result.isTSpin && result.clearedLines === 1;
-    case "tSpinDouble":
-      return result.piece === "T" && result.lastAction === "rotate" && result.isTSpin && result.clearedLines === 2 && result.eventType === "tSpinDouble";
-    case "perfectClear":
-      return result.clearedLines > 0 && result.isPerfectClear;
     case "cascade":
       return result.mode === "cascade" && result.cascadeChain >= 2 && result.clearedLines >= 2;
     case "square":
@@ -4596,8 +4696,64 @@ function isTutorialLockSuccess(sectionId, result) {
   }
 }
 
+function isRotationInsertSuccess(sectionId, result) {
+  const setup = CHAPTER_3_SETUPS[sectionId];
+  const expected = setup?.expected;
+  if (!setup || !expected) return false;
+  return (
+    result.piece === setup.pieceType &&
+    tutorialState.rotatedSinceSpawn === true &&
+    result.x === expected.x &&
+    result.y === expected.y &&
+    result.rotationState === expected.rotationState &&
+    result.clearedLines >= expected.minClearedLines
+  );
+}
+
+function isTSpinTutorialSuccess(sectionId, result) {
+  if (result.piece !== "T" || result.isTSpin !== true) {
+    return false;
+  }
+  if (sectionId === "tSpin") {
+    return result.clearedLines >= 1;
+  }
+  if (sectionId === "tSpinDouble") {
+    return result.clearedLines === 2;
+  }
+  return false;
+}
+
+function isPerfectClearTutorialSuccess(result) {
+  return result.clearedLines > 0 && result.isPerfectClear === true;
+}
+
+function evaluateChapter3Result(result) {
+  const sectionId = getCurrentTutorialSection();
+  let success = false;
+  if (sectionId.startsWith("rotationInsert")) {
+    success = isRotationInsertSuccess(sectionId, result);
+  } else if (sectionId === "tSpin" || sectionId === "tSpinDouble") {
+    success = isTSpinTutorialSuccess(sectionId, result);
+  } else if (sectionId === "perfectClear") {
+    success = isPerfectClearTutorialSuccess(result);
+  }
+
+  if (success) {
+    logTutorialDecision(result, "success");
+    completeTutorialSection("", { clearActive: true });
+    return true;
+  }
+
+  logTutorialDecision(result, "failure");
+  failTutorialSection("指定された技を決めてください", result);
+  return true;
+}
+
 function evaluateTutorialLockResult(result) {
   if (!isTutorialMode() || tutorialChapter === 1 || !tutorialState || tutorialState.completed) return false;
+  if (tutorialChapter === 3) {
+    return evaluateChapter3Result(result);
+  }
   if (tutorialChapter === 5) {
     return evaluateChapter5LockResult(result);
   }
@@ -4647,65 +4803,6 @@ function evaluateTutorialLockResult(result) {
     return true;
   }
 
-  if (sectionId === "rotationInsert") {
-    const type = tutorialState.rotationInsertTypes[tutorialState.subStep];
-    const expected = getRotationInsertExpectedPlacement(type);
-    if (!expected) {
-      console.error("Missing rotation insert expected placement", { type });
-      completeTutorialSection("", { clearActive: true });
-      return true;
-    }
-    const placedCorrectly =
-      result.piece === type &&
-      result.x === expected.x &&
-      result.y === expected.y &&
-      result.rotationState === expected.rotationState;
-    const succeeded =
-      placedCorrectly &&
-      tutorialState.rotatedSinceSpawn &&
-      result.clearedLines >= expected.clearedLines;
-
-    console.debug("Rotation insert check", {
-      expectedType: type,
-      expected,
-      resultPiece: result.piece,
-      resultX: result.x,
-      resultY: result.y,
-      resultRotationState: result.rotationState,
-      resultLastAction: result.lastAction,
-      rotatedSinceSpawn: tutorialState.rotatedSinceSpawn,
-      lastRotationContext: tutorialState.lastRotationContext,
-      clearedLines: result.clearedLines,
-      placedCorrectly,
-      succeeded,
-    });
-
-    if (succeeded) {
-      const nextSubStep = tutorialState.subStep + 1;
-      if (nextSubStep < tutorialState.rotationInsertTypes.length) {
-        const nextType = tutorialState.rotationInsertTypes[nextSubStep];
-        const nextSetup = ROTATION_INSERT_SETUPS[nextType];
-        if (!nextSetup || !nextSetup.verified || !nextSetup.expected) {
-          console.error("Rotation insert setup unavailable", {
-            nextType,
-            nextSetup,
-          });
-          completeTutorialSection("", { clearActive: true });
-          return true;
-        }
-        logTutorialDecision(result, "continue");
-        advanceTutorialSubStep("できました！", { nextSubStep });
-        return true;
-      }
-      logTutorialDecision(result, "success");
-      completeTutorialSection("", { clearActive: true });
-      return true;
-    }
-    logTutorialDecision(result, "failure");
-    failTutorialSection("指定された場所へ回転入れしてください", result);
-    return true;
-  }
-
   if (isTutorialLockSuccess(sectionId, result)) {
     logTutorialDecision(result, "success");
     completeTutorialSection(sectionId === "square" ? "Square完成！\n\n4個とも同じ種類なら\nGold Squareになります。" : "できました！", { clearActive: true });
@@ -4752,6 +4849,9 @@ function startTutorialChapter(chapter) {
   cols = DEFAULT_COLS;
   rows = DEFAULT_ROWS;
   configureBoardForMode();
+  if (chapter === 3) {
+    validateChapter3Setups();
+  }
   board = createBoard();
   nextQueue = [];
   holdType = null;

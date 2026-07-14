@@ -16,16 +16,16 @@ function extractConst(name) {
 const SHAPES = extractConst("SHAPES");
 const JLSTZ_KICKS = extractConst("JLSTZ_KICKS");
 const I_KICKS = extractConst("I_KICKS");
-const rotationInsertSetupsSource = source.slice(
-  source.indexOf("const ROTATION_INSERT_EMPTY_BOARD"),
+const chapter3SetupsSource = source.slice(
+  source.indexOf("const CHAPTER_3_SETUPS"),
   source.indexOf("const TUTORIAL_CHAPTER_SECTIONS"),
 );
-const ROTATION_INSERT_SETUPS = Function(
-  `${rotationInsertSetupsSource}; return ROTATION_INSERT_SETUPS;`,
+const CHAPTER_3_SETUPS = Function(
+  `${chapter3SetupsSource}; return CHAPTER_3_SETUPS;`,
 )();
-const rotationInsertTypesMatch = source.match(/const ROTATION_INSERT_TYPES = (\[[^\]]+\]);/);
-assert.ok(rotationInsertTypesMatch, "ROTATION_INSERT_TYPES was not found");
-const ROTATION_INSERT_TYPES = Function(`return ${rotationInsertTypesMatch[1]};`)();
+const chapter3SectionsMatch = source.match(/const TUTORIAL_CHAPTER_3_SECTIONS = (\[[\s\S]*?\]);/);
+assert.ok(chapter3SectionsMatch, "TUTORIAL_CHAPTER_3_SECTIONS was not found");
+const TUTORIAL_CHAPTER_3_SECTIONS = Function(`return ${chapter3SectionsMatch[1]};`)();
 
 function cloneMatrix(matrix) {
   return matrix.map((row) => [...row]);
@@ -197,21 +197,28 @@ function replaySolution(type, board, solution) {
   return state;
 }
 
-test("all rotation insert tutorial piece types are active in Chapter 3", () => {
-  assert.deepEqual(ROTATION_INSERT_TYPES, ["I", "J", "L", "S", "Z"]);
+test("Chapter 3 uses independent tutorial sections in order", () => {
+  assert.deepEqual(TUTORIAL_CHAPTER_3_SECTIONS, [
+    "rotationInsertI",
+    "rotationInsertJ",
+    "rotationInsertL",
+    "rotationInsertS",
+    "rotationInsertZ",
+    "tSpin",
+    "tSpinDouble",
+    "perfectClear",
+  ]);
 });
 
-test("only verified rotation insert setups are available for progression", () => {
-  const availableTypes = ROTATION_INSERT_TYPES.filter((type) => {
-    const setup = ROTATION_INSERT_SETUPS[type];
-    return Boolean(setup && setup.verified === true && setup.expected && Array.isArray(setup.board));
-  });
-  assert.deepEqual(availableTypes, ["I"]);
+test("Chapter 3 does not keep the old single rotationInsert section", () => {
+  assert.equal(TUTORIAL_CHAPTER_3_SECTIONS.includes("rotationInsert"), false);
+  assert.equal(source.includes("getAvailableRotationInsertTypes"), false);
+  assert.equal(source.includes("handleUnavailableRotationInsertSubStep"), false);
 });
 
-for (const type of ROTATION_INSERT_TYPES) {
-  test(`${type} rotation insert setup has a valid board shape`, () => {
-    const pattern = ROTATION_INSERT_SETUPS[type].board;
+for (const sectionId of TUTORIAL_CHAPTER_3_SECTIONS) {
+  test(`${sectionId} setup has a valid board shape`, () => {
+    const pattern = CHAPTER_3_SETUPS[sectionId].board;
     assert.equal(pattern.length, rows);
     pattern.forEach((row) => {
       assert.equal(row.length, cols);
@@ -220,9 +227,16 @@ for (const type of ROTATION_INSERT_TYPES) {
   });
 }
 
-for (const type of ROTATION_INSERT_TYPES.filter((pieceType) => ROTATION_INSERT_SETUPS[pieceType].verified)) {
-  test(`${type} rotation insert setup is playable with its verified solution`, () => {
-    const setup = ROTATION_INSERT_SETUPS[type];
+for (const sectionId of [
+  "rotationInsertI",
+  "rotationInsertJ",
+  "rotationInsertL",
+  "rotationInsertS",
+  "rotationInsertZ",
+]) {
+  test(`${sectionId} setup is playable with its registered solution`, () => {
+    const setup = CHAPTER_3_SETUPS[sectionId];
+    const type = setup.pieceType;
     const pattern = setup.board;
 
     const board = boardFromPattern(pattern);
@@ -232,7 +246,7 @@ for (const type of ROTATION_INSERT_TYPES.filter((pieceType) => ROTATION_INSERT_S
     assert.equal(collides(board, expected.x, expected.y, expectedMatrix), false);
     assert.equal(collides(board, expected.x, expected.y + 1, expectedMatrix), true);
     assert.equal(
-      countClearedLinesAfterPlacement(board, type, expected) >= expected.clearedLines,
+      countClearedLinesAfterPlacement(board, type, expected) >= expected.minClearedLines,
       true,
     );
 
@@ -254,16 +268,6 @@ for (const type of ROTATION_INSERT_TYPES.filter((pieceType) => ROTATION_INSERT_S
     assert.ok(
       reachableStates.has(`${expected.x},${expected.y},${expected.rotationState}`),
       `${type} expected placement is not reachable by BFS`,
-    );
-  });
-}
-
-for (const type of ROTATION_INSERT_TYPES.filter((pieceType) => !ROTATION_INSERT_SETUPS[pieceType].verified)) {
-  test(`${type} rotation insert setup is intentionally blocked until verified`, () => {
-    assert.equal(ROTATION_INSERT_SETUPS[type].verified, false);
-    assert.equal(
-      ROTATION_INSERT_SETUPS[type].errorMessage,
-      `${type} rotation insert tutorial setup is not verified`,
     );
   });
 }
