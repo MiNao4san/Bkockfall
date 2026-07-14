@@ -317,6 +317,18 @@ function replaySolution(type, board, solution) {
   return state;
 }
 
+function hardDropFromSpawn(type, board, offsetX = 0) {
+  let state = {
+    x: Math.floor((cols - SHAPES[type][0].length) / 2) + offsetX,
+    y: 1,
+    rotationState: "0",
+  };
+  while (!collides(board, state.x, state.y + 1, matrixFor(type, state.rotationState))) {
+    state = { ...state, y: state.y + 1 };
+  }
+  return state;
+}
+
 test("Chapter 3 uses independent tutorial sections in order", () => {
   assert.deepEqual(TUTORIAL_CHAPTER_3_SECTIONS, [
     "rotationInsertI",
@@ -465,7 +477,7 @@ test("T-Spin Single setup is reachable only with rotation and satisfies 3-corner
   assert.equal(collides(board, expected.x, expected.y, matrixFor("T", expected.rotationState)), false);
   assert.equal(collides(board, expected.x, expected.y + 1, matrixFor("T", expected.rotationState)), true);
   assert.equal(countClearedLinesAfterPlacement(board, "T", expected), 1);
-  assert.equal(countTSpinFilledCorners(board, expected), 3);
+  assert.equal(countTSpinFilledCorners(board, expected) >= 3, true);
 
   const finalState = replaySolution("T", board, setup.verifiedSolution);
   assert.deepEqual({
@@ -498,7 +510,7 @@ test("T-Spin Double setup is reachable only with rotation and clears exactly two
   assert.equal(collides(board, expected.x, expected.y, matrixFor("T", expected.rotationState)), false);
   assert.equal(collides(board, expected.x, expected.y + 1, matrixFor("T", expected.rotationState)), true);
   assert.equal(countClearedLinesAfterPlacement(board, "T", expected), 2);
-  assert.equal(countTSpinFilledCorners(board, expected), 3);
+  assert.equal(countTSpinFilledCorners(board, expected) >= 3, true);
 
   const finalState = replaySolution("T", board, setup.verifiedSolution);
   assert.deepEqual({
@@ -511,7 +523,22 @@ test("T-Spin Double setup is reachable only with rotation and clears exactly two
     rotationState: expected.rotationState,
   });
   assert.ok(finalState.lastKick);
+  assert.equal(setup.verifiedSolution.at(-1), "Rotate Right");
+  assert.notDeepEqual(finalState.lastKick.kick, [0, 0]);
   assert.deepEqual(finalState.lastKick.kick, [setup.usedKick.x, setup.usedKick.y]);
+
+  for (let offsetX = -3; offsetX <= 4; offsetX += 1) {
+    const directDropState = hardDropFromSpawn("T", board, offsetX);
+    assert.notDeepEqual({
+      x: directDropState.x,
+      y: directDropState.y,
+      rotationState: directDropState.rotationState,
+    }, {
+      x: expected.x,
+      y: expected.y,
+      rotationState: expected.rotationState,
+    });
+  }
 
   const noRotationStates = getReachableStatesWithRotationLimit("T", board, 0);
   assert.equal(

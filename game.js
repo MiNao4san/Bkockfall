@@ -185,13 +185,13 @@ const CHAPTER_3_SETUPS = {
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "....X.....", "XXXXX..XXX", "XXXXX.XXXX",
+      "....XX....", "....X.....", "....X.X...", "XXXXX..XXX", "XXXXX.XXXX",
     ],
     expected: { x: 4, y: 17, rotationState: "R", clearedLines: 2 },
     requireTSpin: true,
     instruction: "Tミノを穴の近くまで下ろし、\n最後に回転してT-Spin Doubleを決めよう。",
-    verifiedSolution: ["Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop", "Soft Drop"],
-    usedKick: { x: 0, y: 0 },
+    verifiedSolution: ["Right", "Right", "Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Left", "Rotate Right"],
+    usedKick: { x: -1, y: 2 },
   },
   perfectClear: {
     pieceType: "O",
@@ -4290,6 +4290,23 @@ function validateChapter3Setup(id, setup) {
   if ((id === "tSpin" || id === "tSpinDouble" || id === "perfectClear") && !setup.expected) {
     throw new Error(`${id}: missing expected result`);
   }
+  if (id === "tSpinDouble") {
+    validateTSpinDoubleSetup(setup);
+  }
+}
+
+function validateTSpinDoubleSetup(setup) {
+  if (setup.board.length !== 20) {
+    throw new Error("T-Spin Double board must have 20 rows");
+  }
+  setup.board.forEach((row, y) => {
+    if (row.length !== 10) {
+      throw new Error(`T-Spin Double row ${y} must have 10 columns`);
+    }
+    if (!/^[.X]+$/.test(row)) {
+      throw new Error(`T-Spin Double row ${y} has invalid characters`);
+    }
+  });
 }
 
 function validateChapter3Setups() {
@@ -4747,15 +4764,21 @@ function isTSpinTutorialSuccess(sectionId, result) {
     );
   }
   if (sectionId === "tSpinDouble") {
-    const expected = CHAPTER_3_SETUPS.tSpinDouble.expected;
-    return (
-      result.x === expected.x &&
-      result.y === expected.y &&
-      result.rotationState === expected.rotationState &&
-      result.clearedLines === expected.clearedLines
-    );
+    return isTSpinDoubleTutorialSuccess(result);
   }
   return false;
+}
+
+function isTSpinDoubleTutorialSuccess(result) {
+  const setup = CHAPTER_3_SETUPS.tSpinDouble;
+  return (
+    result.piece === "T" &&
+    result.isTSpin === true &&
+    result.x === setup.expected.x &&
+    result.y === setup.expected.y &&
+    result.rotationState === setup.expected.rotationState &&
+    result.clearedLines === 2
+  );
 }
 
 function isPerfectClearTutorialSuccess(result) {
