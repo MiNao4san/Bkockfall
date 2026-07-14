@@ -111,10 +111,11 @@ const CHAPTER_3_SETUPS = {
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "....XXX...", "XXX...XXXX", "..........",
+      "..........", "..........", "....X.....", "XXX...XXXX", "XXXXX.XXXX",
     ],
-    expected: { x: 3, y: 17, rotationState: "2", minClearedLines: 1 },
+    expected: { x: 3, y: 17, rotationState: "2", clearedLines: 2 },
     requireRotation: true,
+    minimumRotationCount: 1,
     instruction: "Jミノを回転させて隙間へ入れよう",
     verifiedSolution: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop", "Rotate Right"],
     usedKick: { x: 1, y: 1 },
@@ -125,10 +126,11 @@ const CHAPTER_3_SETUPS = {
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
-      "..........", "..........", "...XXX....", "XXXX...XXX", "..........",
+      "..........", "..........", ".....X....", "XXXX...XXX", "XXXX.XXXXX",
     ],
-    expected: { x: 4, y: 17, rotationState: "2", minClearedLines: 1 },
+    expected: { x: 4, y: 17, rotationState: "2", clearedLines: 2 },
     requireRotation: true,
+    minimumRotationCount: 1,
     instruction: "Lミノを回転させて隙間へ入れよう",
     verifiedSolution: ["Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Left", "Soft Drop", "Rotate Left"],
     usedKick: { x: -1, y: 1 },
@@ -143,6 +145,7 @@ const CHAPTER_3_SETUPS = {
     ],
     expected: { x: 4, y: 17, rotationState: "2", clearedLines: 2 },
     requireRotation: true,
+    minimumRotationCount: 2,
     instruction: "Sミノを縦向きにして地形へ引っ掛け、\nもう一度回転して隙間へ入れよう。",
     verifiedSolution: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop", "Rotate Right"],
     usedKick: { x: 1, y: 1 },
@@ -157,6 +160,7 @@ const CHAPTER_3_SETUPS = {
     ],
     expected: { x: 3, y: 17, rotationState: "2", clearedLines: 2 },
     requireRotation: true,
+    minimumRotationCount: 2,
     instruction: "Zミノを縦向きにして地形へ引っ掛け、\nもう一度回転して隙間へ入れよう。",
     verifiedSolution: ["Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Left", "Soft Drop", "Rotate Left"],
     usedKick: { x: -1, y: 1 },
@@ -4305,6 +4309,7 @@ function startChapter3Section(sectionId) {
     usedHold: false,
     usedHoldDuringBackToBack: false,
     rotatedSinceSpawn: false,
+    rotationCount: 0,
     lastSuccessfulAction: null,
     lastRotationContext: null,
     completed: false,
@@ -4454,6 +4459,7 @@ function startTutorialSection(sectionId, options = {}) {
     usedHold: false,
     usedHoldDuringBackToBack: false,
     rotatedSinceSpawn: false,
+    rotationCount: 0,
     lastSuccessfulAction: null,
     lastRotationContext: null,
     completed: false,
@@ -4633,6 +4639,7 @@ function resetTutorialSectionForSubStep(options = {}) {
     waitingForAdvance: false,
     pendingAdvanceCallback: null,
     rotatedSinceSpawn: false,
+    rotationCount: 0,
     lastSuccessfulAction: null,
     lastRotationContext: null,
   };
@@ -4709,7 +4716,7 @@ function isRotationInsertSuccess(sectionId, result) {
   if (!setup || !expected) return false;
   return (
     result.piece === setup.pieceType &&
-    tutorialState.rotatedSinceSpawn === true &&
+    tutorialState.rotationCount >= (setup.minimumRotationCount ?? 1) &&
     result.x === expected.x &&
     result.y === expected.y &&
     result.rotationState === expected.rotationState &&
@@ -6163,6 +6170,7 @@ function rotatePiece(direction) {
     active.lastAction = "rotate";
     if (isTutorialMode() && tutorialState) {
       tutorialState.rotatedSinceSpawn = true;
+      tutorialState.rotationCount = (tutorialState.rotationCount ?? 0) + 1;
       tutorialState.lastSuccessfulAction = "rotate";
       tutorialState.lastRotationContext = {
         type: active.type,

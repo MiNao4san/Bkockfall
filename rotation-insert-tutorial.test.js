@@ -90,6 +90,12 @@ function expectedClearedLines(expected) {
     : expected.minClearedLines;
 }
 
+function lineClearMatchesExpected(actual, expected) {
+  return Number.isFinite(expected.clearedLines)
+    ? actual === expected.clearedLines
+    : actual >= expected.minClearedLines;
+}
+
 function countFullLines(board) {
   return board.filter((row) => row.every(Boolean)).length;
 }
@@ -156,6 +162,79 @@ function getReachableStates(type, board) {
   return seen;
 }
 
+function getReachableStatesWithRotationLimit(type, board, maxRotations) {
+  const startX = Math.floor((cols - SHAPES[type][0].length) / 2);
+  const start = { x: startX, y: 1, rotationState: "0", rotationCount: 0, path: [], lastKick: null };
+  const queue = [start];
+  const seen = new Map([[`${start.x},${start.y},${start.rotationState},${start.rotationCount}`, start]]);
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    const movementActions = [
+      ["Left", -1, 0],
+      ["Right", 1, 0],
+      ["Soft Drop", 0, 1],
+    ];
+
+    for (const [action, dx, dy] of movementActions) {
+      const matrix = matrixFor(type, current.rotationState);
+      const next = {
+        x: current.x + dx,
+        y: current.y + dy,
+        rotationState: current.rotationState,
+        rotationCount: current.rotationCount,
+        path: [...current.path, action],
+        lastKick: current.lastKick,
+      };
+      const key = `${next.x},${next.y},${next.rotationState},${next.rotationCount}`;
+      if (
+        next.y >= -4 &&
+        next.y <= rows &&
+        !seen.has(key) &&
+        !collides(board, next.x, next.y, matrix)
+      ) {
+        seen.set(key, next);
+        queue.push(next);
+      }
+    }
+
+    if (current.rotationCount >= maxRotations) continue;
+
+    for (const direction of [1, -1]) {
+      const toState = nextRotationState(current.rotationState, direction);
+      const nextMatrix = matrixFor(type, toState);
+      for (const [kickX, kickY] of getKickTests(type, current.rotationState, toState)) {
+        const nextX = current.x + kickX;
+        const nextY = current.y + kickY;
+        if (collides(board, nextX, nextY, nextMatrix)) {
+          continue;
+        }
+        const next = {
+          x: nextX,
+          y: nextY,
+          rotationState: toState,
+          rotationCount: current.rotationCount + 1,
+          path: [...current.path, direction > 0 ? "Rotate Right" : "Rotate Left"],
+          lastKick: {
+            from: current.rotationState,
+            to: toState,
+            kick: [kickX, kickY],
+            action: direction > 0 ? "Rotate Right" : "Rotate Left",
+          },
+        };
+        const key = `${next.x},${next.y},${next.rotationState},${next.rotationCount}`;
+        if (next.y >= -4 && next.y <= rows && !seen.has(key)) {
+          seen.set(key, next);
+          queue.push(next);
+        }
+        break;
+      }
+    }
+  }
+
+  return seen;
+}
+
 function applyRotation(board, type, state, direction) {
   const toState = nextRotationState(state.rotationState, direction);
   const nextMatrix = matrixFor(type, toState);
@@ -167,6 +246,7 @@ function applyRotation(board, type, state, direction) {
         x: nextX,
         y: nextY,
         rotationState: toState,
+        rotationCount: (state.rotationCount ?? 0) + 1,
         lastKick: {
           from: state.rotationState,
           to: toState,
@@ -184,6 +264,7 @@ function replaySolution(type, board, solution) {
     x: Math.floor((cols - SHAPES[type][0].length) / 2),
     y: 1,
     rotationState: "0",
+    rotationCount: 0,
     lastKick: null,
   };
 
@@ -193,6 +274,7 @@ function replaySolution(type, board, solution) {
         x: state.x + (action === "Left" ? -1 : action === "Right" ? 1 : 0),
         y: state.y + (action === "Soft Drop" ? 1 : 0),
         rotationState: state.rotationState,
+        rotationCount: state.rotationCount,
         lastKick: state.lastKick,
       };
       if (collides(board, next.x, next.y, matrixFor(type, next.rotationState))) {
@@ -265,8 +347,8 @@ for (const sectionId of [
     assert.equal(collides(board, expected.x, expected.y, expectedMatrix), false);
     assert.equal(collides(board, expected.x, expected.y + 1, expectedMatrix), true);
     assert.equal(
-      countClearedLinesAfterPlacement(board, type, expected),
-      expectedClearedLines(expected),
+      lineClearMatchesExpected(countClearedLinesAfterPlacement(board, type, expected), expected),
+      true,
     );
 
     const solution = setup.verifiedSolution;
@@ -281,6 +363,11 @@ for (const sectionId of [
       y: expected.y,
       rotationState: expected.rotationState,
     });
+    assert.equal(
+      finalState.rotationCount >= (setup.minimumRotationCount ?? 1),
+      true,
+      `${type} solution does not meet minimumRotationCount`,
+    );
     assert.equal(
       solution.some((action) => action === "Rotate Right" || action === "Rotate Left"),
       true,
@@ -301,6 +388,30 @@ for (const sectionId of [
     );
   });
 }
+
+test("rotation insert setups cannot satisfy success with too few rotations", () => {
+  for (const sectionId of [
+    "rotationInsertJ",
+    "rotationInsertL",
+    "rotationInsertS",
+    "rotationInsertZ",
+  ]) {
+    const setup = CHAPTER_3_SETUPS[sectionId];
+    const type = setup.pieceType;
+    const board = boardFromPattern(setup.board);
+    const expected = setup.expected;
+    const maxRotations = (setup.minimumRotationCount ?? 1) - 1;
+    const reachableStates = getReachableStatesWithRotationLimit(type, board, maxRotations);
+    const invalidSuccess = [...reachableStates.values()].some((state) => (
+      state.x === expected.x &&
+      state.y === expected.y &&
+      state.rotationState === expected.rotationState &&
+      lineClearMatchesExpected(countClearedLinesAfterPlacement(board, type, expected), expected)
+    ));
+
+    assert.equal(invalidSuccess, false, `${sectionId} can pass with too few rotations`);
+  }
+});
 
 test("J rotation insert board is the horizontal mirror of the L board", () => {
   const jBoard = CHAPTER_3_SETUPS.rotationInsertJ.board;
