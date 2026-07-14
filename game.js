@@ -111,12 +111,13 @@ const CHAPTER_3_SETUPS = {
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
-      "....XXX...", "......X...", "......X...", "XXXX.XXXXX", "....X.....",
+      "..........", "..........", "....XXX...", "XXX...XXXX", "..........",
     ],
-    expected: { x: 2, y: 16, rotationState: "2", minClearedLines: 1 },
+    expected: { x: 3, y: 17, rotationState: "2", minClearedLines: 1 },
     requireRotation: true,
     instruction: "Jミノを回転させて隙間へ入れよう",
-    verifiedSolution: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop", "Rotate Right", "Left", "Soft Drop"],
+    verifiedSolution: ["Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Right", "Soft Drop", "Rotate Right"],
+    usedKick: { x: 1, y: 1 },
   },
   rotationInsertL: {
     pieceType: "L",
@@ -124,12 +125,13 @@ const CHAPTER_3_SETUPS = {
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
       "..........", "..........", "..........", "..........", "..........",
-      "...XXX....", "...X......", "...X......", "XXXXX.XXXX", ".....X....",
+      "..........", "..........", "...XXX....", "XXXX...XXX", "..........",
     ],
-    expected: { x: 5, y: 16, rotationState: "2", minClearedLines: 1 },
+    expected: { x: 4, y: 17, rotationState: "2", minClearedLines: 1 },
     requireRotation: true,
     instruction: "Lミノを回転させて隙間へ入れよう",
-    verifiedSolution: ["Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Left", "Soft Drop", "Rotate Left", "Right", "Soft Drop"],
+    verifiedSolution: ["Right", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Soft Drop", "Rotate Left", "Soft Drop", "Rotate Left"],
+    usedKick: { x: -1, y: 1 },
   },
   rotationInsertS: {
     pieceType: "S",
@@ -1599,7 +1601,7 @@ function resumeBgm() {
   if (!bgm.enabled || !bgm.paused) return;
   bgm.paused = false;
   bgm.segments.forEach((segment) => {
-    segment.audio.play().catch(() => {});
+    segment.audio.play().catch(() => { });
     scheduleBgmNext(segment);
   });
 }
@@ -2384,7 +2386,7 @@ function resolveCascadeClears() {
     chainCount += 1;
     clears.push({ chain: chainCount, lines: fullLines.length });
     clearCascadeLines(fullLines);
-    while (applyCascadeGravityStep()) {}
+    while (applyCascadeGravityStep()) { }
   }
 
   return { chainCount, clears, totalLines: clears.reduce((sum, clear) => sum + clear.lines, 0) };
@@ -7581,11 +7583,11 @@ function updateStats() {
     ? "-"
     : isTutorialMode()
       ? tutorialChapter === 5 ? level : "-"
-    : isCustomMode() && customSettings.levelMode === "fixed" && customSettings.fixedLevel === "zeroGravity"
-      ? "無重力"
-      : isMasterMode()
-        ? "Master"
-        : level;
+      : isCustomMode() && customSettings.levelMode === "fixed" && customSettings.fixedLevel === "zeroGravity"
+        ? "無重力"
+        : isMasterMode()
+          ? "Master"
+          : level;
   if (isShadowMode()) {
     linesEl.textContent = `${currentShadowStageIndex + 1} / ${SHADOW_STAGES.length}`;
     levelEl.textContent = "1";

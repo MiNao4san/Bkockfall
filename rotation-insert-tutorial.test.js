@@ -302,5 +302,6 @@ test("J and L registered solutions use a non-zero SRS kick into the cavity", () 
     const finalState = replaySolution(setup.pieceType, board, setup.verifiedSolution);
     assert.ok(finalState.lastKick, `${sectionId} did not rotate`);
     assert.notDeepEqual(finalState.lastKick.kick, [0, 0]);
+    assert.deepEqual(finalState.lastKick.kick, [setup.usedKick.x, setup.usedKick.y]);
   }
 });
