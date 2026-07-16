@@ -23,9 +23,17 @@ const HOTLINE_ROWS = [
   { y: 19, points: 6 },
 ];
 const BGM_LEAD_TIME = 0.18;
-const BGM_INTRO_SRC = "korobeiniki.m4a";
-const BGM_LOOP_FALLBACK_SRC = "korobeiniki-roop.m4a";
-const BGM_LOOP_CANDIDATES = ["korobeiniki2.m4a", BGM_LOOP_FALLBACK_SRC];
+const BGM_INTRO_SRC = "BGM/Koeobeiniki/korobeiniki.m4a";
+const BGM_LOOP_FALLBACK_SRC = "BGM/Koeobeiniki/korobeiniki-roop.m4a";
+const BGM_LOOP_CANDIDATES = [BGM_LOOP_FALLBACK_SRC];
+const SE_SOURCES = {
+  cancel: "SE/キャンセル.mp3",
+  rotate: "SE/ミノ 回転.mp3",
+  tRotate: "SE/T-spinのTミノを回転させる時の音.mp3",
+  cursor: "SE/カーソル操作音.mp3",
+  confirm: "SE/決定音.mp3",
+  lineClear: "SE/ライン消し.mp3",
+};
 const ROTATION_STATES = ["0", "R", "2", "L"];
 const GOLD_SQUARE_CREATE_SCORE = 2000;
 const SILVER_SQUARE_CREATE_SCORE = 1000;
@@ -1146,6 +1154,8 @@ const customZoneToggleButton = document.querySelector("#customZoneToggleButton")
 const ghostToggleButton = document.querySelector("#ghostToggleButton");
 const difficultyToggleButton = document.querySelector("#difficultyToggleButton");
 const endlessToggleButton = document.querySelector("#endlessToggleButton");
+const bgmVolumeRange = document.querySelector("#bgmVolumeRange");
+const seVolumeRange = document.querySelector("#seVolumeRange");
 const sprintGoalRow = document.querySelector("#sprintGoalRow");
 const sprintGoalValueEl = document.querySelector("#sprintGoalValue");
 const sprintGoalRange = document.querySelector("#sprintGoalRange");
@@ -1332,6 +1342,8 @@ let easyModeVariant = null;
 let easyDifficulty = "easy";
 let fixedLevelEnabled = false;
 let fixedLevelValue = "1";
+let bgmVolume = 0.52;
+let seVolume = 0.7;
 let customSettings = { ...DEFAULT_CUSTOM_SETTINGS };
 let customActionLog = [];
 let customActionLogVisible = false;
@@ -1729,7 +1741,7 @@ function playBgmSegment(src, generation) {
   };
 
   audio.preload = "auto";
-  audio.volume = 0.52;
+  audio.volume = bgmVolume;
   audio.addEventListener("loadedmetadata", () => scheduleBgmNext(segment));
   audio.addEventListener("ended", () => removeBgmSegment(segment), { once: true });
   audio.addEventListener("error", () => removeBgmSegment(segment), { once: true });
@@ -1737,6 +1749,32 @@ function playBgmSegment(src, generation) {
   audio.play().catch(() => {
     removeBgmSegment(segment);
   });
+}
+
+function setBgmVolume(value) {
+  bgmVolume = Math.max(0, Math.min(1, Number(value) || 0));
+  bgm.segments.forEach((segment) => {
+    segment.audio.volume = bgmVolume;
+  });
+}
+
+function setSeVolume(value) {
+  seVolume = Math.max(0, Math.min(1, Number(value) || 0));
+}
+
+function playSe(name) {
+  const src = SE_SOURCES[name];
+  if (!src || seVolume <= 0) return;
+  const audio = new Audio(src);
+  audio.preload = "auto";
+  audio.volume = seVolume;
+  audio.play().catch(() => { });
+}
+
+function playLineClearSe(cleared) {
+  if (cleared > 0) {
+    playSe("lineClear");
+  }
 }
 
 function startBgm() {
@@ -3848,6 +3886,7 @@ function finalizePlayerStatsForGame() {
 
 function recordLineClearStats(cleared, { tSpin = false, backToBackActive = false, perfectClear = false } = {}) {
   if (isTutorialMode()) return;
+  playLineClearSe(cleared);
   if (cleared > 0) {
     updateStatsForCurrentPlayer((stats) => {
       stats.totalLinesCleared += cleared;
@@ -6286,6 +6325,7 @@ function movePiece(deltaX) {
       y: active.y,
     });
     handleTutorialMove(deltaX);
+    playSe("cursor");
     draw();
   }
 }
@@ -6412,6 +6452,8 @@ function loadSettings() {
       keyBindings: normalized,
       tsdAssistEnabled: Boolean(source.tsdAssistEnabled),
       customSettings: normalizeCustomSettings(source.customSettings),
+      bgmVolume: Math.max(0, Math.min(1, Number(source.bgmVolume ?? 0.52) || 0.52)),
+      seVolume: Math.max(0, Math.min(1, Number(source.seVolume ?? 0.7) || 0.7)),
     };
   } catch {
     const normalized = {};
@@ -6422,6 +6464,8 @@ function loadSettings() {
       keyBindings: normalized,
       tsdAssistEnabled: false,
       customSettings: { ...DEFAULT_CUSTOM_SETTINGS },
+      bgmVolume: 0.52,
+      seVolume: 0.7,
     };
   }
 }
@@ -6434,6 +6478,8 @@ function saveSettings() {
         keyBindings,
         tsdAssistEnabled,
         customSettings,
+        bgmVolume,
+        seVolume,
       }),
     );
   } catch {
@@ -6489,6 +6535,10 @@ function loadKeyBindingsFromSettings() {
   keyBindings = settings.keyBindings;
   tsdAssistEnabled = Boolean(settings.tsdAssistEnabled);
   customSettings = normalizeCustomSettings(settings.customSettings);
+  setBgmVolume(settings.bgmVolume);
+  setSeVolume(settings.seVolume);
+  if (bgmVolumeRange) bgmVolumeRange.value = String(Math.round(bgmVolume * 100));
+  if (seVolumeRange) seVolumeRange.value = String(Math.round(seVolume * 100));
 }
 
 function clearKeyBinding(action) {
@@ -7086,6 +7136,7 @@ function rotatePiece(direction) {
       rotationState: active.rotationState,
     });
     handleTutorialRotate(direction, fromState, toState);
+    playSe(active.type === "T" ? "tRotate" : "rotate");
     draw();
     return;
   }
@@ -7178,6 +7229,8 @@ function lockPiece() {
   const backToBackAfter = backToBackStreak;
   if (!isMissionMode()) {
     recordLineClearStats(cleared, { tSpin, backToBackActive, perfectClear });
+  } else {
+    playLineClearSe(cleared);
   }
   recordCustomLineEvents(cleared, tSpin);
   const clearedTargetLineIds = isMissionMode() ? updateMissionModeLineTargets(clearedRows) : [];
@@ -9511,6 +9564,27 @@ endlessToggleButton.addEventListener("click", () => {
   endlessEnabled = !endlessEnabled;
   updateOptionButtons();
   updateStats();
+});
+
+bgmVolumeRange?.addEventListener("input", () => {
+  setBgmVolume(Number(bgmVolumeRange.value) / 100);
+  saveSettings();
+});
+
+seVolumeRange?.addEventListener("input", () => {
+  setSeVolume(Number(seVolumeRange.value) / 100);
+  saveSettings();
+});
+
+document.addEventListener("click", (event) => {
+  const button = event.target instanceof Element ? event.target.closest("button") : null;
+  if (!button || button.disabled) return;
+  const text = button.textContent?.trim() ?? "";
+  if (/戻る|キャンセル|タイトル/.test(text)) {
+    playSe("cancel");
+    return;
+  }
+  playSe("confirm");
 });
 
 globalThis.DebugCosmetics = {

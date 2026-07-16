@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
 const gameSource = readFileSync(new URL("./game.js", import.meta.url), "utf8");
@@ -18,8 +18,8 @@ function extractConstArray(name) {
       depth -= 1;
       if (depth === 0) {
         return Function(`
-          const BGM_INTRO_SRC = "korobeiniki.m4a";
-          const BGM_LOOP_FALLBACK_SRC = "korobeiniki-roop.m4a";
+          const BGM_INTRO_SRC = "BGM/Koeobeiniki/korobeiniki.m4a";
+          const BGM_LOOP_FALLBACK_SRC = "BGM/Koeobeiniki/korobeiniki-roop.m4a";
           return (${gameSource.slice(arrayStart, index + 1)});
         `)();
       }
@@ -81,4 +81,19 @@ test("menus expose achievements, gacha, and collection", () => {
 test("debug cosmetics API is available but not exposed in HTML", () => {
   assert.match(gameSource, /globalThis\.DebugCosmetics/);
   assert.equal(htmlSource.includes("DebugCosmetics"), false);
+});
+
+test("configured audio assets exist", () => {
+  [
+    "BGM/Koeobeiniki/korobeiniki.m4a",
+    "BGM/Koeobeiniki/korobeiniki-roop.m4a",
+    "SE/キャンセル.mp3",
+    "SE/ミノ 回転.mp3",
+    "SE/T-spinのTミノを回転させる時の音.mp3",
+    "SE/カーソル操作音.mp3",
+    "SE/決定音.mp3",
+    "SE/ライン消し.mp3",
+  ].forEach((path) => {
+    assert.equal(existsSync(new URL(`./${path}`, import.meta.url)), true, path);
+  });
 });
