@@ -38,6 +38,61 @@ const PLAYER_PROFILES_STORAGE_KEY_LEGACY = "blockfall.playerProfiles";
 const LAST_PLAYER_STORAGE_KEY = "blockfall.lastPlayer.v1";
 const LAST_PLAYER_STORAGE_KEY_LEGACY = "blockfall.lastPlayer";
 const SETTINGS_STORAGE_KEY = "blockfall.settings.v1";
+const ACHIEVEMENT_PROGRESS_STORAGE_KEY = "blockfall.achievements.v1";
+const COSMETIC_INVENTORY_STORAGE_KEY = "blockfall.cosmeticInventory.v1";
+const COSMETIC_EQUIPMENT_STORAGE_KEY = "blockfall.cosmeticEquipment.v1";
+const GACHA_CURRENCY_STORAGE_KEY = "blockfall.gachaCurrency.v1";
+const COSMETIC_GACHA_COST = 100;
+const INITIAL_GACHA_CRYSTALS = 300;
+const GACHA_RARITY_RATES = {
+  common: 0.75,
+  rare: 0.25,
+};
+const DUPLICATE_POINT_VALUES = {
+  common: 10,
+  rare: 30,
+};
+const DEFAULT_COSMETIC_INVENTORY = {
+  ownedIds: ["background_default", "mino_default", "bgm_default"],
+  cosmeticPoints: 0,
+};
+const DEFAULT_COSMETIC_EQUIPMENT = {
+  backgroundId: "background_default",
+  minoTextureId: "mino_default",
+  bgmId: "bgm_default",
+};
+const COSMETIC_ITEMS = [
+  { id: "background_default", category: "background", rarity: "common", name: "標準" },
+  { id: "background_night", category: "background", rarity: "common", name: "ナイト" },
+  { id: "background_space", category: "background", rarity: "rare", name: "スペース" },
+  { id: "background_grid", category: "background", rarity: "common", name: "グリッド" },
+  { id: "mino_default", category: "minoTexture", rarity: "common", name: "標準" },
+  { id: "mino_pastel", category: "minoTexture", rarity: "common", name: "パステル" },
+  { id: "mino_glass", category: "minoTexture", rarity: "rare", name: "ガラス" },
+  { id: "mino_neon", category: "minoTexture", rarity: "rare", name: "ネオン" },
+  { id: "bgm_default", category: "bgm", rarity: "common", name: "標準", introSrc: BGM_INTRO_SRC, loopSrc: BGM_LOOP_FALLBACK_SRC },
+  { id: "bgm_classic", category: "bgm", rarity: "common", name: "クラシック", introSrc: BGM_INTRO_SRC, loopSrc: BGM_LOOP_FALLBACK_SRC },
+  { id: "bgm_calm", category: "bgm", rarity: "common", name: "カーム", introSrc: BGM_INTRO_SRC, loopSrc: BGM_LOOP_FALLBACK_SRC },
+  { id: "bgm_fast", category: "bgm", rarity: "rare", name: "ハイスピード", introSrc: BGM_INTRO_SRC, loopSrc: BGM_LOOP_FALLBACK_SRC },
+];
+const ACHIEVEMENTS = [
+  { id: "first_line_clear", category: "basic", title: "最初の一歩", description: "初めてラインを消す", type: "counter", statKey: "totalLinesCleared", target: 1, rewardCrystals: 50 },
+  { id: "lines_100", category: "basic", title: "ライン消去入門", description: "累計100ライン消す", type: "counter", statKey: "totalLinesCleared", target: 100, rewardCrystals: 100 },
+  { id: "pieces_100", category: "basic", title: "積み上げ開始", description: "累計100個のミノを固定する", type: "counter", statKey: "totalPiecesLocked", target: 100, rewardCrystals: 100 },
+  { id: "play_10_games", category: "basic", title: "何度でも", description: "10回ゲームを開始する", type: "counter", statKey: "gamesStarted", target: 10, rewardCrystals: 100 },
+  { id: "first_tetris", category: "technique", title: "4ライン同時消し", description: "初めてTetrisを決める", type: "counter", statKey: "totalTetrises", target: 1, rewardCrystals: 100 },
+  { id: "tetris_10", category: "technique", title: "Tetris使い", description: "累計10回Tetrisを決める", type: "counter", statKey: "totalTetrises", target: 10, rewardCrystals: 150 },
+  { id: "first_tspin", category: "technique", title: "回転の技術", description: "初めてT-Spinを決める", type: "counter", statKey: "totalTSpins", target: 1, rewardCrystals: 150 },
+  { id: "first_tsd", category: "technique", title: "T-Spin Double", description: "初めてT-Spin Doubleを決める", type: "counter", statKey: "totalTSpinDoubles", target: 1, rewardCrystals: 200 },
+  { id: "first_perfect_clear", category: "technique", title: "完全消去", description: "初めてPerfect Clearを決める", type: "counter", statKey: "totalPerfectClears", target: 1, rewardCrystals: 250 },
+  { id: "combo_5", category: "technique", title: "Combo 5", description: "5Comboを達成する", type: "maximum", statKey: "maxCombo", target: 5, rewardCrystals: 150 },
+  { id: "tutorial_chapter_1", category: "mode", title: "基本操作修了", description: "チュートリアルChapter 1をクリアする", type: "flag", flagKey: "tutorialChapter1Completed", rewardCrystals: 100 },
+  { id: "tutorial_chapter_4", category: "mode", title: "特殊ルール修了", description: "チュートリアルChapter 4をクリアする", type: "flag", flagKey: "tutorialChapter4Completed", rewardCrystals: 200 },
+  { id: "mission_set_1", category: "mode", title: "ミッション入門", description: "ミッションセット1をクリアする", type: "flag", flagKey: "missionSet1Completed", rewardCrystals: 200 },
+  { id: "mission_set_5", category: "mode", title: "ミッションマスター", description: "ミッションセット5をクリアする", type: "flag", flagKey: "missionSet5Completed", rewardCrystals: 500 },
+  { id: "cascade_chain_3", category: "mode", title: "連鎖反応", description: "Cascadeで3連鎖する", type: "maximum", statKey: "maxCascadeChain", target: 3, rewardCrystals: 200 },
+  { id: "zone_lines_10", category: "mode", title: "ZONE活用", description: "1回のZONEで10ライン以上消す", type: "maximum", statKey: "maxZoneLines", target: 10, rewardCrystals: 200 },
+];
 const CUSTOM_ACTION_LOG_LIMIT = 1000;
 const TUTORIAL_SUCCESS_DELAY_MS = 1200;
 const TUTORIAL_CHAPTER_1_SECTIONS = [
@@ -557,6 +612,10 @@ const SAVE_EXPORT_KEYS = [
   LAST_PLAYER_STORAGE_KEY,
   BEST_RECORDS_STORAGE_KEY,
   PLAYER_STATS_STORAGE_KEY,
+  ACHIEVEMENT_PROGRESS_STORAGE_KEY,
+  COSMETIC_INVENTORY_STORAGE_KEY,
+  COSMETIC_EQUIPMENT_STORAGE_KEY,
+  GACHA_CURRENCY_STORAGE_KEY,
   SETTINGS_STORAGE_KEY,
 ];
 const JLSTZ_KICKS = {
@@ -1031,6 +1090,24 @@ const globalOptionsBackButton = document.querySelector("#globalOptionsBackButton
 const exportSaveButton = document.querySelector("#exportSaveButton");
 const importSaveButton = document.querySelector("#importSaveButton");
 const saveImportInput = document.querySelector("#saveImportInput");
+const achievementMenu = document.querySelector("#achievementMenu");
+const achievementButton = document.querySelector("#achievementButton");
+const achievementCrystalCountEl = document.querySelector("#achievementCrystalCount");
+const achievementListEl = document.querySelector("#achievementList");
+const achievementBackButton = document.querySelector("#achievementBackButton");
+const gachaMenu = document.querySelector("#gachaMenu");
+const gachaButton = document.querySelector("#gachaButton");
+const gachaCrystalCountEl = document.querySelector("#gachaCrystalCount");
+const gachaResultEl = document.querySelector("#gachaResult");
+const gachaRollButton = document.querySelector("#gachaRollButton");
+const gachaCollectionButton = document.querySelector("#gachaCollectionButton");
+const gachaBackButton = document.querySelector("#gachaBackButton");
+const collectionMenu = document.querySelector("#collectionMenu");
+const collectionButton = document.querySelector("#collectionButton");
+const collectionListEl = document.querySelector("#collectionList");
+const collectionBackButton = document.querySelector("#collectionBackButton");
+const cosmeticPointCountEl = document.querySelector("#cosmeticPointCount");
+const collectionTabButtons = Array.from(document.querySelectorAll(".collection-tab-button"));
 const myPageMenu = document.querySelector("#myPageMenu");
 const myPageButton = document.querySelector("#myPageButton");
 const myPageFromOptionsButton = document.querySelector("#myPageFromOptionsButton");
@@ -1221,6 +1298,18 @@ let cascadeResolutionClears = [];
 let cascadeResolutionUsedZone = false;
 let cascadeClearDelay = 0;
 let cascadeGravityTimer = 0;
+let achievementProgress = {
+  counters: {},
+  flags: {},
+  unlockedIds: [],
+  claimedIds: [],
+};
+let gachaCrystals = 0;
+let hasReceivedInitialGachaGrant = false;
+let cosmeticInventory = { ...DEFAULT_COSMETIC_INVENTORY };
+let cosmeticEquipment = { ...DEFAULT_COSMETIC_EQUIPMENT };
+let activeCollectionCategory = "background";
+let collectionReturnTarget = "globalOptions";
 let lines;
 let level;
 let dropInterval;
@@ -1583,7 +1672,8 @@ function canLoadAudio(src) {
 }
 
 async function resolveBgmLoopSource(generation) {
-  for (const src of BGM_LOOP_CANDIDATES) {
+  const candidates = [...new Set([getEquippedBgmLoopSource(), ...BGM_LOOP_CANDIDATES])];
+  for (const src of candidates) {
     if (generation !== bgm.generation) return;
     if (await canLoadAudio(src)) {
       bgm.loopSrc = src;
@@ -1654,9 +1744,9 @@ function startBgm() {
   bgm.enabled = true;
   bgm.paused = false;
   bgm.generation += 1;
-  bgm.loopSrc = BGM_LOOP_FALLBACK_SRC;
+  bgm.loopSrc = getEquippedBgmLoopSource();
   resolveBgmLoopSource(bgm.generation);
-  playBgmSegment(BGM_INTRO_SRC, bgm.generation);
+  playBgmSegment(getEquippedBgmSource(), bgm.generation);
 }
 
 function pauseBgm() {
@@ -2524,6 +2614,7 @@ function finalizeCascadeResolution() {
   } else {
     updateStats();
   }
+  recordCascadeChainStat(result.chainCount);
   updateCascadeLastEvent(result, perfectClear);
   if (perfectClear) {
     recordPerfectClearStat();
@@ -3158,6 +3249,8 @@ function setCurrentPlayer(player) {
     setLastPlayerId(player.id);
   }
   updatePlayerIndicator();
+  loadEconomyAndCosmeticsForCurrentPlayer();
+  applyEquippedCosmetics();
 }
 
 function createGuestPlayer() {
@@ -3261,27 +3354,36 @@ function openPlayerSwitchMenu() {
 function createEmptyPlayerStats() {
   return {
     gamesPlayed: 0,
+    gamesStarted: 0,
     totalPlayTimeMs: 0,
     totalScore: 0,
     totalLines: 0,
+    totalLinesCleared: 0,
+    totalPiecesLocked: 0,
     singles: 0,
     doubles: 0,
     triples: 0,
     tetrises: 0,
+    totalTetrises: 0,
     tSpinNoLines: 0,
     tSpinSingles: 0,
     tSpinDoubles: 0,
     tSpinTriples: 0,
+    totalTSpins: 0,
+    totalTSpinDoubles: 0,
     backToBacks: 0,
     maxBackToBackStreak: 0,
     perfectClears: 0,
+    totalPerfectClears: 0,
     maxRen: 0,
+    maxCombo: 0,
     zoneActivations: 0,
     maxZoneLines: 0,
     cheeseLinesCleared: 0,
     shadowStagesCleared: 0,
     bomblissStagesCleared: 0,
     catchSquares: 0,
+    maxCascadeChain: 0,
   };
 }
 
@@ -3301,18 +3403,33 @@ function savePlayerStats(stats) {
   }
 }
 
+function normalizePlayerStats(stats) {
+  const next = { ...createEmptyPlayerStats(), ...(stats ?? {}) };
+  next.totalLinesCleared = Math.max(next.totalLinesCleared ?? 0, next.totalLines ?? 0);
+  next.totalTetrises = Math.max(next.totalTetrises ?? 0, next.tetrises ?? 0);
+  next.totalTSpins = Math.max(
+    next.totalTSpins ?? 0,
+    (next.tSpinNoLines ?? 0) + (next.tSpinSingles ?? 0) + (next.tSpinDoubles ?? 0) + (next.tSpinTriples ?? 0),
+  );
+  next.totalTSpinDoubles = Math.max(next.totalTSpinDoubles ?? 0, next.tSpinDoubles ?? 0);
+  next.totalPerfectClears = Math.max(next.totalPerfectClears ?? 0, next.perfectClears ?? 0);
+  next.maxCombo = Math.max(next.maxCombo ?? 0, next.maxRen ?? 0);
+  return next;
+}
+
 function getStatsForPlayer(playerId = getCurrentPlayerId()) {
   const allStats = loadPlayerStats();
-  return { ...createEmptyPlayerStats(), ...(allStats[playerId] ?? {}) };
+  return normalizePlayerStats(allStats[playerId]);
 }
 
 function updateStatsForCurrentPlayer(updater) {
   const playerId = getCurrentPlayerId();
   const allStats = loadPlayerStats();
-  const stats = { ...createEmptyPlayerStats(), ...(allStats[playerId] ?? {}) };
+  const stats = normalizePlayerStats(allStats[playerId]);
   updater(stats);
   allStats[playerId] = stats;
   savePlayerStats(allStats);
+  updateAchievementProgressFromStats();
 }
 
 function clearStatsForCurrentPlayer() {
@@ -3320,6 +3437,403 @@ function clearStatsForCurrentPlayer() {
   const allStats = loadPlayerStats();
   delete allStats[playerId];
   savePlayerStats(allStats);
+}
+
+function loadPerPlayerStorage(key) {
+  try {
+    const value = JSON.parse(window.localStorage.getItem(key));
+    return value && typeof value === "object" ? value : {};
+  } catch {
+    return {};
+  }
+}
+
+function savePerPlayerStorage(key, value) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // ignore
+  }
+}
+
+function sanitizeIdArray(value) {
+  return [...new Set(Array.isArray(value) ? value.filter((item) => typeof item === "string") : [])];
+}
+
+function getCosmeticItem(id) {
+  return COSMETIC_ITEMS.find((item) => item.id === id) ?? null;
+}
+
+function sanitizeAchievementProgress(value) {
+  const progress = value && typeof value === "object" ? value : {};
+  return {
+    counters: progress.counters && typeof progress.counters === "object" ? { ...progress.counters } : {},
+    flags: progress.flags && typeof progress.flags === "object" ? { ...progress.flags } : {},
+    unlockedIds: sanitizeIdArray(progress.unlockedIds),
+    claimedIds: sanitizeIdArray(progress.claimedIds),
+  };
+}
+
+function saveAchievementProgress() {
+  const allProgress = loadPerPlayerStorage(ACHIEVEMENT_PROGRESS_STORAGE_KEY);
+  allProgress[getCurrentPlayerId()] = sanitizeAchievementProgress(achievementProgress);
+  savePerPlayerStorage(ACHIEVEMENT_PROGRESS_STORAGE_KEY, allProgress);
+}
+
+function loadAchievementProgress() {
+  const allProgress = loadPerPlayerStorage(ACHIEVEMENT_PROGRESS_STORAGE_KEY);
+  achievementProgress = sanitizeAchievementProgress(allProgress[getCurrentPlayerId()]);
+}
+
+function sanitizeGachaCurrency(value) {
+  const currency = value && typeof value === "object" ? value : {};
+  return {
+    crystals: Math.max(0, Math.floor(Number(currency.crystals) || 0)),
+    hasReceivedInitialGachaGrant: Boolean(currency.hasReceivedInitialGachaGrant),
+  };
+}
+
+function saveGachaCrystals() {
+  const allCurrency = loadPerPlayerStorage(GACHA_CURRENCY_STORAGE_KEY);
+  allCurrency[getCurrentPlayerId()] = sanitizeGachaCurrency({
+    crystals: gachaCrystals,
+    hasReceivedInitialGachaGrant,
+  });
+  savePerPlayerStorage(GACHA_CURRENCY_STORAGE_KEY, allCurrency);
+}
+
+function loadGachaCrystals() {
+  const allCurrency = loadPerPlayerStorage(GACHA_CURRENCY_STORAGE_KEY);
+  const currency = sanitizeGachaCurrency(allCurrency[getCurrentPlayerId()]);
+  gachaCrystals = currency.crystals;
+  hasReceivedInitialGachaGrant = currency.hasReceivedInitialGachaGrant;
+  if (!hasReceivedInitialGachaGrant) {
+    gachaCrystals += INITIAL_GACHA_CRYSTALS;
+    hasReceivedInitialGachaGrant = true;
+    saveGachaCrystals();
+  }
+}
+
+function getGachaCrystals() {
+  gachaCrystals = Math.max(0, Math.floor(Number(gachaCrystals) || 0));
+  return gachaCrystals;
+}
+
+function addGachaCrystals(amount, reason = "") {
+  const value = Math.floor(Number(amount) || 0);
+  if (value <= 0) return false;
+  gachaCrystals = getGachaCrystals() + value;
+  saveGachaCrystals();
+  console.debug("Gacha crystals added", { amount: value, reason, total: gachaCrystals });
+  return true;
+}
+
+function spendGachaCrystals(amount) {
+  const value = Math.floor(Number(amount) || 0);
+  if (value <= 0 || getGachaCrystals() < value) return false;
+  gachaCrystals -= value;
+  saveGachaCrystals();
+  return true;
+}
+
+function sanitizeCosmeticInventory(value) {
+  const inventory = value && typeof value === "object" ? value : {};
+  const ownedIds = sanitizeIdArray([...(DEFAULT_COSMETIC_INVENTORY.ownedIds ?? []), ...(inventory.ownedIds ?? [])])
+    .filter((id) => Boolean(getCosmeticItem(id)));
+  return {
+    ownedIds,
+    cosmeticPoints: Math.max(0, Math.floor(Number(inventory.cosmeticPoints) || 0)),
+  };
+}
+
+function saveCosmeticInventory() {
+  const allInventories = loadPerPlayerStorage(COSMETIC_INVENTORY_STORAGE_KEY);
+  allInventories[getCurrentPlayerId()] = sanitizeCosmeticInventory(cosmeticInventory);
+  savePerPlayerStorage(COSMETIC_INVENTORY_STORAGE_KEY, allInventories);
+}
+
+function loadCosmeticInventory() {
+  const allInventories = loadPerPlayerStorage(COSMETIC_INVENTORY_STORAGE_KEY);
+  cosmeticInventory = sanitizeCosmeticInventory(allInventories[getCurrentPlayerId()]);
+  saveCosmeticInventory();
+}
+
+function isCosmeticOwned(id) {
+  return cosmeticInventory.ownedIds.includes(id);
+}
+
+function addCosmeticToInventory(item) {
+  if (!item) return { duplicate: false, points: 0 };
+  if (isCosmeticOwned(item.id)) {
+    const points = DUPLICATE_POINT_VALUES[item.rarity] ?? 0;
+    cosmeticInventory.cosmeticPoints = Math.max(0, Math.floor(Number(cosmeticInventory.cosmeticPoints) || 0)) + points;
+    saveCosmeticInventory();
+    return { duplicate: true, points };
+  }
+  cosmeticInventory.ownedIds = sanitizeIdArray([...cosmeticInventory.ownedIds, item.id]);
+  saveCosmeticInventory();
+  return { duplicate: false, points: 0 };
+}
+
+function sanitizeCosmeticEquipment(value) {
+  const equipment = value && typeof value === "object" ? value : {};
+  const next = {
+    backgroundId: typeof equipment.backgroundId === "string" ? equipment.backgroundId : DEFAULT_COSMETIC_EQUIPMENT.backgroundId,
+    minoTextureId: typeof equipment.minoTextureId === "string" ? equipment.minoTextureId : DEFAULT_COSMETIC_EQUIPMENT.minoTextureId,
+    bgmId: typeof equipment.bgmId === "string" ? equipment.bgmId : DEFAULT_COSMETIC_EQUIPMENT.bgmId,
+  };
+  if (!isCosmeticOwned(next.backgroundId)) next.backgroundId = DEFAULT_COSMETIC_EQUIPMENT.backgroundId;
+  if (!isCosmeticOwned(next.minoTextureId)) next.minoTextureId = DEFAULT_COSMETIC_EQUIPMENT.minoTextureId;
+  if (!isCosmeticOwned(next.bgmId)) next.bgmId = DEFAULT_COSMETIC_EQUIPMENT.bgmId;
+  return next;
+}
+
+function saveCosmeticEquipment() {
+  const allEquipment = loadPerPlayerStorage(COSMETIC_EQUIPMENT_STORAGE_KEY);
+  allEquipment[getCurrentPlayerId()] = sanitizeCosmeticEquipment(cosmeticEquipment);
+  savePerPlayerStorage(COSMETIC_EQUIPMENT_STORAGE_KEY, allEquipment);
+}
+
+function loadCosmeticEquipment() {
+  const allEquipment = loadPerPlayerStorage(COSMETIC_EQUIPMENT_STORAGE_KEY);
+  cosmeticEquipment = sanitizeCosmeticEquipment(allEquipment[getCurrentPlayerId()]);
+  saveCosmeticEquipment();
+}
+
+function equipCosmetic(itemId) {
+  const item = getCosmeticItem(itemId);
+  if (!item || !isCosmeticOwned(itemId)) return false;
+  if (item.category === "background") cosmeticEquipment.backgroundId = item.id;
+  if (item.category === "minoTexture") cosmeticEquipment.minoTextureId = item.id;
+  if (item.category === "bgm") cosmeticEquipment.bgmId = item.id;
+  cosmeticEquipment = sanitizeCosmeticEquipment(cosmeticEquipment);
+  saveCosmeticEquipment();
+  applyEquippedCosmetics();
+  return true;
+}
+
+function applyBackgroundCosmetic(itemId) {
+  document.body.dataset.backgroundSkin = itemId;
+}
+
+function applyEquippedCosmetics() {
+  cosmeticEquipment = sanitizeCosmeticEquipment(cosmeticEquipment);
+  applyBackgroundCosmetic(cosmeticEquipment.backgroundId);
+}
+
+function getEquippedBgmSource() {
+  return getCosmeticItem(cosmeticEquipment.bgmId)?.introSrc ?? BGM_INTRO_SRC;
+}
+
+function getEquippedBgmLoopSource() {
+  return getCosmeticItem(cosmeticEquipment.bgmId)?.loopSrc ?? BGM_LOOP_FALLBACK_SRC;
+}
+
+function loadEconomyAndCosmeticsForCurrentPlayer() {
+  loadAchievementProgress();
+  loadGachaCrystals();
+  loadCosmeticInventory();
+  loadCosmeticEquipment();
+  updateAchievementProgressFromStats();
+}
+
+function getAchievementValue(achievement, stats = getStatsForPlayer()) {
+  if (achievement.type === "flag") {
+    return achievementProgress.flags?.[achievement.flagKey] ? achievement.target ?? 1 : 0;
+  }
+  return Math.max(0, Number(stats[achievement.statKey] ?? achievementProgress.counters?.[achievement.statKey] ?? 0) || 0);
+}
+
+function updateAchievementProgressFromStats() {
+  const stats = getStatsForPlayer();
+  let changed = false;
+  const unlocked = new Set(achievementProgress.unlockedIds);
+
+  ACHIEVEMENTS.forEach((achievement) => {
+    const value = getAchievementValue(achievement, stats);
+    if (achievement.type !== "flag") {
+      const previous = Math.max(0, Number(achievementProgress.counters[achievement.statKey] ?? 0) || 0);
+      if (value !== previous) {
+        achievementProgress.counters[achievement.statKey] = value;
+        changed = true;
+      }
+    }
+    if (value >= (achievement.target ?? 1) && !unlocked.has(achievement.id)) {
+      unlocked.add(achievement.id);
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    achievementProgress.unlockedIds = [...unlocked];
+    saveAchievementProgress();
+  }
+}
+
+function setAchievementFlag(flagKey, value = true) {
+  achievementProgress.flags = { ...(achievementProgress.flags ?? {}), [flagKey]: Boolean(value) };
+  saveAchievementProgress();
+  updateAchievementProgressFromStats();
+}
+
+function claimAchievementReward(id) {
+  const achievement = ACHIEVEMENTS.find((item) => item.id === id);
+  if (!achievement) return false;
+  updateAchievementProgressFromStats();
+  if (!achievementProgress.unlockedIds.includes(id)) return false;
+  if (achievementProgress.claimedIds.includes(id)) return false;
+  achievementProgress.claimedIds = sanitizeIdArray([...achievementProgress.claimedIds, id]);
+  saveAchievementProgress();
+  addGachaCrystals(achievement.rewardCrystals, `achievement:${id}`);
+  return true;
+}
+
+function rollCosmeticRarity() {
+  const value = rng();
+  let accumulated = 0;
+  for (const [rarity, rate] of Object.entries(GACHA_RARITY_RATES)) {
+    accumulated += rate;
+    if (value <= accumulated) return rarity;
+  }
+  return "common";
+}
+
+function getCosmeticCandidatesByRarity(rarity) {
+  return COSMETIC_ITEMS.filter((item) => item.rarity === rarity && !item.id.endsWith("_default"));
+}
+
+function rollCosmeticItem() {
+  const rarity = rollCosmeticRarity();
+  let candidates = getCosmeticCandidatesByRarity(rarity);
+  if (candidates.length === 0) {
+    candidates = COSMETIC_ITEMS.filter((item) => !item.id.endsWith("_default"));
+  }
+  if (candidates.length === 0) return null;
+  return candidates[Math.floor(rng() * candidates.length)];
+}
+
+function rollCosmeticGacha() {
+  if (getGachaCrystals() < COSMETIC_GACHA_COST) {
+    return { ok: false, reason: "クリスタルが足りません" };
+  }
+  const item = rollCosmeticItem();
+  if (!item) {
+    return { ok: false, reason: "排出候補がありません" };
+  }
+  if (!spendGachaCrystals(COSMETIC_GACHA_COST)) {
+    return { ok: false, reason: "クリスタルが足りません" };
+  }
+  const inventoryResult = addCosmeticToInventory(item);
+  return { ok: true, item, ...inventoryResult };
+}
+
+function renderAchievementMenu() {
+  if (!achievementListEl) return;
+  updateAchievementProgressFromStats();
+  achievementCrystalCountEl.textContent = `${getGachaCrystals().toLocaleString("ja-JP")}`;
+  const stats = getStatsForPlayer();
+  achievementListEl.innerHTML = "";
+
+  ACHIEVEMENTS.forEach((achievement) => {
+    const card = document.createElement("div");
+    card.className = "collection-card";
+
+    const title = document.createElement("strong");
+    title.textContent = achievement.title;
+    const description = document.createElement("p");
+    description.textContent = achievement.description;
+
+    const value = getAchievementValue(achievement, stats);
+    const target = achievement.target ?? 1;
+    const unlocked = achievementProgress.unlockedIds.includes(achievement.id);
+    const claimed = achievementProgress.claimedIds.includes(achievement.id);
+
+    const progress = document.createElement("p");
+    progress.textContent = unlocked ? "達成済み" : `${Math.min(value, target)} / ${target}`;
+
+    const reward = document.createElement("p");
+    reward.textContent = `報酬：${achievement.rewardCrystals}クリスタル`;
+
+    card.append(title, description, progress, reward);
+
+    if (claimed) {
+      const claimedText = document.createElement("p");
+      claimedText.textContent = "受取済み";
+      card.appendChild(claimedText);
+    } else if (unlocked) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "受け取る";
+      button.addEventListener("click", () => {
+        claimAchievementReward(achievement.id);
+        renderAchievementMenu();
+      });
+      card.appendChild(button);
+    }
+
+    achievementListEl.appendChild(card);
+  });
+}
+
+function renderGachaMenu(message = null) {
+  if (gachaCrystalCountEl) {
+    gachaCrystalCountEl.textContent = `${getGachaCrystals().toLocaleString("ja-JP")}クリスタル`;
+  }
+  if (gachaRollButton) {
+    gachaRollButton.disabled = getGachaCrystals() < COSMETIC_GACHA_COST;
+  }
+  if (message && gachaResultEl) {
+    gachaResultEl.textContent = message;
+  }
+}
+
+function getEquipmentIdForCategory(category) {
+  if (category === "background") return cosmeticEquipment.backgroundId;
+  if (category === "minoTexture") return cosmeticEquipment.minoTextureId;
+  if (category === "bgm") return cosmeticEquipment.bgmId;
+  return null;
+}
+
+function renderCollectionMenu(category = activeCollectionCategory) {
+  activeCollectionCategory = category;
+  if (cosmeticPointCountEl) {
+    cosmeticPointCountEl.textContent = `${Math.max(0, Number(cosmeticInventory.cosmeticPoints) || 0).toLocaleString("ja-JP")}`;
+  }
+  collectionTabButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.category === activeCollectionCategory);
+  });
+  if (!collectionListEl) return;
+  collectionListEl.innerHTML = "";
+  const equippedId = getEquipmentIdForCategory(activeCollectionCategory);
+
+  COSMETIC_ITEMS
+    .filter((item) => item.category === activeCollectionCategory)
+    .forEach((item) => {
+      const owned = isCosmeticOwned(item.id);
+      const equipped = item.id === equippedId;
+      const card = document.createElement("div");
+      card.className = "collection-card";
+
+      const title = document.createElement("strong");
+      title.textContent = owned ? item.name : "???";
+      const meta = document.createElement("p");
+      meta.textContent = `${item.rarity.toUpperCase()} / ${owned ? "所持済み" : "未所持"}${equipped ? " / 装備中" : ""}`;
+      card.append(title, meta);
+
+      if (owned && !equipped) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = "装備する";
+        button.addEventListener("click", () => {
+          equipCosmetic(item.id);
+          renderCollectionMenu(activeCollectionCategory);
+          draw();
+        });
+        card.appendChild(button);
+      }
+
+      collectionListEl.appendChild(card);
+    });
 }
 
 function finalizePlayerStatsForGame() {
@@ -3336,14 +3850,22 @@ function recordLineClearStats(cleared, { tSpin = false, backToBackActive = false
   if (isTutorialMode()) return;
   if (cleared > 0) {
     updateStatsForCurrentPlayer((stats) => {
+      stats.totalLinesCleared += cleared;
       if (cleared === 1) stats.singles += 1;
       else if (cleared === 2) stats.doubles += 1;
       else if (cleared === 3) stats.triples += 1;
-      else if (cleared >= 4) stats.tetrises += 1;
+      else if (cleared >= 4) {
+        stats.tetrises += 1;
+        stats.totalTetrises += 1;
+      }
       if (tSpin) {
+        stats.totalTSpins += 1;
         if (cleared === 0) stats.tSpinNoLines += 1;
         else if (cleared === 1) stats.tSpinSingles += 1;
-        else if (cleared === 2) stats.tSpinDoubles += 1;
+        else if (cleared === 2) {
+          stats.tSpinDoubles += 1;
+          stats.totalTSpinDoubles += 1;
+        }
         else if (cleared >= 3) stats.tSpinTriples += 1;
       }
       if (backToBackActive) {
@@ -3351,22 +3873,48 @@ function recordLineClearStats(cleared, { tSpin = false, backToBackActive = false
       }
       stats.maxBackToBackStreak = Math.max(stats.maxBackToBackStreak ?? 0, backToBackStreak);
       stats.maxRen = Math.max(stats.maxRen ?? 0, renStreak);
+      stats.maxCombo = Math.max(stats.maxCombo ?? 0, renStreak);
       if (perfectClear) {
         stats.perfectClears += 1;
+        stats.totalPerfectClears += 1;
       }
     });
   } else if (tSpin) {
     updateStatsForCurrentPlayer((stats) => {
+      stats.totalTSpins += 1;
       stats.tSpinNoLines += 1;
       stats.maxBackToBackStreak = Math.max(stats.maxBackToBackStreak ?? 0, backToBackStreak);
       stats.maxRen = Math.max(stats.maxRen ?? 0, renStreak);
+      stats.maxCombo = Math.max(stats.maxCombo ?? 0, renStreak);
     });
   } else {
     updateStatsForCurrentPlayer((stats) => {
       stats.maxBackToBackStreak = Math.max(stats.maxBackToBackStreak ?? 0, backToBackStreak);
       stats.maxRen = Math.max(stats.maxRen ?? 0, renStreak);
+      stats.maxCombo = Math.max(stats.maxCombo ?? 0, renStreak);
     });
   }
+}
+
+function recordPieceLockedStat() {
+  if (isTutorialMode()) return;
+  updateStatsForCurrentPlayer((stats) => {
+    stats.totalPiecesLocked += 1;
+  });
+}
+
+function recordGameStartedStat() {
+  if (isTutorialMode()) return;
+  updateStatsForCurrentPlayer((stats) => {
+    stats.gamesStarted += 1;
+  });
+}
+
+function recordCascadeChainStat(value) {
+  if (isTutorialMode()) return;
+  updateStatsForCurrentPlayer((stats) => {
+    stats.maxCascadeChain = Math.max(stats.maxCascadeChain ?? 0, Number(value) || 0);
+  });
 }
 
 function recordZoneActivationStat() {
@@ -3396,6 +3944,7 @@ function recordPerfectClearStat() {
   if (isTutorialMode()) return;
   updateStatsForCurrentPlayer((stats) => {
     stats.perfectClears += 1;
+    stats.totalPerfectClears += 1;
   });
 }
 
@@ -4204,6 +4753,7 @@ function startMissionModeMission() {
 
 function startMissionModeSet(setNumber) {
   selectedGameMode = "ミッションモード";
+  recordGameStartedStat();
   tutorialChapter = null;
   tutorialSectionIndex = 0;
   tutorialState = null;
@@ -4389,6 +4939,7 @@ function completeMissionModeSet() {
   progress.completedMissionIds = [...new Set([...(progress.completedMissionIds ?? []), ...(missionModeState?.completedMissionIds ?? [])])];
   progress.bestClearTimeMs = progress.bestClearTimeMs == null ? elapsed : Math.min(progress.bestClearTimeMs, elapsed);
   saveMissionModeProgress();
+  setAchievementFlag(`missionSet${setNumber}Completed`, true);
   running = false;
   gameOver = true;
   active = null;
@@ -5129,6 +5680,7 @@ function completeTutorialChapter() {
   stopBgm();
   finishZone();
   tutorialState = null;
+  setAchievementFlag(`tutorialChapter${tutorialChapter}Completed`, true);
   updateStats();
   const content = TUTORIAL_CHAPTER_COMPLETE[tutorialChapter] ?? TUTORIAL_CHAPTER_COMPLETE[1];
   showActionOverlay(
@@ -5968,12 +6520,19 @@ function hidePracticeMenu() {
   missionSetMenu?.classList.add("hidden");
 }
 
+function hideCosmeticMenus() {
+  achievementMenu?.classList.add("hidden");
+  gachaMenu?.classList.add("hidden");
+  collectionMenu?.classList.add("hidden");
+}
+
 function showTitleMenu() {
   hideBombingReveal();
   hideCustomOverlayPanels();
   hideTutorialPanel();
   hideTutorialMenus();
   hidePracticeMenu();
+  hideCosmeticMenus();
   shell.classList.add("menu-screen");
   overlay.classList.remove("hidden");
   overlayTitle.textContent = "Blockfall";
@@ -5997,6 +6556,7 @@ function showPracticeMenu() {
   hideCustomOverlayPanels();
   hideTutorialPanel();
   hideTutorialMenus();
+  hideCosmeticMenus();
   shell.classList.add("menu-screen");
   overlay.classList.remove("hidden");
   overlayTitle.textContent = "練習";
@@ -6021,6 +6581,7 @@ function showMissionSetMenu() {
   hideCustomOverlayPanels();
   hideTutorialPanel();
   hideTutorialMenus();
+  hideCosmeticMenus();
   shell.classList.add("menu-screen");
   overlay.classList.remove("hidden");
   overlayTitle.textContent = "ミッションモード";
@@ -6040,6 +6601,7 @@ function showGlobalOptionsMenu() {
   hideTutorialPanel();
   hideTutorialMenus();
   hidePracticeMenu();
+  hideCosmeticMenus();
   updateKeybindDisplay();
   updateOptionButtons();
   shell.classList.add("menu-screen");
@@ -6057,6 +6619,88 @@ function showGlobalOptionsMenu() {
   if (myPageMenu) myPageMenu.classList.add("hidden");
   loginMenu.classList.add("hidden");
   actionMenu.classList.add("hidden");
+}
+
+function showAchievementMenu() {
+  hideBombingReveal();
+  hideCustomOverlayPanels();
+  hideTutorialPanel();
+  hideTutorialMenus();
+  hidePracticeMenu();
+  shell.classList.add("menu-screen");
+  overlay.classList.remove("hidden");
+  overlayTitle.textContent = "アチーブメント";
+  modeMenu.classList.add("hidden");
+  if (myPageButton) myPageButton.classList.add("hidden");
+  if (playerSwitchButton) playerSwitchButton.classList.add("hidden");
+  if (onePlayerMenu) onePlayerMenu.classList.add("hidden");
+  easyModeMenu.classList.add("hidden");
+  globalOptionsButton.classList.add("hidden");
+  optionMenu.classList.add("hidden");
+  globalOptionsMenu.classList.add("hidden");
+  if (keybindMenu) keybindMenu.classList.add("hidden");
+  if (myPageMenu) myPageMenu.classList.add("hidden");
+  loginMenu.classList.add("hidden");
+  actionMenu.classList.add("hidden");
+  gachaMenu?.classList.add("hidden");
+  collectionMenu?.classList.add("hidden");
+  achievementMenu?.classList.remove("hidden");
+  renderAchievementMenu();
+}
+
+function showGachaMenu(message = null) {
+  hideBombingReveal();
+  hideCustomOverlayPanels();
+  hideTutorialPanel();
+  hideTutorialMenus();
+  hidePracticeMenu();
+  shell.classList.add("menu-screen");
+  overlay.classList.remove("hidden");
+  overlayTitle.textContent = "コスメガチャ";
+  modeMenu.classList.add("hidden");
+  if (myPageButton) myPageButton.classList.add("hidden");
+  if (playerSwitchButton) playerSwitchButton.classList.add("hidden");
+  if (onePlayerMenu) onePlayerMenu.classList.add("hidden");
+  easyModeMenu.classList.add("hidden");
+  globalOptionsButton.classList.add("hidden");
+  optionMenu.classList.add("hidden");
+  globalOptionsMenu.classList.add("hidden");
+  if (keybindMenu) keybindMenu.classList.add("hidden");
+  if (myPageMenu) myPageMenu.classList.add("hidden");
+  loginMenu.classList.add("hidden");
+  actionMenu.classList.add("hidden");
+  achievementMenu?.classList.add("hidden");
+  collectionMenu?.classList.add("hidden");
+  gachaMenu?.classList.remove("hidden");
+  renderGachaMenu(message);
+}
+
+function showCollectionMenu(category = activeCollectionCategory, returnTarget = "globalOptions") {
+  collectionReturnTarget = returnTarget;
+  hideBombingReveal();
+  hideCustomOverlayPanels();
+  hideTutorialPanel();
+  hideTutorialMenus();
+  hidePracticeMenu();
+  shell.classList.add("menu-screen");
+  overlay.classList.remove("hidden");
+  overlayTitle.textContent = "コレクション";
+  modeMenu.classList.add("hidden");
+  if (myPageButton) myPageButton.classList.add("hidden");
+  if (playerSwitchButton) playerSwitchButton.classList.add("hidden");
+  if (onePlayerMenu) onePlayerMenu.classList.add("hidden");
+  easyModeMenu.classList.add("hidden");
+  globalOptionsButton.classList.add("hidden");
+  optionMenu.classList.add("hidden");
+  globalOptionsMenu.classList.add("hidden");
+  if (keybindMenu) keybindMenu.classList.add("hidden");
+  if (myPageMenu) myPageMenu.classList.add("hidden");
+  loginMenu.classList.add("hidden");
+  actionMenu.classList.add("hidden");
+  achievementMenu?.classList.add("hidden");
+  gachaMenu?.classList.add("hidden");
+  collectionMenu?.classList.remove("hidden");
+  renderCollectionMenu(category);
 }
 
 function showEasyModeMenu() {
@@ -6518,6 +7162,7 @@ function lockPiece() {
   score += softDropDistance;
   const tSpin = isTSpin(active);
   mergePiece();
+  recordPieceLockedStat();
   recordCustomAction("lock", lockedPiece);
   const { cleared, clearedRows, clearedRowCells } = clearLinesWithRowsAndCells();
   const perfectClear = cleared > 0 && isPerfectClear();
@@ -6615,6 +7260,7 @@ function lockCascadePiece() {
     score += softDropDistance;
   }
   mergePiece();
+  recordPieceLockedStat();
   active = null;
   recordCustomAction("lock", lockedPiece);
   const cascadeStarted = startCascadeResolution();
@@ -6648,6 +7294,7 @@ function lockHotlinePiece() {
   resetSoftDropAfterLock();
   score += softDropDistance;
   mergePiece();
+  recordPieceLockedStat();
   const { cleared, clearedRows } = clearLinesWithRows();
   const earned = getHotlinePointsForRows(clearedRows);
   lines += cleared;
@@ -6691,6 +7338,7 @@ function lockZonePiece() {
   resetSoftDropAfterLock();
   score += softDropDistance;
   mergePiece();
+  recordPieceLockedStat();
   recordCustomAction("lock", lockedPiece);
   const tSpin = isTSpin(active);
   const cleared = clearLines();
@@ -6741,6 +7389,7 @@ function lockSquarePiece() {
   resetSoftDropAfterLock();
   score += softDropDistance;
   mergePiece();
+  recordPieceLockedStat();
   const madeSquares = detectAndMarkSquares();
   const { cleared, clearedCells } = clearLinesWithCellData();
   refreshSquareGroupsAfterLineClear();
@@ -6816,6 +7465,7 @@ function lockCheesePiece() {
   score += softDropDistance;
   const tSpin = isTSpin(active);
   mergePiece();
+  recordPieceLockedStat();
   const { cleared, clearedRows, clearedRowCells } = clearLinesWithRowsAndCells();
   const perfectClear = cleared > 0 && isPerfectClear();
   const backToBackActive = isBackToBackEligible(cleared, tSpin) && backToBackStreak > 0;
@@ -6853,6 +7503,7 @@ function lockPurifyPiece() {
   resetSoftDropAfterLock();
   score += softDropDistance;
   mergePiece();
+  recordPieceLockedStat();
   const { cleared, clearedRows, clearedRowCells } = clearLinesWithRowsAndCells();
   const infectedCleared = clearedRowCells.reduce(
     (sum, row) => sum + row.filter(getCellInfected).length,
@@ -6894,6 +7545,7 @@ function lockZeroGravityPiece() {
   score += softDropDistance;
   const tSpin = isTSpin(active);
   mergePiece();
+  recordPieceLockedStat();
   recordCustomAction("lock", lockedPiece);
   const cleared = clearLines();
   const perfectClear = cleared > 0 && isPerfectClear();
@@ -6917,6 +7569,7 @@ function lockShadowPiece() {
   resetSoftDropAfterLock();
   score += softDropDistance;
   mergePiece();
+  recordPieceLockedStat();
   const evaluation = evaluateShadowMatch();
   shadowInsideCells = evaluation.inside;
   shadowOutsideCells = evaluation.outside;
@@ -6976,6 +7629,7 @@ function lockBomblissPiece() {
   lockResetCount = 0;
   resetSoftDropAfterLock();
   mergePiece();
+  recordPieceLockedStat();
   const result = processBomblissChains();
   if (result.chainCount > 0) {
     showBombingRevealRect(result.revealRect ?? { x: 0, y: 0, width: cols, height: rows });
@@ -7392,12 +8046,38 @@ function updateCatch(delta) {
   }
 }
 
+function isStandardMinoColor(color) {
+  return ["I", "J", "L", "O", "S", "T", "Z"].some((type) => COLORS[type] === color);
+}
+
 function drawCell(ctx, x, y, color, size = CELL, bomb = "none", squareType = null, infected = false) {
   const inset = Math.max(2, size * 0.08);
+  const textureId = cosmeticEquipment.minoTextureId;
+  const useMinoTexture = isStandardMinoColor(color) && bomb === "none" && !squareType && !infected;
   ctx.fillStyle = color;
   ctx.fillRect(x * size + inset, y * size + inset, size - inset * 2, size - inset * 2);
-  ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+  ctx.fillStyle = textureId === "mino_pastel" && useMinoTexture ? "rgba(255, 255, 255, 0.32)" : "rgba(255, 255, 255, 0.2)";
   ctx.fillRect(x * size + inset, y * size + inset, size - inset * 2, Math.max(3, size * 0.16));
+  if (useMinoTexture && textureId === "mino_glass") {
+    const gradient = ctx.createLinearGradient(x * size, y * size, (x + 1) * size, (y + 1) * size);
+    gradient.addColorStop(0, "rgba(255, 255, 255, 0.36)");
+    gradient.addColorStop(0.45, "rgba(255, 255, 255, 0.04)");
+    gradient.addColorStop(1, "rgba(0, 0, 0, 0.24)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(x * size + inset, y * size + inset, size - inset * 2, size - inset * 2);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.42)";
+    ctx.lineWidth = Math.max(1, size * 0.05);
+    ctx.strokeRect(x * size + inset + 1, y * size + inset + 1, size - inset * 2 - 2, size - inset * 2 - 2);
+  } else if (useMinoTexture && textureId === "mino_neon") {
+    ctx.strokeStyle = "rgba(210, 255, 255, 0.82)";
+    ctx.lineWidth = Math.max(1.5, size * 0.07);
+    ctx.strokeRect(x * size + inset + 1, y * size + inset + 1, size - inset * 2 - 2, size - inset * 2 - 2);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
+    ctx.fillRect(x * size + inset + 4, y * size + inset + 4, Math.max(3, size * 0.18), size - inset * 2 - 8);
+  } else if (useMinoTexture && textureId === "mino_pastel") {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.14)";
+    ctx.fillRect(x * size + inset, y * size + inset, size - inset * 2, size - inset * 2);
+  }
   if (squareType) {
     ctx.strokeStyle = squareType === "gold" ? "#ffd45a" : "#d8e2ef";
     ctx.lineWidth = Math.max(2, size * 0.1);
@@ -7997,6 +8677,7 @@ function startGame() {
   running = true;
   paused = false;
   gameOver = false;
+  recordGameStartedStat();
   startBgm();
   hideOverlay();
   if (isBomblissMode()) {
@@ -8668,6 +9349,67 @@ optionBackButton.addEventListener("click", () => {
   }
 });
 
+achievementButton?.addEventListener("click", () => {
+  showAchievementMenu();
+});
+
+achievementBackButton?.addEventListener("click", () => {
+  showGlobalOptionsMenu();
+});
+
+gachaButton?.addEventListener("click", () => {
+  showGachaMenu();
+});
+
+gachaBackButton?.addEventListener("click", () => {
+  showGlobalOptionsMenu();
+});
+
+gachaCollectionButton?.addEventListener("click", () => {
+  showCollectionMenu(activeCollectionCategory, "gacha");
+});
+
+gachaRollButton?.addEventListener("click", () => {
+  if (getGachaCrystals() < COSMETIC_GACHA_COST) {
+    renderGachaMenu("クリスタルが足りません");
+    return;
+  }
+  gachaRollButton.disabled = true;
+  if (gachaResultEl) {
+    gachaResultEl.textContent = "抽選中…";
+  }
+  window.setTimeout(() => {
+    const result = rollCosmeticGacha();
+    if (!result.ok) {
+      renderGachaMenu(result.reason ?? "ガチャを引けませんでした");
+      return;
+    }
+    const rareLabel = result.item.rarity === "rare" ? "RARE\n" : "";
+    const duplicateText = result.duplicate
+      ? `\nすでに所持しています\n\nコスメポイント +${result.points}`
+      : "\n新しく入手しました";
+    renderGachaMenu(`${rareLabel}${result.item.name}${duplicateText}`);
+  }, 800);
+});
+
+collectionButton?.addEventListener("click", () => {
+  showCollectionMenu(activeCollectionCategory, "globalOptions");
+});
+
+collectionBackButton?.addEventListener("click", () => {
+  if (collectionReturnTarget === "gacha") {
+    showGachaMenu();
+    return;
+  }
+  showGlobalOptionsMenu();
+});
+
+collectionTabButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    renderCollectionMenu(button.dataset.category);
+  });
+});
+
 createProfileButton.addEventListener("click", () => {
   const name = normalizePlayerName(playerNameInput?.value);
   if (!name) return;
@@ -8770,6 +9512,45 @@ endlessToggleButton.addEventListener("click", () => {
   updateOptionButtons();
   updateStats();
 });
+
+globalThis.DebugCosmetics = {
+  addCrystals(amount) {
+    addGachaCrystals(amount, "debug");
+    renderGachaMenu();
+    renderAchievementMenu();
+  },
+  unlockAchievement(id) {
+    const achievement = ACHIEVEMENTS.find((item) => item.id === id);
+    if (!achievement) return false;
+    achievementProgress.unlockedIds = sanitizeIdArray([...achievementProgress.unlockedIds, id]);
+    saveAchievementProgress();
+    renderAchievementMenu();
+    return true;
+  },
+  grantAllCosmetics() {
+    cosmeticInventory.ownedIds = COSMETIC_ITEMS.map((item) => item.id);
+    saveCosmeticInventory();
+    renderCollectionMenu(activeCollectionCategory);
+  },
+  resetCosmeticData() {
+    const playerId = getCurrentPlayerId();
+    [
+      ACHIEVEMENT_PROGRESS_STORAGE_KEY,
+      COSMETIC_INVENTORY_STORAGE_KEY,
+      COSMETIC_EQUIPMENT_STORAGE_KEY,
+      GACHA_CURRENCY_STORAGE_KEY,
+    ].forEach((key) => {
+      const data = loadPerPlayerStorage(key);
+      delete data[playerId];
+      savePerPlayerStorage(key, data);
+    });
+    loadEconomyAndCosmeticsForCurrentPlayer();
+    applyEquippedCosmetics();
+    renderAchievementMenu();
+    renderGachaMenu("リセットしました");
+    renderCollectionMenu(activeCollectionCategory);
+  },
+};
 
 board = createBoard();
 nextQueue = [];

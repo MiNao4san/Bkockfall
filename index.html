@@ -198,12 +198,50 @@
         </div>
         <div id="globalOptionsMenu" class="option-menu hidden">
           <button id="myPageFromOptionsButton" type="button">マイページ</button>
+          <button id="achievementButton" type="button">アチーブメント</button>
+          <button id="gachaButton" type="button">コスメガチャ</button>
+          <button id="collectionButton" type="button">コレクション</button>
           <button id="playerSwitchFromOptionsButton" type="button">プレイヤー切り替え</button>
           <button id="exportSaveButton" type="button">セーブデータを書き出す</button>
           <button id="importSaveButton" type="button">セーブデータを読み込む</button>
           <button id="tsdAssistToggleButton" type="button">TSD Assist: OFF</button>
           <button id="keybindMenuButton" type="button">キーコン設定</button>
           <button id="globalOptionsBackButton" type="button">戻る</button>
+        </div>
+        <div id="achievementMenu" class="option-menu hidden">
+          <div class="option-row">
+            <span>クリスタル</span>
+            <strong id="achievementCrystalCount">0</strong>
+          </div>
+          <div id="achievementList" class="collection-list"></div>
+          <button id="achievementBackButton" type="button">戻る</button>
+        </div>
+        <div id="gachaMenu" class="option-menu hidden">
+          <div class="option-row">
+            <span>所持</span>
+            <strong id="gachaCrystalCount">0クリスタル</strong>
+          </div>
+          <div class="option-row">
+            <span>1回</span>
+            <strong>100クリスタル</strong>
+          </div>
+          <p id="gachaResult" class="cosmetic-result">結果はここに表示されます</p>
+          <button id="gachaRollButton" type="button">1回引く</button>
+          <button id="gachaCollectionButton" type="button">コレクション</button>
+          <button id="gachaBackButton" type="button">戻る</button>
+        </div>
+        <div id="collectionMenu" class="option-menu hidden">
+          <div class="option-row">
+            <span>コスメポイント</span>
+            <strong id="cosmeticPointCount">0</strong>
+          </div>
+          <div class="collection-tabs">
+            <button class="collection-tab-button" data-category="background" type="button">背景</button>
+            <button class="collection-tab-button" data-category="minoTexture" type="button">ミノ</button>
+            <button class="collection-tab-button" data-category="bgm" type="button">BGM</button>
+          </div>
+          <div id="collectionList" class="collection-list"></div>
+          <button id="collectionBackButton" type="button">戻る</button>
         </div>
         <div id="keybindMenu" class="option-menu hidden">
           <div class="option-row">

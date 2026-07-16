@@ -29,6 +29,29 @@ body {
     sans-serif;
 }
 
+body[data-background-skin="background_grid"] {
+  background:
+    linear-gradient(rgba(84, 210, 183, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(84, 210, 183, 0.08) 1px, transparent 1px),
+    linear-gradient(135deg, #101216 0%, #171b21 52%, #0f1116 100%);
+  background-size: 28px 28px, 28px 28px, auto;
+}
+
+body[data-background-skin="background_night"] {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(86, 127, 255, 0.18), transparent 24rem),
+    radial-gradient(circle at 70% 12%, rgba(255, 255, 255, 0.12), transparent 12rem),
+    linear-gradient(145deg, #070910 0%, #11172a 56%, #07080d 100%);
+}
+
+body[data-background-skin="background_space"] {
+  background:
+    radial-gradient(circle at 18% 28%, rgba(110, 80, 255, 0.2), transparent 18rem),
+    radial-gradient(circle at 72% 18%, rgba(84, 210, 183, 0.18), transparent 20rem),
+    radial-gradient(circle at 52% 82%, rgba(255, 255, 255, 0.1), transparent 10rem),
+    linear-gradient(135deg, #080812 0%, #17112a 48%, #071318 100%);
+}
+
 .shell {
   width: min(94vw, 900px);
   display: grid;
@@ -216,6 +239,61 @@ body {
 .option-menu {
   width: min(420px, 90vw);
   text-align: left;
+}
+
+.collection-list {
+  display: grid;
+  gap: 8px;
+  max-height: min(48vh, 360px);
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.collection-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid rgba(238, 243, 247, 0.14);
+  border-radius: 6px;
+  background: rgba(26, 31, 39, 0.86);
+}
+
+.collection-card strong,
+.collection-card span,
+.collection-card p {
+  overflow-wrap: anywhere;
+}
+
+.collection-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.collection-card button {
+  width: 100%;
+}
+
+.collection-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.collection-tab-button.active {
+  border-color: rgba(84, 210, 183, 0.8);
+  box-shadow: 0 0 0 1px rgba(84, 210, 183, 0.35) inset;
+}
+
+.cosmetic-result {
+  min-height: 58px;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid rgba(238, 243, 247, 0.14);
+  border-radius: 6px;
+  background: rgba(10, 13, 17, 0.48);
+  color: var(--text);
+  white-space: pre-line;
 }
 
 .player-indicator {
