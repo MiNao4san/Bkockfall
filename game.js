@@ -74,22 +74,73 @@ const TUTORIAL_CHAPTER_4_SECTIONS = [
   "zone",
   "garbage",
 ];
-const CHAPTER_5_MISSION_POOL = [
-  "single",
-  "double",
-  "triple",
-  "tetris",
-  "hold",
-  "backToBack",
-  "combo",
-  "tSpin",
-  "tSpinDouble",
-  "rotationInsert",
-];
-const CHAPTER_5_MISSION_COUNT = 5;
-const CHAPTER_5_TIME_LIMIT_MS = 300000;
-const DEBUG_CHAPTER_5_MISSIONS = null;
-const CHAPTER_5_ROTATION_INSERT_TARGETS = ["I", "J", "L", "S", "Z"];
+const MISSION_MODE_PROGRESS_STORAGE_KEY = "blockfall.missionModeProgress.v1";
+const MISSION_MODE_SUCCESS_DELAY_MS = 1200;
+const MISSION_MODE_SET_COUNT = 5;
+const MISSION_MODE_MISSIONS_PER_SET = 10;
+const MISSION_MODE_ROTATION_INSERT_TARGETS = ["I", "J", "L", "S", "Z"];
+const MISSION_MODE_SETS = {
+  1: [
+    { id: "1-1", type: "clearAtLeast", minLines: 1, description: "1ライン以上消そう" },
+    { id: "1-2", type: "clearAtLeast", minLines: 2, description: "2ライン以上を同時に消そう" },
+    { id: "1-3", type: "clearWithPiece", pieces: ["S", "Z"], minLines: 1, description: "SミノまたはZミノを使ってラインを消そう" },
+    { id: "1-4", type: "clearWithPiece", pieces: ["J", "L"], minLines: 1, description: "JミノまたはLミノを使ってラインを消そう" },
+    { id: "1-5", type: "clearWithPiece", pieces: ["O"], exactLines: 2, description: "Oミノを使って2ライン同時に消そう" },
+    { id: "1-6", type: "clearWithPiece", pieces: ["T"], minLines: 2, description: "Tミノを使って2ライン以上を同時に消そう" },
+    { id: "1-7", type: "clearWithPiece", pieces: ["S", "Z"], minLines: 2, description: "SミノまたはZミノを使って2ライン以上を同時に消そう" },
+    { id: "1-8", type: "clearAtLeast", minLines: 3, description: "3ライン以上を同時に消そう" },
+    { id: "1-9", type: "targetLine", targetLinesFromBottom: [4], description: "緑色の指定ラインを消そう" },
+    { id: "1-10", type: "clearExact", exactLines: 4, garbage: { kind: "fixedHole", rows: 4, holeColumn: 6 }, description: "テトリスを決めよう" },
+  ],
+  2: [
+    { id: "2-1", type: "clearWithPiece", pieces: ["J", "L"], exactLines: 3, description: "JミノまたはLミノを使って3ライン同時に消そう" },
+    { id: "2-2", type: "clearWithHeldPiece", pieces: ["O"], exactLines: 2, description: "HOLDしていたOミノで2ライン同時に消そう" },
+    { id: "2-3", type: "targetLine", targetLinesFromBottom: [5], description: "緑色の指定ラインを消そう" },
+    { id: "2-4", type: "clearExact", exactLines: 4, description: "テトリスを決めよう" },
+    { id: "2-5", type: "clearWithHeldPiece", pieces: ["T"], minLines: 2, description: "HOLDしていたTミノで2ライン以上を同時に消そう" },
+    { id: "2-6", type: "spin", pieces: ["T"], minLines: 0, allowMini: false, description: "T-Spinを決めよう" },
+    { id: "2-7", type: "repeatClear", exactLines: 2, count: 2, label: "Double", description: "Doubleを2回決めよう" },
+    { id: "2-8", type: "repeatClear", exactLines: 4, count: 2, label: "Tetris", description: "テトリスを2回決めよう" },
+    { id: "2-9", type: "targetLine", targetLinesFromBottom: [4], description: "緑色の指定ラインを消そう" },
+    { id: "2-10", type: "targetLine", targetLinesFromBottom: [1], garbage: { kind: "randomHoles", rows: 5 }, description: "最下段の緑色ラインを消そう" },
+  ],
+  3: [
+    { id: "3-1", type: "missionBackToBackTetris", count: 2, description: "Back-to-Backでテトリスを2回決めよう" },
+    { id: "3-2", type: "sequentialTargetLines", targetLinesFromBottom: [8, 3], description: "緑色のラインを2本、順番に消そう" },
+    { id: "3-3", type: "spin", pieces: ["T"], minLines: 1, allowMini: false, description: "T-Spinでラインを消そう" },
+    { id: "3-4", type: "spin", pieces: ["S", "Z"], minLines: 2, description: "SスピンまたはZスピンで2ライン以上を同時に消そう" },
+    { id: "3-5", type: "spin", pieces: ["J", "L"], minLines: 2, description: "JスピンまたはLスピンで2ライン以上を同時に消そう" },
+    { id: "3-6", type: "sequentialTargetLines", targetLinesFromBottom: [11, 6], description: "緑色のラインを2本、順番に消そう" },
+    { id: "3-7", type: "spin", pieces: ["T"], minLines: 2, allowMini: false, description: "T-Spinで2ライン以上を同時に消そう" },
+    { id: "3-8", type: "repeatClear", exactLines: 4, count: 2, label: "Tetris", description: "テトリスを2回決めよう" },
+    { id: "3-9", type: "targetLine", targetLinesFromBottom: [11], description: "緑色の指定ラインを消そう" },
+    { id: "3-10", type: "tetrisTargetLine", targetLinesFromBottom: [3], description: "テトリスによって緑色ラインを消そう" },
+  ],
+  4: [
+    { id: "4-1", type: "spin", pieces: ["S", "Z"], exactLines: 3, description: "SスピンまたはZスピンで3ライン同時消しを決めよう" },
+    { id: "4-2", type: "targetLine", targetLinesFromBottom: [3], description: "緑色の指定ラインを消そう" },
+    { id: "4-3", type: "targetLine", targetLinesFromBottom: [5], garbage: { kind: "randomHoles", rows: 6 }, description: "緑色の指定ラインを消そう" },
+    { id: "4-4", type: "clearExact", exactLines: 4, garbage: { kind: "fixedHole", rows: 4, holeColumn: 3 }, description: "テトリスを決めよう" },
+    { id: "4-5", type: "spin", pieces: ["T"], minLines: 2, allowMini: false, description: "T-Spinで2ライン以上を同時に消そう" },
+    { id: "4-6", type: "spin", pieces: ["J", "L"], exactLines: 3, description: "JスピンまたはLスピンで3ライン同時消しを決めよう" },
+    { id: "4-7", type: "repeatClear", exactLines: 4, count: 2, label: "Tetris", description: "テトリスを2回決めよう" },
+    { id: "4-8", type: "repeatSpin", pieces: ["T"], minLines: 1, count: 2, allowMini: false, label: "T-Spin", description: "T-Spin Single以上を2回決めよう" },
+    { id: "4-9", type: "sequentialTargetLines", targetLinesFromBottom: [7, 4], description: "緑色のラインを2本、順番に消そう" },
+    { id: "4-10", type: "targetLine", targetLinesFromBottom: [1], garbage: { kind: "randomHoles", rows: 7 }, description: "最下段の緑色ラインを消そう" },
+  ],
+  5: [
+    { id: "5-1", type: "spin", pieces: ["T"], exactLines: 3, allowMini: false, description: "T-Spin Tripleを決めよう" },
+    { id: "5-2", type: "missionBackToBackTetris", count: 2, description: "Back-to-Backでテトリスを2回決めよう" },
+    { id: "5-3", type: "spin", pieces: ["S", "Z"], exactLines: 3, description: "SスピンまたはZスピンで3ライン同時消しを決めよう" },
+    { id: "5-4", type: "targetLine", targetLinesFromBottom: [11], description: "緑色の指定ラインを消そう" },
+    { id: "5-5", type: "targetLine", targetLinesFromBottom: [1], garbage: { kind: "randomHoles", rows: 4 }, description: "最下段の緑色ラインを消そう" },
+    { id: "5-6", type: "repeatClear", exactLines: 4, count: 2, label: "Tetris", description: "テトリスを2回決めよう" },
+    { id: "5-7", type: "spin", pieces: ["J", "L"], exactLines: 3, description: "JスピンまたはLスピンで3ライン同時消しを決めよう" },
+    { id: "5-8", type: "targetLine", targetLinesFromBottom: [8], description: "緑色の指定ラインを消そう" },
+    { id: "5-9", type: "targetLine", targetLinesFromBottom: [7], garbage: { kind: "randomHoles", rows: 5 }, description: "緑色の指定ラインを消そう" },
+    { id: "5-10", type: "tetrisTargetLine", targetLinesFromBottom: [1], garbage: { kind: "fixedHole", rows: 4, holeColumn: 6 }, description: "テトリスによって最下段の緑色ラインを消そう" },
+  ],
+};
 const CHAPTER_3_SETUPS = {
   rotationInsertI: {
     pieceType: "I",
@@ -209,7 +260,6 @@ const TUTORIAL_CHAPTER_SECTIONS = {
   2: TUTORIAL_CHAPTER_2_SECTIONS,
   3: TUTORIAL_CHAPTER_3_SECTIONS,
   4: TUTORIAL_CHAPTER_4_SECTIONS,
-  5: [],
 };
 const TUTORIAL_CHAPTER_COMPLETE = {
   1: {
@@ -228,17 +278,12 @@ const TUTORIAL_CHAPTER_COMPLETE = {
     title: "Chapter 4 Complete",
     body: "特殊ルールの基本を体験しました。\n\n・Cascade\n・Square\n・Bombliss\n・ZONE\n・おじゃまブロック",
   },
-  5: {
-    title: "Chapter 5 Complete",
-    body: "実戦ミッションをすべて達成しました。",
-  },
 };
 const TUTORIAL_PROGRESS_DEFAULT = {
   chapter1Completed: false,
   chapter2Completed: false,
   chapter3Completed: false,
   chapter4Completed: false,
-  chapter5Completed: false,
 };
 const TUTORIAL_BOARD_PATTERNS = {
   single: [
@@ -976,6 +1021,7 @@ const modeMenu = document.querySelector("#modeMenu");
 const onePlayerMenu = document.querySelector("#onePlayerMenu");
 const easyModeMenu = document.querySelector("#easyModeMenu");
 const practiceMenu = document.querySelector("#practiceMenu");
+const missionSetMenu = document.querySelector("#missionSetMenu");
 const tutorialChapterMenu = document.querySelector("#tutorialChapterMenu");
 const globalOptionsButton = document.querySelector("#globalOptionsButton");
 const optionMenu = document.querySelector("#optionMenu");
@@ -1046,13 +1092,17 @@ const hotlineButton = document.querySelector("#hotlineButton");
 const zoneButton = document.querySelector("#zoneButton");
 const customButton = document.querySelector("#customButton");
 const tutorialButton = document.querySelector("#tutorialButton");
+const missionModeButton = document.querySelector("#missionModeButton");
 const zeroGravityButton = document.querySelector("#zeroGravityButton");
 const tutorialChapter1Button = document.querySelector("#tutorialChapter1Button");
 const tutorialChapter2Button = document.querySelector("#tutorialChapter2Button");
 const tutorialChapter3Button = document.querySelector("#tutorialChapter3Button");
 const tutorialChapter4Button = document.querySelector("#tutorialChapter4Button");
-const tutorialChapter5Button = document.querySelector("#tutorialChapter5Button");
 const tutorialChapterBackButton = document.querySelector("#tutorialChapterBackButton");
+const missionSetButtons = Array.from({ length: MISSION_MODE_SET_COUNT }, (_, index) =>
+  document.querySelector(`#missionSet${index + 1}Button`),
+);
+const missionSetBackButton = document.querySelector("#missionSetBackButton");
 const squareButton = document.querySelector("#squareButton");
 const easyModeBackButton = document.querySelector("#easyModeBackButton");
 const onePlayerBackButton = document.querySelector("#onePlayerBackButton");
@@ -1201,6 +1251,9 @@ let tutorialSectionIndex = 0;
 let tutorialState = null;
 let tutorialAdvanceTimer = null;
 let tutorialProgress = { ...TUTORIAL_PROGRESS_DEFAULT };
+let missionModeState = null;
+let missionModeAdvanceTimer = null;
+let missionModeProgress = {};
 let endlessEnabled = false;
 let sprintGoalLines = 40;
 let cheeseGoalLines = 18;
@@ -1474,6 +1527,10 @@ function createPiece(type) {
 function spawnPiece() {
   fillQueue();
   active = createPiece(nextQueue.shift());
+  if (isMissionMode() && missionModeState) {
+    active.heldEntryId = null;
+    missionModeState.usedHoldForCurrentPiece = false;
+  }
   if ((isZeroGravityMode() || (isCustomMode() && customSettings.levelMode === "fixed" && customSettings.fixedLevel === "zeroGravity")) && active) {
     active.y = 0;
   }
@@ -1501,6 +1558,10 @@ function spawnPiece() {
   softDropDistance = 0;
   applyBufferedInputsForSpawn();
   if (collides(active, active.x, active.y, active.matrix)) {
+    if (isMissionMode()) {
+      failMissionModeMission();
+      return;
+    }
     finishGame();
   }
 }
@@ -3699,7 +3760,7 @@ function isPracticeGravityOff() {
 }
 
 function hasNaturalGravity() {
-  if (isTutorialMode()) return tutorialChapter === 5;
+  if (isTutorialMode()) return false;
   if (isCustomMode() && customSettings.levelMode === "fixed" && customSettings.fixedLevel === "zeroGravity") return false;
   return !isZeroGravityMode() && !isPracticeGravityOff();
 }
@@ -3710,7 +3771,7 @@ function shouldUseInstantGravity() {
 }
 
 function canControlActivePiece() {
-  return running && !paused && !gameOver && active !== null && !cascadeResolutionActive;
+  return running && !paused && !gameOver && active !== null && !cascadeResolutionActive && !missionModeState?.waitingForNext;
 }
 
 function getEffectiveModeName() {
@@ -3759,7 +3820,11 @@ function getCatchFallInterval(levelValue) {
 
 function applyGravityInterval() {
   if (isTutorialMode()) {
-    dropInterval = tutorialChapter === 5 ? getLevelGravityInterval(1) : Number.POSITIVE_INFINITY;
+    dropInterval = Number.POSITIVE_INFINITY;
+    return;
+  }
+  if (isMissionMode()) {
+    dropInterval = getLevelGravityInterval(1);
     return;
   }
   if (isCatchMode()) {
@@ -3879,10 +3944,6 @@ function getTutorialSectionContent(sectionId) {
 function isTutorialActionAllowed(action) {
   if (!isTutorialMode()) return true;
   if (action === "pause") return true;
-  if (tutorialChapter === 5) {
-    if (tutorialState?.completed || tutorialState?.waitingForNext || tutorialState?.waitingForAdvance) return false;
-    return ["moveLeft", "moveRight", "rotateLeft", "rotateRight", "softDrop", "hardDrop", "hold", "pause"].includes(action);
-  }
   if (tutorialState?.completed || tutorialState?.waitingForNext || tutorialState?.waitingForAdvance) return false;
   const section = getCurrentTutorialSection();
   const config = TUTORIAL_SECTIONS[section];
@@ -3920,6 +3981,8 @@ function updateTutorialPanel() {
 function hideTutorialPanel() {
   window.clearTimeout(tutorialAdvanceTimer);
   tutorialAdvanceTimer = null;
+  window.clearTimeout(missionModeAdvanceTimer);
+  missionModeAdvanceTimer = null;
   tutorialPanel?.classList.add("hidden");
   tutorialMissionPanel?.classList.add("hidden");
 }
@@ -3966,229 +4029,382 @@ function logTutorialDecision(result, decision) {
   });
 }
 
-function getChapter5MissionTitle(mission) {
-  const titles = {
-    single: "Single",
-    double: "Double",
-    triple: "Triple",
-    tetris: "Tetris",
-    hold: "Hold",
-    backToBack: "Back-to-Back",
-    combo: "Combo",
-    tSpin: "T-Spin",
-    tSpinDouble: "T-Spin Double",
-    rotationInsert: "回転入れ",
-  };
-  return titles[mission] ?? mission;
+function rowFromBottom(n) {
+  return rows - n;
 }
 
-function getChapter5MissionDescription(mission) {
-  if (mission === "single") return "1ライン以上消そう";
-  if (mission === "double") return "2ラインを同時に消そう";
-  if (mission === "triple") return "3ラインを同時に消そう";
-  if (mission === "tetris") return "4ラインを同時に消そう";
-  if (mission === "hold") return "HOLDを使ってから\nミノを1個置こう";
-  if (mission === "backToBack") return "TetrisまたはT-Spinを\n2回続けて決めよう";
-  if (mission === "combo") return "3回続けてラインを消そう";
-  if (mission === "tSpin") return "Tミノを回転で入れて\nT-Spinを決めよう";
-  if (mission === "tSpinDouble") return "T-Spinで2ライン同時に消そう";
-  if (mission === "rotationInsert") {
-    const target = tutorialState?.rotationInsertTarget ?? CHAPTER_5_ROTATION_INSERT_TARGETS[0];
-    return `${target}ミノを回転させて\n隙間へ入れよう`;
+function getMissionModeSet(setNumber = missionModeState?.setNumber) {
+  return MISSION_MODE_SETS[setNumber] ?? [];
+}
+
+function getCurrentMissionModeMission() {
+  return getMissionModeSet()?.[missionModeState?.missionIndex ?? 0] ?? null;
+}
+
+function isMissionMode() {
+  return selectedGameMode === "ミッションモード";
+}
+
+function loadMissionModeProgress() {
+  try {
+    const raw = localStorage.getItem(MISSION_MODE_PROGRESS_STORAGE_KEY);
+    missionModeProgress = raw ? JSON.parse(raw) : {};
+  } catch {
+    missionModeProgress = {};
+  }
+}
+
+function saveMissionModeProgress() {
+  localStorage.setItem(MISSION_MODE_PROGRESS_STORAGE_KEY, JSON.stringify(missionModeProgress));
+}
+
+function ensureMissionModeSetProgress(setNumber) {
+  const key = String(setNumber);
+  if (!missionModeProgress[key]) {
+    missionModeProgress[key] = {
+      completed: false,
+      highestMissionIndex: 0,
+      completedMissionIds: [],
+      bestClearTimeMs: null,
+    };
+  }
+  return missionModeProgress[key];
+}
+
+function createMissionTargetLines(mission) {
+  const fromBottom = mission?.targetLinesFromBottom ?? [];
+  if (fromBottom.length === 0) return [];
+  return [{
+    id: `${mission.id}-target-1`,
+    fromBottom: fromBottom[0],
+    currentY: rowFromBottom(fromBottom[0]),
+    completed: false,
+  }];
+}
+
+function createMissionModeRuntime(mission) {
+  return {
+    counts: {},
+    tetrisB2BCount: 0,
+    b2bBroken: false,
+    targetLines: createMissionTargetLines(mission),
+  };
+}
+
+function getActiveMissionTargetLine() {
+  return missionModeState?.missionRuntime?.targetLines?.find((line) => !line.completed) ?? null;
+}
+
+function getMissionModeProgressText(mission) {
+  const runtime = missionModeState?.missionRuntime;
+  if (!runtime) return "";
+  if (mission.type === "repeatClear") return `${mission.label ?? "Clear"} ${runtime.counts.clear ?? 0} / ${mission.count}`;
+  if (mission.type === "repeatSpin") return `${mission.label ?? "Spin"} ${runtime.counts.spin ?? 0} / ${mission.count}`;
+  if (mission.type === "missionBackToBackTetris") return `Tetris ${runtime.tetrisB2BCount ?? 0} / ${mission.count ?? 2}`;
+  if (mission.type === "sequentialTargetLines") {
+    const completed = runtime.targetLines?.filter((line) => line.completed).length ?? 0;
+    return `指定ライン ${completed} / ${mission.targetLinesFromBottom.length}`;
   }
   return "";
 }
 
-function formatChapter5Time(milliseconds) {
-  const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+function getMissionModeTargetText() {
+  const target = getActiveMissionTargetLine();
+  return target ? `対象：下から${target.fromBottom}段目` : "";
 }
 
-function getCurrentChapter5Mission() {
-  return tutorialState?.chapter5Missions?.[tutorialState.chapter5MissionIndex] ?? null;
-}
-
-function normalizeChapter5Missions(candidates = []) {
-  const allowedMissions = new Set(CHAPTER_5_MISSION_POOL);
-  const missions = [];
-  candidates.forEach((mission) => {
-    if (allowedMissions.has(mission) && !missions.includes(mission)) {
-      missions.push(mission);
-    }
-  });
-
-  const fillers = shuffle(CHAPTER_5_MISSION_POOL.filter((mission) => !missions.includes(mission)));
-  while (missions.length < CHAPTER_5_MISSION_COUNT && fillers.length > 0) {
-    missions.push(fillers.shift());
-  }
-
-  if (missions.includes("backToBack") && !missions.includes("tetris") && !missions.includes("tSpinDouble")) {
-    const dependency = rng() < 0.5 ? "tetris" : "tSpinDouble";
-    const replaceIndex = missions.findIndex((mission) => mission !== "backToBack");
-    if (replaceIndex >= 0) {
-      missions[replaceIndex] = dependency;
-    } else if (missions.length < CHAPTER_5_MISSION_COUNT) {
-      missions.push(dependency);
-    }
-  }
-
-  return missions.slice(0, CHAPTER_5_MISSION_COUNT);
-}
-
-function chooseChapter5Missions() {
-  const sourceMissions = Array.isArray(DEBUG_CHAPTER_5_MISSIONS) && DEBUG_CHAPTER_5_MISSIONS.length > 0
-    ? DEBUG_CHAPTER_5_MISSIONS
-    : shuffle(CHAPTER_5_MISSION_POOL);
-  return normalizeChapter5Missions(sourceMissions);
-}
-
-function resetChapter5MissionTemporaryState() {
-  if (!tutorialState) return;
-  const mission = getCurrentChapter5Mission();
-  tutorialState.currentMissionStartedAt = gameTimeMs;
-  tutorialState.usedHoldForCurrentMission = false;
-  tutorialState.currentMissionProgress = 0;
-  tutorialState.lastRotationContext = null;
-  tutorialState.rotationInsertTarget = mission === "rotationInsert"
-    ? CHAPTER_5_ROTATION_INSERT_TARGETS[Math.floor(rng() * CHAPTER_5_ROTATION_INSERT_TARGETS.length)]
-    : null;
-}
-
-function showChapter5Mission(message = "", missionOverride = null) {
-  if (!tutorialMissionPanel || !tutorialState || tutorialChapter !== 5) return;
-  const mission = missionOverride ?? getCurrentChapter5Mission();
-  const total = tutorialState.chapter5Missions.length;
-  const remaining = tutorialState.chapter5Missions
-    .slice(tutorialState.chapter5MissionIndex + 1)
-    .map(getChapter5MissionTitle)
-    .join("\n");
-  tutorialMissionPanel.classList.remove("hidden");
+function showMissionModePanel(message = "") {
+  if (!tutorialMissionPanel || !isMissionMode() || !missionModeState) return;
+  const mission = getCurrentMissionModeMission();
   tutorialPanel?.classList.add("hidden");
-  tutorialMissionProgressEl.textContent = message || `Mission ${tutorialState.chapter5MissionIndex + 1} / ${total}   Time ${formatChapter5Time(tutorialState.chapter5TimeRemainingMs)}`;
-  tutorialMissionTitleEl.textContent = getChapter5MissionTitle(mission);
-  tutorialMissionDescriptionEl.textContent = `${getChapter5MissionDescription(mission)}${remaining ? `\n\n残り:\n${remaining}` : ""}`;
+  tutorialMissionPanel.classList.remove("hidden");
+  tutorialMissionProgressEl.textContent = message || `MISSION MODE\nSET ${missionModeState.setNumber}\nMISSION ${mission?.id ?? "-"} / ${MISSION_MODE_MISSIONS_PER_SET}`;
+  tutorialMissionTitleEl.textContent = mission ? `MISSION ${mission.id}` : "MISSION";
+  tutorialMissionDescriptionEl.textContent = [
+    mission?.description ?? "",
+    getMissionModeTargetText(),
+    getMissionModeProgressText(mission),
+  ].filter(Boolean).join("\n\n");
 }
 
-function updateChapter5MissionPanel() {
-  if (isTutorialMode() && tutorialChapter === 5 && tutorialState && !gameOver) {
-    showChapter5Mission(
-      tutorialState.waitingForNext ? tutorialState.message : "",
-      tutorialState.waitingForNext ? tutorialState.clearedMissionDisplay : null,
-    );
-  }
+function createMissionFixedHolePattern(garbage) {
+  const holeX = Math.max(0, Math.min(cols - 1, (garbage.holeColumn ?? 1) - 1));
+  return Array.from({ length: garbage.rows }, () =>
+    Array.from({ length: cols }, (_, x) => (x === holeX ? "." : "X")).join(""),
+  );
 }
 
-function isChapter5RotationInsertSuccess(result) {
-  if (result.piece !== tutorialState.rotationInsertTarget) return false;
-  if (result.lastAction !== "rotate" || result.clearedLines < 1) return false;
-  const context = tutorialState.lastRotationContext;
-  // Chapter 5は空盤面からの実践なので、回転入れはSRSキック使用+ライン消去を簡易条件にする。
-  // 平地での単なる回転ライン消去を避けるため、キックなし回転は成功にしない。
-  return Boolean(context?.usedKick && context.type === result.piece);
-}
-
-function isChapter5SingleSuccess(result) {
-  return result.clearedLines >= 1;
-}
-
-function isChapter5MissionSuccess(mission, result) {
-  if (mission === "single") return isChapter5SingleSuccess(result);
-  if (mission === "double") return result.clearedLines === 2 && !result.isTSpin;
-  if (mission === "triple") return result.clearedLines === 3 && !result.isTSpin;
-  if (mission === "tetris") return result.clearedLines === 4;
-  if (mission === "hold") return tutorialState.usedHoldForCurrentMission && result.lockedAfterHold;
-  if (mission === "backToBack") return Boolean(result.isBackToBack);
-  if (mission === "combo") return result.comboCount >= 3;
-  if (mission === "tSpin") return result.piece === "T" && result.isTSpin;
-  if (mission === "tSpinDouble") return result.piece === "T" && result.isTSpin && result.clearedLines === 2;
-  if (mission === "rotationInsert") return isChapter5RotationInsertSuccess(result);
-  return false;
-}
-
-function evaluateChapter5LockResult(result) {
-  if (!isTutorialMode() || tutorialChapter !== 5 || !tutorialState || tutorialState.completed) return false;
-  tutorialState.chapter5PieceCount += 1;
-  const mission = getCurrentChapter5Mission();
-  if (mission && isChapter5MissionSuccess(mission, result)) {
-    completeChapter5Mission();
-    return tutorialState.chapter5MissionIndex >= tutorialState.chapter5Missions.length;
-  }
-  return false;
-}
-
-function completeChapter5Mission() {
-  const mission = getCurrentChapter5Mission();
-  if (!mission || !tutorialState) return;
-  tutorialState.chapter5CompletedMissions.push({
-    mission,
-    title: getChapter5MissionTitle(mission),
+function createMissionRandomGarbagePattern(garbage, seed) {
+  const previousSeed = gameSeed;
+  const previousState = rngState;
+  seedRng(seed);
+  const pattern = Array.from({ length: garbage.rows }, () => {
+    const holeX = Math.floor(rng() * cols);
+    return Array.from({ length: cols }, (_, x) => (x === holeX ? "." : "X")).join("");
   });
-  tutorialState.chapter5MissionIndex += 1;
-  tutorialState.showSuccess = true;
-  tutorialState.message = "Mission Clear!";
-  tutorialState.waitingForNext = true;
-  tutorialState.clearedMissionDisplay = mission;
+  gameSeed = previousSeed;
+  rngState = previousState;
+  return pattern;
+}
+
+function applyMissionInitialGarbage(mission) {
+  if (!mission?.garbage) return;
+  const pattern = mission.garbage.kind === "fixedHole"
+    ? createMissionFixedHolePattern(mission.garbage)
+    : createMissionRandomGarbagePattern(mission.garbage, `${gameSeed}-${mission.id}-garbage`);
+  pattern.forEach((row, index) => {
+    const y = rows - pattern.length + index;
+    [...row].forEach((value, x) => {
+      board[y][x] = value === "X" ? createGarbageCell() : null;
+    });
+  });
+}
+
+function resetMissionModeGameStateForMission() {
+  board = createBoard();
+  nextQueue = [];
+  holdType = null;
+  canHold = true;
+  score = 0;
+  lines = 0;
+  level = 1;
+  renStreak = 0;
+  backToBackStreak = 0;
+  perfectClearCount = 0;
+  gameTimeMs = 0;
+  dropCounter = 0;
+  lockCounter = 0;
+  lockResetCount = 0;
+  softDropDistance = 0;
   resetAllInputState();
-  if (tutorialState.chapter5MissionIndex >= tutorialState.chapter5Missions.length) {
-    running = false;
-    active = null;
+  clearInputBuffer();
+  tsdAssistCandidate = null;
+  tsdAssistDirty = true;
+  missionModeState.usedHoldForCurrentPiece = false;
+  missionModeState.activeHeldEntryId = null;
+}
+
+function startMissionModeMission() {
+  const mission = getCurrentMissionModeMission();
+  if (!mission) {
+    completeMissionModeSet();
+    return;
   }
-  showChapter5Mission("Mission Clear!", mission);
-  window.clearTimeout(tutorialAdvanceTimer);
-  tutorialAdvanceTimer = window.setTimeout(() => {
-    if (!isTutorialMode() || tutorialChapter !== 5 || !tutorialState) return;
-    if (tutorialState.chapter5MissionIndex >= tutorialState.chapter5Missions.length) {
-      completeTutorialChapter5();
+  missionModeState.missionRuntime = createMissionModeRuntime(mission);
+  missionModeState.waitingForNext = false;
+  resetMissionModeGameStateForMission();
+  applyMissionInitialGarbage(mission);
+  fillQueue();
+  spawnPiece();
+  drawNextPreviews();
+  drawPreview(holdCtx, holdType);
+  showMissionModePanel();
+  draw();
+}
+
+function startMissionModeSet(setNumber) {
+  selectedGameMode = "ミッションモード";
+  tutorialChapter = null;
+  tutorialSectionIndex = 0;
+  tutorialState = null;
+  missionModeState = null;
+  window.clearTimeout(missionModeAdvanceTimer);
+  missionModeAdvanceTimer = null;
+  loadMissionModeProgress();
+  ensureMissionModeSetProgress(setNumber);
+  seedRng(`mission-${setNumber}-${Date.now()}`);
+  easyModeVariant = null;
+  cols = DEFAULT_COLS;
+  rows = DEFAULT_ROWS;
+  configureBoardForMode();
+  missionModeState = {
+    setNumber,
+    missionIndex: 0,
+    missionRuntime: {},
+    completedMissionIds: [],
+    startedAt: performance.now(),
+    waitingForNext: false,
+    usedHoldForCurrentPiece: false,
+    heldEntryIdByType: {},
+    nextHeldEntryId: 1,
+    activeHeldEntryId: null,
+  };
+  paused = false;
+  gameOver = false;
+  running = true;
+  stopBgm();
+  hideOverlay();
+  hideTutorialPanel();
+  applyGravityInterval();
+  lastEventEl.textContent = "-";
+  lastTime = performance.now();
+  updateStats();
+  startMissionModeMission();
+  requestAnimationFrame(update);
+}
+
+function restartCurrentMissionModeMission() {
+  if (!isMissionMode() || !missionModeState) return;
+  paused = false;
+  gameOver = false;
+  hideOverlay();
+  startMissionModeMission();
+  running = true;
+  lastTime = performance.now();
+  requestAnimationFrame(update);
+}
+
+function updateMissionModeLineTargets(clearedRows) {
+  const targetLines = missionModeState?.missionRuntime?.targetLines;
+  if (!targetLines?.length) return [];
+  const clearedTargetLineIds = [];
+  targetLines.forEach((line) => {
+    if (line.completed) return;
+    if (clearedRows.includes(line.currentY)) {
+      line.completed = true;
+      clearedTargetLineIds.push(line.id);
       return;
     }
-    tutorialState.waitingForNext = false;
-    tutorialState.clearedMissionDisplay = null;
-    resetChapter5MissionTemporaryState();
-    showChapter5Mission();
-  }, TUTORIAL_SUCCESS_DELAY_MS);
+    const clearedBelow = clearedRows.filter((y) => y > line.currentY).length;
+    line.currentY = Math.min(rows - 1, line.currentY + clearedBelow);
+  });
+  const mission = getCurrentMissionModeMission();
+  const completed = targetLines.filter((line) => line.completed).length;
+  if (
+    mission?.type === "sequentialTargetLines" &&
+    clearedTargetLineIds.length > 0 &&
+    completed < mission.targetLinesFromBottom.length &&
+    targetLines.length === completed
+  ) {
+    targetLines.push({
+      id: `${mission.id}-target-${completed + 1}`,
+      fromBottom: mission.targetLinesFromBottom[completed],
+      currentY: rowFromBottom(mission.targetLinesFromBottom[completed]),
+      completed: false,
+    });
+  }
+  return clearedTargetLineIds;
 }
 
-function getChapter5ResultSummary() {
-  const completedTitles = (tutorialState?.chapter5CompletedMissions ?? []).map(({ title }) => title).join("\n");
-  const elapsed = CHAPTER_5_TIME_LIMIT_MS - (tutorialState?.chapter5TimeRemainingMs ?? CHAPTER_5_TIME_LIMIT_MS);
-  return [
-    `Clear Time ${formatTime(elapsed)}`,
-    "",
-    completedTitles,
-    "",
-    `Score ${score.toLocaleString("ja-JP")}`,
-    `Lines ${lines}`,
-    `Pieces ${tutorialState?.chapter5PieceCount ?? 0}`,
-  ].join("\n");
+function hasMissionLineRequirement(mission, result) {
+  if (Number.isFinite(mission.exactLines) && result.clearedLines !== mission.exactLines) return false;
+  if (Number.isFinite(mission.minLines) && result.clearedLines < mission.minLines) return false;
+  return true;
 }
 
-function completeTutorialChapter5() {
-  if (!tutorialState) return;
-  tutorialState.completed = true;
+function isMissionSpinResult(mission, result) {
+  const spinPieceType = result.spinPieceType ?? (result.isTSpin ? "T" : null);
+  if (!mission.pieces.includes(spinPieceType)) return false;
+  if (spinPieceType === "T" && result.isTSpinMini && mission.allowMini === false) return false;
+  return Boolean(result.isSpin || result.isTSpin) && hasMissionLineRequirement(mission, result);
+}
+
+function evaluateMissionModeResult(mission, result, context = missionModeState?.missionRuntime) {
+  if (!mission) return "continue";
+  switch (mission.type) {
+    case "clearAtLeast":
+      return result.clearedLines >= mission.minLines ? "success" : "continue";
+    case "clearExact":
+      return result.clearedLines === mission.exactLines ? "success" : "continue";
+    case "clearWithPiece":
+      return mission.pieces.includes(result.piece) && hasMissionLineRequirement(mission, result) ? "success" : "continue";
+    case "clearWithHeldPiece":
+      return mission.pieces.includes(result.piece) && result.wasPreviouslyHeldPiece && hasMissionLineRequirement(mission, result) ? "success" : "continue";
+    case "spin":
+      return isMissionSpinResult(mission, result) ? "success" : "continue";
+    case "repeatClear":
+      if (result.clearedLines === mission.exactLines) context.counts.clear = (context.counts.clear ?? 0) + 1;
+      return (context.counts.clear ?? 0) >= mission.count ? "success" : "continue";
+    case "repeatSpin":
+      if (isMissionSpinResult(mission, result)) context.counts.spin = (context.counts.spin ?? 0) + 1;
+      return (context.counts.spin ?? 0) >= mission.count ? "success" : "continue";
+    case "targetLine":
+    case "sequentialTargetLines":
+      return context.targetLines.every((line) => line.completed) ? "success" : "continue";
+    case "tetrisTargetLine":
+      return result.clearedLines === 4 && result.clearedTargetLineIds?.length > 0 ? "success" : "continue";
+    case "missionBackToBackTetris":
+      if (result.clearedLines === 4) {
+        context.tetrisB2BCount = (context.tetrisB2BCount ?? 0) + 1;
+        return context.tetrisB2BCount >= (mission.count ?? 2) ? "success" : "continue";
+      }
+      if (result.clearedLines > 0) {
+        context.tetrisB2BCount = 0;
+        context.b2bBroken = true;
+        return "failed";
+      }
+      return "continue";
+    default:
+      return "continue";
+  }
+}
+
+function evaluateMissionModeLockResult(result) {
+  if (!isMissionMode() || !missionModeState || missionModeState.waitingForNext) return false;
+  const mission = getCurrentMissionModeMission();
+  const decision = evaluateMissionModeResult(mission, result, missionModeState.missionRuntime);
+  console.debug("Mission mode result", { mission, result, decision, runtime: missionModeState.missionRuntime });
+  if (decision === "success") {
+    completeMissionModeMission();
+    return true;
+  }
+  if (decision === "failed") {
+    failMissionModeMission();
+    return true;
+  }
+  showMissionModePanel();
+  return false;
+}
+
+function completeMissionModeMission() {
+  const mission = getCurrentMissionModeMission();
+  if (!mission) return;
+  missionModeState.completedMissionIds.push(mission.id);
+  missionModeState.missionIndex += 1;
+  const progress = ensureMissionModeSetProgress(missionModeState.setNumber);
+  progress.highestMissionIndex = Math.max(progress.highestMissionIndex ?? 0, missionModeState.missionIndex);
+  progress.completedMissionIds = [...new Set([...(progress.completedMissionIds ?? []), mission.id])];
+  saveMissionModeProgress();
+  missionModeState.waitingForNext = true;
+  resetAllInputState();
+  showMissionModePanel("Mission Clear!");
+  window.clearTimeout(missionModeAdvanceTimer);
+  missionModeAdvanceTimer = window.setTimeout(() => {
+    missionModeAdvanceTimer = null;
+    if (!isMissionMode() || !missionModeState) return;
+    if (missionModeState.missionIndex >= getMissionModeSet().length) {
+      completeMissionModeSet();
+      return;
+    }
+    startMissionModeMission();
+  }, MISSION_MODE_SUCCESS_DELAY_MS);
+}
+
+function completeMissionModeSet() {
+  const setNumber = missionModeState?.setNumber;
+  const elapsed = performance.now() - (missionModeState?.startedAt ?? performance.now());
+  const progress = ensureMissionModeSetProgress(setNumber);
+  progress.completed = true;
+  progress.highestMissionIndex = MISSION_MODE_MISSIONS_PER_SET;
+  progress.completedMissionIds = [...new Set([...(progress.completedMissionIds ?? []), ...(missionModeState?.completedMissionIds ?? [])])];
+  progress.bestClearTimeMs = progress.bestClearTimeMs == null ? elapsed : Math.min(progress.bestClearTimeMs, elapsed);
+  saveMissionModeProgress();
   running = false;
   gameOver = true;
   active = null;
   resetAllInputState();
-  tutorialProgress = { ...tutorialProgress, chapter5Completed: true };
   hideTutorialPanel();
   stopBgm();
-  const summary = getChapter5ResultSummary();
-  tutorialState = null;
-  updateStats();
-  showActionOverlay("Chapter 5 Complete", "もう一度", true, `実戦ミッションをすべて達成しました。\n\n${summary}`);
+  showActionOverlay(`SET ${setNumber} CLEAR`, "もう一度", true, `ミッションセット${setNumber}をクリアしました。\n\nClear Time ${formatTime(elapsed)}`);
 }
 
-function failTutorialChapter5() {
-  running = false;
-  gameOver = true;
-  active = null;
-  resetAllInputState();
-  hideTutorialPanel();
-  stopBgm();
-  updateStats();
-  showActionOverlay("Challenge Failed", "もう一度", true, "もう一度挑戦しよう");
+function failMissionModeMission() {
+  showMissionModePanel("もう一度やってみよう");
+  window.clearTimeout(missionModeAdvanceTimer);
+  missionModeAdvanceTimer = window.setTimeout(() => {
+    missionModeAdvanceTimer = null;
+    if (isMissionMode()) restartCurrentMissionModeMission();
+  }, MISSION_MODE_SUCCESS_DELAY_MS);
 }
 
 function getMatrixCells(matrix) {
@@ -4845,9 +5061,6 @@ function evaluateTutorialLockResult(result) {
   if (tutorialChapter === 3) {
     return evaluateChapter3Result(result);
   }
-  if (tutorialChapter === 5) {
-    return evaluateChapter5LockResult(result);
-  }
   const sectionId = getCurrentTutorialSection();
 
   if (sectionId === "backToBack") {
@@ -4927,10 +5140,7 @@ function completeTutorialChapter() {
 }
 
 function startTutorialChapter(chapter) {
-  if (chapter === 5) {
-    startTutorialChapter5();
-    return;
-  }
+  if (!TUTORIAL_CHAPTER_SECTIONS[chapter]) return;
   selectedGameMode = "チュートリアル";
   tutorialChapter = chapter;
   tutorialSectionIndex = 0;
@@ -4973,93 +5183,6 @@ function startTutorialChapter(chapter) {
 
 function startTutorialChapter1() {
   startTutorialChapter(1);
-}
-
-function startTutorialChapter5() {
-  selectedGameMode = "チュートリアル";
-  tutorialChapter = 5;
-  tutorialSectionIndex = 0;
-  seedRng(`tutorial-5-${Date.now()}`);
-  easyModeVariant = null;
-  cols = DEFAULT_COLS;
-  rows = DEFAULT_ROWS;
-  configureBoardForMode();
-  board = createBoard();
-  nextQueue = [];
-  holdType = null;
-  canHold = true;
-  score = 0;
-  lines = 0;
-  level = 1;
-  renStreak = 0;
-  backToBackStreak = 0;
-  perfectClearCount = 0;
-  gameTimeMs = 0;
-  dropCounter = 0;
-  lockCounter = 0;
-  lockResetCount = 0;
-  softDropDistance = 0;
-  zoneGauge = 0;
-  zoneActive = false;
-  zoneTimer = 0;
-  zoneConsumedGauge = 0;
-  zoneLines = 0;
-  zoneMaxLines = 0;
-  zoneScoreBuffer = 0;
-  cascadeResolutionActive = false;
-  cascadeResolutionPhase = "idle";
-  cascadeResolutionClears = [];
-  cascadeResolutionUsedZone = false;
-  cascadeClearDelay = 0;
-  cascadeGravityTimer = 0;
-  squareGroups = new Map();
-  bomblissStageIndex = 0;
-  bomblissPoints = 100;
-  nextPieceId = 1;
-  nextSquareId = 1;
-  nextLargeBombId = 1;
-  tsdAssistCandidate = null;
-  tsdAssistDirty = true;
-  paused = false;
-  gameOver = false;
-  running = true;
-  tutorialState = {
-    chapter: 5,
-    completed: false,
-    chapter5Missions: chooseChapter5Missions(),
-    chapter5MissionIndex: 0,
-    chapter5CompletedMissions: [],
-    chapter5TimeRemainingMs: CHAPTER_5_TIME_LIMIT_MS,
-    chapter5PieceCount: 0,
-    currentMissionStartedAt: 0,
-    usedHoldForCurrentMission: false,
-    rotationInsertTarget: null,
-    currentMissionProgress: 0,
-    lastRotationContext: null,
-    lastSuccessfulAction: null,
-    clearedMissionDisplay: null,
-  };
-  if (tutorialState.chapter5Missions.length === 0) {
-    tutorialState.chapter5Missions = CHAPTER_5_MISSION_POOL.slice(0, CHAPTER_5_MISSION_COUNT);
-  }
-  console.debug("Chapter 5 missions", tutorialState.chapter5Missions);
-  resetChapter5MissionTemporaryState();
-  clearInputBuffer();
-  resetAllInputState();
-  stopBgm();
-  hideOverlay();
-  hideTutorialPanel();
-  applyGravityInterval();
-  lastEventEl.textContent = "-";
-  lastTime = performance.now();
-  updateStats();
-  fillQueue();
-  spawnPiece();
-  drawNextPreviews();
-  drawPreview(holdCtx, holdType);
-  showChapter5Mission();
-  draw();
-  requestAnimationFrame(update);
 }
 
 function showTutorialChapterMenu() {
@@ -5191,6 +5314,8 @@ function updateLineGoalDisplay() {
     currentLinesEl.textContent = `${perfectClearCount} / 20 PC`;
   } else if (isTutorialMode()) {
     currentLinesEl.textContent = tutorialChapter ? `Chapter ${tutorialChapter}` : "-";
+  } else if (isMissionMode()) {
+    currentLinesEl.textContent = `Set ${missionModeState?.setNumber ?? "-"} ${getCurrentMissionModeMission()?.id ?? ""}`;
   } else if (isBomblissMode()) {
     currentLinesEl.textContent = `Stage ${bomblissStageIndex + 1}`;
   } else if (isSprintMode()) {
@@ -5840,6 +5965,7 @@ function hideTutorialMenus() {
 
 function hidePracticeMenu() {
   practiceMenu?.classList.add("hidden");
+  missionSetMenu?.classList.add("hidden");
 }
 
 function showTitleMenu() {
@@ -5880,12 +6006,31 @@ function showPracticeMenu() {
   if (onePlayerMenu) onePlayerMenu.classList.add("hidden");
   easyModeMenu.classList.add("hidden");
   practiceMenu?.classList.remove("hidden");
+  missionSetMenu?.classList.add("hidden");
   globalOptionsButton.classList.add("hidden");
   optionMenu.classList.add("hidden");
   globalOptionsMenu.classList.add("hidden");
   if (keybindMenu) keybindMenu.classList.add("hidden");
   if (myPageMenu) myPageMenu.classList.add("hidden");
   loginMenu.classList.add("hidden");
+  actionMenu.classList.add("hidden");
+}
+
+function showMissionSetMenu() {
+  hideBombingReveal();
+  hideCustomOverlayPanels();
+  hideTutorialPanel();
+  hideTutorialMenus();
+  shell.classList.add("menu-screen");
+  overlay.classList.remove("hidden");
+  overlayTitle.textContent = "ミッションモード";
+  modeMenu.classList.add("hidden");
+  practiceMenu?.classList.add("hidden");
+  missionSetMenu?.classList.remove("hidden");
+  if (onePlayerMenu) onePlayerMenu.classList.add("hidden");
+  easyModeMenu.classList.add("hidden");
+  optionMenu.classList.add("hidden");
+  globalOptionsButton.classList.add("hidden");
   actionMenu.classList.add("hidden");
 }
 
@@ -6040,16 +6185,20 @@ function showActionOverlay(title, buttonText, showRestart = false, resultText = 
   restartButton.textContent = isTutorialMode() && gameOver ? "Chapter選択へ" : "Restart";
   const customPause = paused && isCustomMode() && !gameOver;
   const tutorialPause = paused && isTutorialMode() && !gameOver;
+  const missionPause = paused && isMissionMode() && !gameOver;
   if (tutorialPause) {
     restartButton.textContent = "現在のセクションを最初から";
   }
-  if (customRestartButton) customRestartButton.textContent = tutorialPause ? "Chapter選択へ" : "リスタート";
+  if (missionPause) {
+    restartButton.textContent = "現在の問題をやり直す";
+  }
+  if (customRestartButton) customRestartButton.textContent = tutorialPause ? "Chapter選択へ" : missionPause ? "セット選択へ" : "リスタート";
   customSettingsButton?.classList.toggle("hidden", !customPause);
-  customRestartButton?.classList.toggle("hidden", !customPause && !tutorialPause);
+  customRestartButton?.classList.toggle("hidden", !customPause && !tutorialPause && !missionPause);
   customTimeResetButton?.classList.toggle("hidden", !customPause);
   customScoreResetButton?.classList.toggle("hidden", !customPause);
   customActionLogButton?.classList.toggle("hidden", !customPause);
-  restartButton.classList.toggle("hidden", customPause || (!showRestart && !tutorialPause));
+  restartButton.classList.toggle("hidden", customPause || (!showRestart && !tutorialPause && !missionPause));
 }
 
 function showCountdownOverlay(text) {
@@ -6164,7 +6313,7 @@ function movePieceToGround(isSoftDrop = false) {
 }
 
 function updateLockDelay(delta) {
-  if (!active || gameOver || paused || tutorialState?.waitingForAdvance || tutorialState?.waitingForNext) return;
+  if (!active || gameOver || paused || tutorialState?.waitingForAdvance || tutorialState?.waitingForNext || missionModeState?.waitingForNext) return;
   if (collides(active, active.x, active.y + 1, active.matrix)) {
     lockCounter += delta;
     if (lockCounter >= LOCK_DELAY || lockResetCount >= MAX_LOCK_RESETS) {
@@ -6352,7 +6501,15 @@ function lockPiece() {
     return;
   }
   const lockedPiece = active
-    ? { piece: active.type, x: active.x, y: active.y, rotationState: active.rotationState }
+    ? {
+        piece: active.type,
+        x: active.x,
+        y: active.y,
+        rotationState: active.rotationState,
+        lastAction: active.lastAction,
+        lastSuccessfulRotation: active.lastSuccessfulRotation,
+        heldEntryId: active.heldEntryId ?? null,
+      }
     : {};
   const tSpinCornerCount = getTSpinCornerCount(active);
   lockCounter = 0;
@@ -6362,7 +6519,7 @@ function lockPiece() {
   const tSpin = isTSpin(active);
   mergePiece();
   recordCustomAction("lock", lockedPiece);
-  const { cleared, clearedRowCells } = clearLinesWithRowsAndCells();
+  const { cleared, clearedRows, clearedRowCells } = clearLinesWithRowsAndCells();
   const perfectClear = cleared > 0 && isPerfectClear();
   const backToBackBefore = backToBackStreak;
   const isB2BEligibleClear = isBackToBackEligible(cleared, tSpin);
@@ -6374,8 +6531,17 @@ function lockPiece() {
   }
   updateLastEvent(cleared, tSpin, backToBackActive, perfectClear);
   const backToBackAfter = backToBackStreak;
-  recordLineClearStats(cleared, { tSpin, backToBackActive, perfectClear });
+  if (!isMissionMode()) {
+    recordLineClearStats(cleared, { tSpin, backToBackActive, perfectClear });
+  }
   recordCustomLineEvents(cleared, tSpin);
+  const clearedTargetLineIds = isMissionMode() ? updateMissionModeLineTargets(clearedRows) : [];
+  const missionSpin = Boolean(
+    !tSpin &&
+    ["J", "L", "S", "Z"].includes(lockedPiece.piece) &&
+    lockedPiece.lastSuccessfulRotation?.usedKick
+  );
+  const wasPreviouslyHeldPiece = Boolean(isMissionMode() && lockedPiece.heldEntryId);
   const lockResult = {
     mode: "normal",
     piece: lockedPiece.piece,
@@ -6385,15 +6551,18 @@ function lockPiece() {
     finalX: lockedPiece.x,
     finalY: lockedPiece.y,
     rotationState: lockedPiece.rotationState,
-    lastAction: active?.lastAction ?? null,
-    lastSuccessfulAction: active?.lastAction ?? null,
+    lastAction: lockedPiece.lastAction ?? null,
+    lastSuccessfulAction: lockedPiece.lastAction ?? null,
     pieceLocked: true,
     clearedLines: cleared,
     eventType: getTutorialLineEventType(cleared, tSpin, perfectClear),
     isTSpin: tSpin,
+    isTSpinMini: false,
     tSpinCornerCount,
     tSpinType: tSpin ? getTSpinEventName(cleared) : null,
-    lastSuccessfulRotation: active?.lastSuccessfulRotation ?? null,
+    lastSuccessfulRotation: lockedPiece.lastSuccessfulRotation ?? null,
+    isSpin: tSpin || missionSpin,
+    spinPieceType: tSpin ? "T" : missionSpin ? lockedPiece.piece : null,
     isTetris: cleared === 4,
     isPerfectClear: perfectClear,
     isBackToBack: backToBackActive,
@@ -6403,11 +6572,18 @@ function lockPiece() {
     backToBackBefore,
     backToBackAfter,
     backToBackStreak,
-    usedHold: Boolean(tutorialState?.usedHoldForCurrentMission),
-    lockedAfterHold: Boolean(tutorialState?.usedHoldForCurrentMission),
+    usedHold: Boolean(tutorialState?.usedHoldForCurrentMission || missionModeState?.usedHoldForCurrentPiece),
+    usedHoldForThisPiece: Boolean(missionModeState?.usedHoldForCurrentPiece),
+    wasPreviouslyHeldPiece,
+    lockedAfterHold: Boolean(tutorialState?.usedHoldForCurrentMission || missionModeState?.usedHoldForCurrentPiece),
+    clearedRowIds: clearedRows,
+    clearedTargetLineIds,
     clearedGarbageCells: clearedRowCells.flat().filter(getCellGarbage).length,
     clearedGarbageLines: clearedRowCells.filter((row) => row.some(getCellGarbage)).length,
   };
+  if (evaluateMissionModeLockResult(lockResult)) {
+    return;
+  }
   if (evaluateTutorialLockResult(lockResult)) {
     return;
   }
@@ -6858,6 +7034,11 @@ function holdPiece() {
   const currentType = active.type;
   if (holdType) {
     active = createPiece(holdType);
+    if (isMissionMode() && missionModeState) {
+      active.heldEntryId = missionModeState.heldEntryIdByType[holdType] ?? null;
+      missionModeState.usedHoldForCurrentPiece = true;
+      missionModeState.heldEntryIdByType[holdType] = null;
+    }
     if ((isZeroGravityMode() || (isCustomMode() && customSettings.levelMode === "fixed" && customSettings.fixedLevel === "zeroGravity")) && active) {
       active.y = 0;
     }
@@ -6870,10 +7051,18 @@ function holdPiece() {
       }
     }
     holdType = currentType;
+    if (isMissionMode() && missionModeState) {
+      missionModeState.heldEntryIdByType[currentType] = missionModeState.nextHeldEntryId;
+      missionModeState.nextHeldEntryId += 1;
+    }
     softDropDistance = 0;
     resetDropInputAfterLock();
   } else {
     holdType = currentType;
+    if (isMissionMode() && missionModeState) {
+      missionModeState.heldEntryIdByType[currentType] = missionModeState.nextHeldEntryId;
+      missionModeState.nextHeldEntryId += 1;
+    }
     resetSoftDropAfterLock();
     spawnPiece();
   }
@@ -6883,9 +7072,6 @@ function holdPiece() {
   canHold = false;
   if (isTutorialMode() && tutorialState) {
     tutorialState.usedHold = true;
-    if (tutorialChapter === 5) {
-      tutorialState.usedHoldForCurrentMission = true;
-    }
     if (getCurrentTutorialSection() === "backToBack") {
       tutorialState.usedHoldDuringBackToBack = true;
     }
@@ -6961,24 +7147,23 @@ function togglePause() {
     actionMenu.classList.add("hidden");
     resultSummaryEl.classList.add("hidden");
     if (isTutorialMode()) {
-      if (tutorialChapter === 5) {
-        showChapter5Mission();
-      } else {
-        updateTutorialPanel();
-      }
+      updateTutorialPanel();
+    }
+    if (isMissionMode()) {
+      showMissionModePanel();
     }
     resumeBgm();
     lastTime = performance.now();
     resumePendingTutorialAdvance();
     requestAnimationFrame(update);
   } else {
-    showActionOverlay("Paused", isCustomMode() || isTutorialMode() ? "再開" : "Resume", true);
+    showActionOverlay("Paused", isCustomMode() || isTutorialMode() || isMissionMode() ? "再開" : "Resume", true);
     pauseBgm();
   }
 }
 
 function restartCurrentTutorialSection() {
-  if (!isTutorialMode() || tutorialChapter === 5) return;
+  if (!isTutorialMode()) return;
   paused = false;
   gameOver = false;
   hideOverlay();
@@ -7059,15 +7244,6 @@ function update(time = 0) {
   const delta = time - lastTime;
   lastTime = time;
   gameTimeMs += delta;
-  if (isTutorialMode() && tutorialChapter === 5 && tutorialState) {
-    const safeDelta = Number.isFinite(delta) && delta >= 0 ? delta : 0;
-    tutorialState.chapter5TimeRemainingMs = Math.max(0, tutorialState.chapter5TimeRemainingMs - safeDelta);
-    if (tutorialState.chapter5TimeRemainingMs <= 0) {
-      failTutorialChapter5();
-      return;
-    }
-    updateChapter5MissionPanel();
-  }
   if (isCatchMode()) {
     updateCatch(delta);
     draw();
@@ -7134,7 +7310,7 @@ function update(time = 0) {
       }
     }
   }
-  if (isTutorialMode() && tutorialChapter !== 5) {
+  if (isTutorialMode()) {
     updateHorizontalAutoShift(delta);
     if (isSoftDropActive()) {
       dropCounter += delta;
@@ -7635,6 +7811,21 @@ function drawTsdAssist() {
   boardCtx.globalAlpha = 1;
 }
 
+function drawMissionModeTargetLine() {
+  if (!isMissionMode()) return;
+  const target = getActiveMissionTargetLine();
+  if (!target) return;
+  boardCtx.save();
+  boardCtx.globalAlpha = 0.28;
+  boardCtx.fillStyle = "#47d66f";
+  boardCtx.fillRect(0, target.currentY * CELL, cols * CELL, CELL);
+  boardCtx.globalAlpha = 0.9;
+  boardCtx.strokeStyle = "#5dff87";
+  boardCtx.lineWidth = 2;
+  boardCtx.strokeRect(1, target.currentY * CELL + 1, cols * CELL - 2, CELL - 2);
+  boardCtx.restore();
+}
+
 function draw() {
   if (isCatchMode()) {
     drawCatch();
@@ -7652,6 +7843,7 @@ function draw() {
       }
     });
   });
+  drawMissionModeTargetLine();
   if (active) {
     drawTsdAssist();
     drawGhost();
@@ -7689,7 +7881,7 @@ function updateStats() {
   levelEl.textContent = isBomblissMode()
     ? "-"
     : isTutorialMode()
-      ? tutorialChapter === 5 ? level : "-"
+      ? "-"
       : isCustomMode() && customSettings.levelMode === "fixed" && customSettings.fixedLevel === "zeroGravity"
         ? "無重力"
         : isMasterMode()
@@ -7911,8 +8103,8 @@ function getFinishSummary() {
 }
 
 function finishGame(title = "Game Over") {
-  if (isTutorialMode() && tutorialChapter === 5) {
-    failTutorialChapter5();
+  if (isMissionMode()) {
+    failMissionModeMission();
     return;
   }
   running = false;
@@ -8124,6 +8316,10 @@ startButton.addEventListener("click", () => {
     startTutorialChapter(tutorialChapter ?? 1);
     return;
   }
+  if (isMissionMode() && gameOver) {
+    startMissionModeSet(missionModeState?.setNumber ?? 1);
+    return;
+  }
   if (paused) {
     togglePause();
   } else {
@@ -8138,6 +8334,14 @@ restartButton.addEventListener("click", () => {
   }
   if (paused && isTutorialMode() && !gameOver) {
     restartCurrentTutorialSection();
+    return;
+  }
+  if (paused && isMissionMode() && !gameOver) {
+    restartCurrentMissionModeMission();
+    return;
+  }
+  if (isMissionMode() && gameOver) {
+    startMissionModeSet(missionModeState?.setNumber ?? 1);
     return;
   }
   startGame();
@@ -8155,6 +8359,15 @@ customRestartButton?.addEventListener("click", () => {
     tutorialState = null;
     hideTutorialPanel();
     showTutorialChapterMenu();
+    return;
+  }
+  if (paused && isMissionMode() && !gameOver) {
+    running = false;
+    paused = false;
+    gameOver = false;
+    missionModeState = null;
+    hideTutorialPanel();
+    showMissionSetMenu();
     return;
   }
   restartCustomGame();
@@ -8210,6 +8423,20 @@ tutorialButton?.addEventListener("click", () => {
   showTutorialChapterMenu();
 });
 
+missionModeButton?.addEventListener("click", () => {
+  showMissionSetMenu();
+});
+
+missionSetButtons.forEach((button, index) => {
+  button?.addEventListener("click", () => {
+    startMissionModeSet(index + 1);
+  });
+});
+
+missionSetBackButton?.addEventListener("click", () => {
+  showPracticeMenu();
+});
+
 tutorialChapter1Button?.addEventListener("click", () => {
   startTutorialChapter1();
 });
@@ -8224,10 +8451,6 @@ tutorialChapter3Button?.addEventListener("click", () => {
 
 tutorialChapter4Button?.addEventListener("click", () => {
   startTutorialChapter(4);
-});
-
-tutorialChapter5Button?.addEventListener("click", () => {
-  startTutorialChapter(5);
 });
 
 tutorialChapterBackButton?.addEventListener("click", () => {
