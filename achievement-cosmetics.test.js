@@ -68,17 +68,17 @@ test("cosmetic items include defaults and gacha rewards", () => {
   assert.ok(ids.includes("mino_default"));
   assert.ok(ids.includes("bgm_default"));
   assert.equal(items.find((item) => item.id === "bgm_default")?.introSrc, "BGM/Wind Waltz/Wind Waltz_最終形態.mp3");
+  assert.equal(items.find((item) => item.id === "bgm_classic")?.introSrc, "BGM/Koeobeiniki/korobeiniki.m4a");
   assert.ok(ids.includes("background_space"));
   assert.ok(ids.includes("mino_neon"));
   assert.ok(ids.includes("bgm_fast"));
+  assert.match(gameSource, /ownedIds: \["background_default", "mino_default", "bgm_default", "bgm_classic"\]/);
 });
 
 test("menus expose achievements, gacha, and collection", () => {
   assert.match(htmlSource, /id="achievementButton"/);
   assert.match(htmlSource, /id="gachaButton"/);
   assert.match(htmlSource, /id="collectionButton"/);
-  assert.match(htmlSource, /id="bgmSelectButton"/);
-  assert.doesNotMatch(htmlSource, /id="bgmSelectButton"[^>]*disabled/);
   assert.match(htmlSource, /id="achievementMenu"/);
   assert.match(htmlSource, /id="gachaMenu"/);
   assert.match(htmlSource, /id="collectionMenu"/);

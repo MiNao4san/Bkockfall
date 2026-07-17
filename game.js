@@ -64,7 +64,7 @@ const DUPLICATE_POINT_VALUES = {
   rare: 30,
 };
 const DEFAULT_COSMETIC_INVENTORY = {
-  ownedIds: ["background_default", "mino_default", "bgm_default"],
+  ownedIds: ["background_default", "mino_default", "bgm_default", "bgm_classic"],
   cosmeticPoints: 0,
 };
 const DEFAULT_COSMETIC_EQUIPMENT = {
@@ -1157,7 +1157,6 @@ const customZoneToggleButton = document.querySelector("#customZoneToggleButton")
 const ghostToggleButton = document.querySelector("#ghostToggleButton");
 const difficultyToggleButton = document.querySelector("#difficultyToggleButton");
 const endlessToggleButton = document.querySelector("#endlessToggleButton");
-const bgmSelectButton = document.querySelector("#bgmSelectButton");
 const bgmVolumeRange = document.querySelector("#bgmVolumeRange");
 const seVolumeRange = document.querySelector("#seVolumeRange");
 const sprintGoalRow = document.querySelector("#sprintGoalRow");
@@ -9404,10 +9403,6 @@ optionBackButton.addEventListener("click", () => {
   } else {
     showOnePlayerMenu();
   }
-});
-
-bgmSelectButton?.addEventListener("click", () => {
-  showCollectionMenu("bgm", "options");
 });
 
 achievementButton?.addEventListener("click", () => {
