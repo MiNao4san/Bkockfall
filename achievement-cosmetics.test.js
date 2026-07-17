@@ -18,8 +18,11 @@ function extractConstArray(name) {
       depth -= 1;
       if (depth === 0) {
         return Function(`
-          const BGM_INTRO_SRC = "BGM/Koeobeiniki/korobeiniki.m4a";
-          const BGM_LOOP_FALLBACK_SRC = "BGM/Koeobeiniki/korobeiniki-roop.m4a";
+          const WIND_WALTZ_SRC = "BGM/Wind Waltz/Wind Waltz_最終形態.mp3";
+          const KOROBEINIKI_INTRO_SRC = "BGM/Koeobeiniki/korobeiniki.m4a";
+          const KOROBEINIKI_LOOP_SRC = "BGM/Koeobeiniki/korobeiniki-roop.m4a";
+          const BGM_INTRO_SRC = WIND_WALTZ_SRC;
+          const BGM_LOOP_FALLBACK_SRC = WIND_WALTZ_SRC;
           return (${gameSource.slice(arrayStart, index + 1)});
         `)();
       }
@@ -64,6 +67,7 @@ test("cosmetic items include defaults and gacha rewards", () => {
   assert.ok(ids.includes("background_default"));
   assert.ok(ids.includes("mino_default"));
   assert.ok(ids.includes("bgm_default"));
+  assert.equal(items.find((item) => item.id === "bgm_default")?.introSrc, "BGM/Wind Waltz/Wind Waltz_最終形態.mp3");
   assert.ok(ids.includes("background_space"));
   assert.ok(ids.includes("mino_neon"));
   assert.ok(ids.includes("bgm_fast"));
@@ -73,6 +77,8 @@ test("menus expose achievements, gacha, and collection", () => {
   assert.match(htmlSource, /id="achievementButton"/);
   assert.match(htmlSource, /id="gachaButton"/);
   assert.match(htmlSource, /id="collectionButton"/);
+  assert.match(htmlSource, /id="bgmSelectButton"/);
+  assert.doesNotMatch(htmlSource, /id="bgmSelectButton"[^>]*disabled/);
   assert.match(htmlSource, /id="achievementMenu"/);
   assert.match(htmlSource, /id="gachaMenu"/);
   assert.match(htmlSource, /id="collectionMenu"/);
@@ -85,6 +91,7 @@ test("debug cosmetics API is available but not exposed in HTML", () => {
 
 test("configured audio assets exist", () => {
   [
+    "BGM/Wind Waltz/Wind Waltz_最終形態.mp3",
     "BGM/Koeobeiniki/korobeiniki.m4a",
     "BGM/Koeobeiniki/korobeiniki-roop.m4a",
     "SE/キャンセル.mp3",

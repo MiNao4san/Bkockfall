@@ -23,9 +23,12 @@ const HOTLINE_ROWS = [
   { y: 19, points: 6 },
 ];
 const BGM_LEAD_TIME = 0.18;
-const BGM_INTRO_SRC = "BGM/Koeobeiniki/korobeiniki.m4a";
-const BGM_LOOP_FALLBACK_SRC = "BGM/Koeobeiniki/korobeiniki-roop.m4a";
-const BGM_LOOP_CANDIDATES = [BGM_LOOP_FALLBACK_SRC];
+const WIND_WALTZ_SRC = "BGM/Wind Waltz/Wind Waltz_最終形態.mp3";
+const KOROBEINIKI_INTRO_SRC = "BGM/Koeobeiniki/korobeiniki.m4a";
+const KOROBEINIKI_LOOP_SRC = "BGM/Koeobeiniki/korobeiniki-roop.m4a";
+const BGM_INTRO_SRC = WIND_WALTZ_SRC;
+const BGM_LOOP_FALLBACK_SRC = WIND_WALTZ_SRC;
+const BGM_LOOP_CANDIDATES = [BGM_LOOP_FALLBACK_SRC, KOROBEINIKI_LOOP_SRC];
 const SE_SOURCES = {
   cancel: "SE/キャンセル.mp3",
   rotate: "SE/ミノ 回転.mp3",
@@ -78,10 +81,10 @@ const COSMETIC_ITEMS = [
   { id: "mino_pastel", category: "minoTexture", rarity: "common", name: "パステル" },
   { id: "mino_glass", category: "minoTexture", rarity: "rare", name: "ガラス" },
   { id: "mino_neon", category: "minoTexture", rarity: "rare", name: "ネオン" },
-  { id: "bgm_default", category: "bgm", rarity: "common", name: "標準", introSrc: BGM_INTRO_SRC, loopSrc: BGM_LOOP_FALLBACK_SRC },
-  { id: "bgm_classic", category: "bgm", rarity: "common", name: "クラシック", introSrc: BGM_INTRO_SRC, loopSrc: BGM_LOOP_FALLBACK_SRC },
-  { id: "bgm_calm", category: "bgm", rarity: "common", name: "カーム", introSrc: BGM_INTRO_SRC, loopSrc: BGM_LOOP_FALLBACK_SRC },
-  { id: "bgm_fast", category: "bgm", rarity: "rare", name: "ハイスピード", introSrc: BGM_INTRO_SRC, loopSrc: BGM_LOOP_FALLBACK_SRC },
+  { id: "bgm_default", category: "bgm", rarity: "common", name: "Wind Waltz", introSrc: WIND_WALTZ_SRC, loopSrc: WIND_WALTZ_SRC },
+  { id: "bgm_classic", category: "bgm", rarity: "common", name: "Korobeiniki", introSrc: KOROBEINIKI_INTRO_SRC, loopSrc: KOROBEINIKI_LOOP_SRC },
+  { id: "bgm_calm", category: "bgm", rarity: "common", name: "Wind Waltz", introSrc: WIND_WALTZ_SRC, loopSrc: WIND_WALTZ_SRC },
+  { id: "bgm_fast", category: "bgm", rarity: "rare", name: "Korobeiniki Remix", introSrc: KOROBEINIKI_INTRO_SRC, loopSrc: KOROBEINIKI_LOOP_SRC },
 ];
 const ACHIEVEMENTS = [
   { id: "first_line_clear", category: "basic", title: "最初の一歩", description: "初めてラインを消す", type: "counter", statKey: "totalLinesCleared", target: 1, rewardCrystals: 50 },
@@ -1154,6 +1157,7 @@ const customZoneToggleButton = document.querySelector("#customZoneToggleButton")
 const ghostToggleButton = document.querySelector("#ghostToggleButton");
 const difficultyToggleButton = document.querySelector("#difficultyToggleButton");
 const endlessToggleButton = document.querySelector("#endlessToggleButton");
+const bgmSelectButton = document.querySelector("#bgmSelectButton");
 const bgmVolumeRange = document.querySelector("#bgmVolumeRange");
 const seVolumeRange = document.querySelector("#seVolumeRange");
 const sprintGoalRow = document.querySelector("#sprintGoalRow");
@@ -9402,6 +9406,10 @@ optionBackButton.addEventListener("click", () => {
   }
 });
 
+bgmSelectButton?.addEventListener("click", () => {
+  showCollectionMenu("bgm", "options");
+});
+
 achievementButton?.addEventListener("click", () => {
   showAchievementMenu();
 });
@@ -9452,6 +9460,10 @@ collectionButton?.addEventListener("click", () => {
 collectionBackButton?.addEventListener("click", () => {
   if (collectionReturnTarget === "gacha") {
     showGachaMenu();
+    return;
+  }
+  if (collectionReturnTarget === "options") {
+    showOptionMenu(selectedGameMode);
     return;
   }
   showGlobalOptionsMenu();
