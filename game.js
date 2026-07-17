@@ -37,6 +37,7 @@ const SE_SOURCES = {
   confirm: "SE/決定音.mp3",
   lineClear: "SE/ライン消し.mp3",
 };
+const SE_ENABLED = false;
 const ROTATION_STATES = ["0", "R", "2", "L"];
 const GOLD_SQUARE_CREATE_SCORE = 2000;
 const SILVER_SQUARE_CREATE_SCORE = 1000;
@@ -1766,6 +1767,7 @@ function setSeVolume(value) {
 }
 
 function playSe(name) {
+  if (!SE_ENABLED) return;
   const src = SE_SOURCES[name];
   if (!src || seVolume <= 0) return;
   const audio = new Audio(src);
